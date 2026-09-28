@@ -25,7 +25,7 @@ if(/^https?:$/.test(location.protocol)){ var m=document.createElement('link'); m
   --bg:#f4f5f8;--card:#fff;--card2:#f7f8fb;--text:#14161b;--muted:#6b7280;--line:#e5e7ee;
   /* nutrient colors: calories amber-orange, protein red, weight green. *-solid = button fills (white text ≥ 4.5:1) */
   --cal:#f08a00;--cal-soft:rgba(240,138,0,.14);--cal-over:#b45309;
-  --pro:#d62828;--pro-soft:rgba(214,40,40,.12);--pro-solid:#d62828;
+  --pro:#d62828;--pro-soft:rgba(214,40,40,.12);--pro-solid:#d62828;--food-solid:#1877F2;
   --wt:#15803d;--wt-soft:rgba(21,128,61,.13);--wt-solid:#15803d;
   /* general UI accent (links, primary buttons, active tab, focus) */
   --accent:#6d5dfc;--accent-soft:rgba(109,93,252,.14);
@@ -123,7 +123,7 @@ button.ringbox:active{background:var(--card2)}
 .empty{font-size:13px;color:var(--muted);padding:6px 0 4px}
 .linkbtn{color:var(--accent);font-weight:600;font-size:13px;padding:6px 0}
 .fabs{position:fixed;left:0;right:0;bottom:calc(var(--tabh) + env(safe-area-inset-bottom) + 14px);z-index:20;display:flex;justify-content:center;gap:10px;padding:0 12px;pointer-events:none}
-.fab{pointer-events:auto;background:var(--pro-solid);color:#fff;font-weight:700;padding:14px 20px;min-height:50px;border-radius:99px;box-shadow:0 8px 22px color-mix(in srgb,var(--pro-solid) 40%,transparent);display:flex;gap:7px;align-items:center;justify-content:center;font-size:15px;white-space:nowrap}
+.fab{pointer-events:auto;background:var(--food-solid);color:#fff;font-weight:700;padding:14px 20px;min-height:50px;border-radius:99px;box-shadow:0 8px 22px color-mix(in srgb,var(--food-solid) 40%,transparent);display:flex;gap:7px;align-items:center;justify-content:center;font-size:15px;white-space:nowrap}
 .fab:active{transform:scale(.97)}
 #fabW{background:var(--wt-solid);box-shadow:0 8px 22px color-mix(in srgb,var(--wt-solid) 40%,transparent)}
 @media (max-width:360px){.fab{padding:13px 15px;font-size:14px;gap:6px}}
@@ -714,7 +714,7 @@ function foodRow(f, src){
 function renderSheet(){
   const st = UI.sheet; if(!st) return;
   if(st.mode==='weight'){ $('#sheetTitle').textContent = 'Weight · ' + (st.date===todayKey() ? 'Today' : fmtDate(st.date)); $('#sheetBody').innerHTML = quickWeightHTML(st); return; }
-  if(st.mode==='auth'){ $('#sheetTitle').textContent = st.tab==='signup' ? 'Create your Fuel account' : 'Sign in to Fuel'; $('#sheetBody').innerHTML = authSheetHTML(st); return; }
+  if(st.mode==='auth'){ $('#sheetTitle').textContent = st.tab==='signup' ? 'Create your NDLZ account' : 'Sign in to NDLZ'; $('#sheetBody').innerHTML = authSheetHTML(st); return; }
   $('#sheetTitle').textContent = st.mode==='edit' ? 'Edit entry' : `Add to ${MEAL_LABEL[st.meal]}`;
   let h = `<div class="chips" style="margin-bottom:12px">${MEALS.map(m=>`<button class="chip ${st.meal===m.id?'on':''}" data-act="meal" data-meal="${m.id}">${m.label}</button>`).join('')}</div>`;
   if(st.mode==='add'){
@@ -1112,8 +1112,8 @@ async function barcodeLookup(raw, format){
   paintDb();
 }
 function usdaErrMsg(e){
-  if(e.status===429) return usdaKey()==='DEMO_KEY' ? 'USDA: the shared DEMO_KEY has hit its rate limit. Add your free USDA API key in Goals → Food database.' : 'USDA: your API key hit its rate limit. Try again later.';
-  if(e.status===401 || e.status===403) return 'USDA: the API key was rejected (invalid key). Check it in Goals → Food database.';
+  if(e.status===429) return usdaKey()==='DEMO_KEY' ? 'USDA: the shared DEMO_KEY has hit its rate limit. Add your free USDA API key in Settings → Food database.' : 'USDA: your API key hit its rate limit. Try again later.';
+  if(e.status===401 || e.status===403) return 'USDA: the API key was rejected (invalid key). Check it in Settings → Food database.';
   if(e.timeout) return 'USDA: the request timed out.';
   if(e.network) return 'USDA: couldn’t connect.';
   return `USDA: error (HTTP ${e.status}).`;
@@ -1299,10 +1299,10 @@ function cameraError(e){
 }
 function camErrHTML(kind){
   const manual = `You can still type the barcode number in the field above and tap <b>Look up</b>, or <button class="linkbtn" data-act="stab" data-tab="new">enter the food manually</button>.`;
-  if(kind==='denied') return `<div class="notice" data-err="camera"><b>Fuel isn’t allowed to use the camera.</b> To scan barcodes on iPhone:
+  if(kind==='denied') return `<div class="notice" data-err="camera"><b>NDLZ isn’t allowed to use the camera.</b> To scan barcodes on iPhone:
     <ol class="steps"><li>Open the <b>Settings</b> app → <b>Safari</b> → <b>Camera</b>, and choose <b>Ask</b> or <b>Allow</b>.</li>
     <li>Or in Safari, tap <b>aA</b> in the address bar → <b>Website Settings</b> → <b>Camera</b> → <b>Allow</b>.</li>
-    <li>Come back and tap the scan button again. (Using Fuel from your Home Screen? The same Safari camera setting applies — close and reopen Fuel after changing it.)</li></ol>
+    <li>Come back and tap the scan button again. (Using NDLZ from your Home Screen? The same Safari camera setting applies — close and reopen NDLZ after changing it.)</li></ol>
     ${IS_IOS?'':'On other devices, allow the camera for this site in your browser’s site settings. '}${manual}</div>`;
   if(kind==='nocam') return `<div class="notice" data-err="camera"><b>No camera was found</b> on this device. ${manual}</div>`;
   if(kind==='busy') return `<div class="notice" data-err="camera"><b>The camera is busy</b> — another app or tab may be using it. Close it and try again. ${manual}</div>`;
@@ -1553,7 +1553,7 @@ function saveGoals(){
 /* ---------- export / import / reset ---------- */
 function exportData(){
   const blob = new Blob([JSON.stringify({app:'fuel-nutrition', exportedAt:new Date().toISOString(), ...S},null,2)],{type:'application/json'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `nutrition-backup-${todayKey()}.json`;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `NDLZ-backup-${todayKey()}.json`;
   document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
   toast('Backup exported');
 }
@@ -1856,7 +1856,7 @@ function accountCardHTML(){
         <div class="row" style="gap:8px"><input class="inp" type="password" name="pw2" autocomplete="new-password" placeholder="Confirm new password" style="flex:1"><button class="btn primary" type="submit">Save</button></div></form>
     </details></section>`;
   return `<section class="card" id="acctCard"><h2>Account &amp; sync</h2>
-    <p class="muted small" style="margin:-4px 0 12px">Sign in to back up your log and use Fuel on more than one device (phone, iPad, computer). Everything keeps working offline and stays on this device too. Free — just a username and a password.</p>
+    <p class="muted small" style="margin:-4px 0 12px">Sign in to back up your log and use NDLZ on more than one device (phone, iPad, computer). Everything keeps working offline and stays on this device too. Free — just a username and a password.</p>
     <button class="btn primary block" data-act="auth-open">Sign in or create account</button></section>`;
 }
 function paintAccount(){
@@ -1998,7 +1998,7 @@ document.addEventListener('click', async ev=>{
     case 'auth-clear': if(await confirmDialog({title:'Remove data from this device?', text:`Changes that were never synced will be lost. Data already backed up stays in ${loadMeta().user||'your account'}.`, ok:'Remove', danger:true})){ clearDevice(); toast('This device’s data was removed'); } break;
     case 'sync-now': syncNow(); break;
     case 'sign-out': signOut(); break;
-    case 'sync-prompt-x': try { localStorage.setItem(PROMPT_KEY, '1'); } catch(e){} render(); toast('You can sign in any time from Goals'); break;
+    case 'sync-prompt-x': try { localStorage.setItem(PROMPT_KEY, '1'); } catch(e){} render(); toast('You can sign in any time from Settings'); break;
     case 'import': $('#importFile').click(); break;
     case 'reset': { const ok = await confirmDialog({title:'Reset all data?', text:`This permanently deletes all food logs, saved foods, weigh-ins and goals ${CFG && loadMeta().uid ? 'on this device and in your account, on all your devices' : 'on this device'}. Consider exporting a backup first.`, ok:'Delete everything', danger:true});
       if(ok){ S = defaults(); save(); UI.date = todayKey(); UI.view='today'; render(); toast('All data reset'); } break; }
