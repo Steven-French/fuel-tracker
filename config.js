@@ -3,6 +3,6 @@
    Only the project URL and the PUBLIC anon / publishable key belong here. Never put a service_role or
    sb_secret_ key in this file (the app refuses to use one anyway): row-level security is what protects data. */
 window.FUEL_CONFIG = {
-  supabaseUrl: '',
-  supabaseKey: ''
+  supabaseUrl: 'https://takafdvvrhblmpmkvxtg.supabase.co',
+  supabaseKey: 'sb_publishable_-_ODvYJF2-wTWPoU8ov15Q_deissGq-'
 };

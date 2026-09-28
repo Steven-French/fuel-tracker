@@ -253,7 +253,6 @@ details.helper[open] summary::after{transform:rotate(90deg)}
 .dot.good{background:var(--good)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
 details.pwset{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
 details.pwset summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--pro)}
-.inp.code{font:700 30px/1 ui-monospace,Menlo,monospace;letter-spacing:.35em;text-align:center;padding:12px 0 12px .35em}
 .btn:disabled,.linkbtn:disabled{opacity:.5}
 .banner.syncprompt{padding:8px 8px 8px 14px}
 .banner.syncprompt .grow{flex:1;text-align:left;padding:4px 0}
@@ -653,7 +652,7 @@ function foodRow(f, src){
 function renderSheet(){
   const st = UI.sheet; if(!st) return;
   if(st.mode==='weight'){ $('#sheetTitle').textContent = 'Weight · ' + (st.date===todayKey() ? 'Today' : fmtDate(st.date)); $('#sheetBody').innerHTML = quickWeightHTML(st); return; }
-  if(st.mode==='auth'){ $('#sheetTitle').textContent = st.step==='code' ? 'Enter your code' : 'Sign in to Fuel'; $('#sheetBody').innerHTML = authSheetHTML(st); return; }
+  if(st.mode==='auth'){ $('#sheetTitle').textContent = st.tab==='signup' ? 'Create your Fuel account' : 'Sign in to Fuel'; $('#sheetBody').innerHTML = authSheetHTML(st); return; }
   $('#sheetTitle').textContent = st.mode==='edit' ? 'Edit entry' : `Add to ${MEAL_LABEL[st.meal]}`;
   let h = `<div class="chips" style="margin-bottom:12px">${MEALS.map(m=>`<button class="chip ${st.meal===m.id?'on':''}" data-act="meal" data-meal="${m.id}">${m.label}</button>`).join('')}</div>`;
   if(st.mode==='add'){
@@ -1534,7 +1533,7 @@ const NULLS = {
   w:{day:null, kg:null}
 };
 const ACC = {client:null, ready:false, expired:false, state:'idle', err:'', libErr:false};
-const blankMeta = () => ({v:1, uid:null, email:null, recs:{p:{},e:{},f:{},w:{}}, dirty:{p:{},e:{},f:{},w:{}}, cur:{}, last:0, rejected:0});
+const blankMeta = () => ({v:1, uid:null, user:null, recs:{p:{},e:{},f:{},w:{}}, dirty:{p:{},e:{},f:{},w:{}}, cur:{}, last:0, rejected:0});
 function loadMeta(){ try { const m = JSON.parse(localStorage.getItem(SKEY)); if(m && m.v===1 && m.recs && m.dirty){ KINDS.forEach(k=>{ m.recs[k]=m.recs[k]||{}; m.dirty[k]=m.dirty[k]||{}; }); m.cur=m.cur||{}; return m; } } catch(e){} return blankMeta(); }
 function saveMeta(m){ try { localStorage.setItem(SKEY, JSON.stringify(m)); } catch(e){} }
 const dirtyCount = m => KINDS.reduce((n,k)=>n+Object.keys(m.dirty[k]).length, 0);
@@ -1719,7 +1718,7 @@ async function onAuthEvent(event, session){
   const m = loadMeta();
   if(event==='INITIAL_SESSION'){
     ACC.ready = true;
-    if(session){ ACC.expired = false; if(m.uid!==session.user.id) await adoptUser(session.user); else { if(session.user.email && m.email!==session.user.email){ m.email = session.user.email; saveMeta(m); } syncNow(); } }
+    if(session){ ACC.expired = false; if(m.uid!==session.user.id) await adoptUser(session.user); else { if(m.user!==userName(session.user)){ m.user = userName(session.user); saveMeta(m); } syncNow(); } }
     else if(m.uid){ ACC.expired = navigator.onLine; }       // offline: the session may only need a refresh later
     paintAccount(); if(UI.view==='today') render();
   } else if(event==='SIGNED_OUT'){ if(loadMeta().uid) ACC.expired = true; paintAccount(); }
@@ -1730,13 +1729,13 @@ async function adoptUser(user){
   let m = loadMeta();
   if(m.uid && m.uid!==user.id){
     const n = dirtyCount(m);
-    const keep = await confirmDialog({title:'Data from another account', text:`This device still has data from ${m.email||'another account'}${n?` (${n} change${n===1?'':'s'} never synced)`:''}. Add it to ${user.email||'this account'}, or remove it from this device?`, ok:'Add to this account', cancel:'Remove it'});
+    const keep = await confirmDialog({title:'Data from another account', text:`This device still has data from ${m.user?'“'+m.user+'”':'another account'}${n?` (${n} change${n===1?'':'s'} never synced)`:''}. Add it to “${userName(user)}”, or remove it from this device?`, ok:'Add to this account', cancel:'Remove it'});
     if(!keep){ S = defaults(); writeLocal(); }
     m = blankMeta(); saveMeta(m); trackChanges();
     m = loadMeta();
   }
   if(!m.uid){
-    m.uid = user.id; m.email = user.email||''; m.cur = {}; m.last = 0;
+    m.uid = user.id; m.user = userName(user); m.cur = {}; m.last = 0;
     const plainProfile = isDefaultProfile();
     for(const k of KINDS) for(const id in m.recs[k]){ if(m.recs[k][id][0]===null) delete m.recs[k][id]; else if(!(k==='p' && plainProfile)) m.dirty[k][id] = 1; }
     if(plainProfile && m.recs.p.me) m.recs.p.me[1] = 0;   // a fresh device's default goals never overwrite the account's goals
@@ -1760,7 +1759,7 @@ async function signOut(){
   clearDevice();
   toast('Signed out · this device’s data was removed');
 }
-window.FuelSync = { now: ()=>syncNow(), status: ()=>{ const m = loadMeta(); return {configured:!!CFG, ready:ACC.ready, signedIn:!!m.uid && !ACC.expired, email:m.email, state:ACC.state, err:ACC.err, pending:dirtyCount(m), last:m.last}; } };
+window.FuelSync = { now: ()=>syncNow(), status: ()=>{ const m = loadMeta(); return {configured:!!CFG, ready:ACC.ready, signedIn:!!m.uid && !ACC.expired, username:m.user, state:ACC.state, err:ACC.err, pending:dirtyCount(m), last:m.last}; } };
 
 /* ---- account UI ---- */
 function ago(ms){ const s = (Date.now()-ms)/1000; if(s<45) return 'just now'; if(s<3600) return Math.round(s/60)+' min ago'; if(s<86400) return Math.round(s/3600)+' h ago'; return fmtDate(keyOf(new Date(ms)),{month:'short',day:'numeric'}); }
@@ -1778,20 +1777,21 @@ function accountCardHTML(){
   if(!CFG) return '';
   const m = loadMeta();
   if(m.uid && ACC.expired) return `<section class="card" id="acctCard"><h2>Account &amp; sync</h2>
-    <p class="muted small" style="margin:-4px 0 12px">You were signed out of <b>${esc(m.email)}</b>. Sign in again to keep syncing${dirtyCount(m)?` — ${dirtyCount(m)} change${dirtyCount(m)===1?' is':'s are'} waiting`:''}. Your data is still on this device.</p>
+    <p class="muted small" style="margin:-4px 0 12px">You were signed out of <b>${esc(m.user)}</b>. Sign in again to keep syncing${dirtyCount(m)?` — ${dirtyCount(m)} change${dirtyCount(m)===1?' is':'s are'} waiting`:''}. Your data is still on this device.</p>
     <button class="btn primary block" data-act="auth-open">Sign in again</button>
     <button class="btn block" data-act="auth-clear" style="margin-top:10px">Remove data from this device</button></section>`;
   if(m.uid) return `<section class="card" id="acctCard"><h2>Account &amp; sync</h2>
-    <div class="acct"><div class="avatar" aria-hidden="true">${esc((m.email||'?').charAt(0).toUpperCase())}</div><div style="min-width:0;flex:1"><b class="acct-email">${esc(m.email)}</b>
+    <div class="acct"><div class="avatar" aria-hidden="true">${esc((m.user||'?').charAt(0).toUpperCase())}</div><div style="min-width:0;flex:1"><div class="muted small">Username</div><b class="acct-email" id="acctUser">${esc(m.user)}</b>
       <div class="muted small" id="syncStatus"><span class="dot ${ACC.state==='error'?'bad':(ACC.state==='offline'||!navigator.onLine||dirtyCount(m))?'warn':'good'}"></span>${esc(syncStatusText(m))}</div></div></div>
     <div class="grid2" style="gap:10px;margin-top:12px"><button class="btn" data-act="sync-now" ${ACC.state==='syncing'?'disabled':''}>Sync now</button><button class="btn" data-act="sign-out">Sign out</button></div>
-    <details class="pwset"><summary>Set a password (optional)</summary>
-      <form id="pwSetForm" novalidate style="margin-top:10px"><p class="muted small" style="margin:0 0 8px">Lets you sign in with email + password instead of waiting for a code.</p>
-        <input type="email" name="username" value="${esc(m.email)}" autocomplete="username" class="hidden" tabindex="-1" aria-hidden="true">
-        <div class="row" style="gap:8px"><input class="inp" type="password" name="pw" autocomplete="new-password" minlength="8" placeholder="New password (8+ characters)" style="flex:1"><button class="btn primary" type="submit">Save</button></div></form>
+    <details class="pwset"><summary>Change password</summary>
+      <form id="pwSetForm" novalidate style="margin-top:10px">
+        <input type="text" name="username" value="${esc(m.user)}" autocomplete="username" class="hidden" tabindex="-1" aria-hidden="true">
+        <input class="inp" type="password" name="pw" autocomplete="new-password" minlength="8" placeholder="New password (8+ characters)" style="margin-bottom:8px">
+        <div class="row" style="gap:8px"><input class="inp" type="password" name="pw2" autocomplete="new-password" placeholder="Confirm new password" style="flex:1"><button class="btn primary" type="submit">Save</button></div></form>
     </details></section>`;
   return `<section class="card" id="acctCard"><h2>Account &amp; sync</h2>
-    <p class="muted small" style="margin:-4px 0 12px">Sign in to back up your log and use Fuel on more than one device (phone, iPad, computer). Everything keeps working offline and stays on this device too. Free — just your email.</p>
+    <p class="muted small" style="margin:-4px 0 12px">Sign in to back up your log and use Fuel on more than one device (phone, iPad, computer). Everything keeps working offline and stays on this device too. Free — just a username and a password.</p>
     <button class="btn primary block" data-act="auth-open">Sign in or create account</button></section>`;
 }
 function paintAccount(){
@@ -1807,98 +1807,72 @@ function syncPromptHTML(){
   return `<div class="banner syncprompt"><span style="font-size:20px">☁️</span><button class="grow" data-act="auth-open">Back up your log and sync it across your devices. <b>Sign in →</b></button><button class="x2" data-act="sync-prompt-x" aria-label="Dismiss">✕</button></div>`;
 }
 
-/* sign-in sheet: 6-digit email code (default) or email + password */
-function openAuth(){ openSheet({mode:'auth', step:'email', email:loadMeta().email||'', kind:'otp', busy:false, err:'', info:'', resendAt:0}); if(matchMedia('(pointer:fine)').matches) setTimeout(()=>{ const i = $('#authEmail'); if(i) i.focus(); }, 50); }
+/* sign-in sheet: username + password only, no email at all. A username maps to a synthetic, non-routable address
+   (<username>@users.fuel-tracker.invalid) that Supabase uses as the unique login; sign-ups are auto-confirmed, so no
+   auth flow ever sends an email. The display username is kept in user_metadata.username.
+   A forgotten password is reset by Steven with fuel-admin/reset-password.js. */
+const USER_DOMAIN = 'users.fuel-tracker.invalid';
+const validUser = v => /^[A-Za-z0-9_.]{3,20}$/.test(v) && !/^\.|\.$|\.\./.test(v);
+const loginOf = u => u.toLowerCase() + '@' + USER_DOMAIN;
+const userName = user => (user && user.user_metadata && user.user_metadata.username) || ((user && user.email) || '').split('@')[0];
+function openAuth(tab){ const m = loadMeta(); openSheet({mode:'auth', tab: tab || (m.user ? 'signin' : 'signup'), user:m.user||'', pw:'', pw2:'', busy:false, err:''});
+  if(matchMedia('(pointer:fine)').matches) setTimeout(()=>{ const i = $('#authUser'); if(i) i.focus(); }, 50); }
 function authSheetHTML(st){
-  const err = st.err ? `<div class="notice bad" role="alert">${esc(st.err)}</div>` : '', info = st.info ? `<div class="notice info">${esc(st.info)}</div>` : '';
-  const busy = st.busy ? 'disabled' : '';
-  if(st.step==='code'){
-    const wait = Math.max(0, Math.ceil((st.resendAt-Date.now())/1000));
-    return `<form id="authCodeForm" novalidate autocomplete="off">
-      <p style="margin:0 0 12px">We emailed a 6-digit code to <b>${esc(st.email)}</b>. Enter it here${st.kind==='signup'?' to confirm your account':''}.</p>
-      <input class="inp code" id="authCode" name="code" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" placeholder="••••••" aria-label="6-digit code" ${busy}>
-      ${err}${info}
-      <button class="btn primary block" type="submit" style="margin-top:12px" ${busy}>${st.busy?'<span class="spinner"></span> Checking…':'Verify & sign in'}</button>
-      <div class="row" style="justify-content:space-between;margin-top:8px"><button type="button" class="linkbtn" data-act="auth-back">← Use a different email</button>
-        <button type="button" class="linkbtn" data-act="auth-resend" ${wait||st.busy?'disabled':''} id="authResend">${wait?`Resend in ${wait}s`:'Send a new code'}</button></div>
-      <p class="muted small" style="margin:8px 0 0">Not there? Check spam/junk. The code works for 1 hour; only the newest code works.</p></form>`;
-  }
-  if(st.step==='password') return `<form id="authPwForm" novalidate>
-      <label class="f"><span>Email</span><input class="inp" id="authEmail" type="email" name="email" value="${esc(st.email)}" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false" ${busy}></label>
-      <label class="f"><span>Password</span><input class="inp" type="password" name="password" autocomplete="current-password" placeholder="8+ characters" ${busy}></label>
-      ${err}${info}
-      <div class="grid2" style="gap:10px;margin-top:4px"><button class="btn primary" type="submit" name="how" value="signin" ${busy}>Sign in</button><button class="btn" type="submit" name="how" value="signup" ${busy}>Create account</button></div>
-      <p class="muted small" style="margin:12px 0 0">Forgot it? <button type="button" class="linkbtn" data-act="auth-mode" data-m="email">Sign in with an email code instead</button></p></form>`;
-  return `<form id="authEmailForm" novalidate>
-      <p class="muted" style="margin:0 0 12px;font-size:14px">Enter your email and we’ll send you a 6-digit code. New here? The same code creates your account.</p>
-      <label class="f"><span>Email</span><input class="inp" id="authEmail" type="email" name="email" value="${esc(st.email)}" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="you@example.com" enterkeyhint="send" ${busy}></label>
-      ${err}${info}
-      <button class="btn primary block" type="submit" ${busy}>${st.busy?'<span class="spinner"></span> Sending…':'Email me a code'}</button>
-      <p class="muted small" style="margin:12px 0 0;text-align:center"><button type="button" class="linkbtn" data-act="auth-mode" data-m="password">Use a password instead</button></p>
-      <p class="muted small" style="margin:6px 0 0">Your food log syncs privately to your account; nobody else can see it.</p></form>`;
+  const up = st.tab==='signup', busy = st.busy ? 'disabled' : '';
+  return `<div class="seg" style="margin-bottom:14px" role="tablist"><button type="button" role="tab" class="${up?'':'on'}" data-act="auth-tab" data-t="signin" aria-selected="${!up}">Sign in</button><button type="button" role="tab" class="${up?'on':''}" data-act="auth-tab" data-t="signup" aria-selected="${up}">Create account</button></div>
+    <form id="authPwForm" data-how="${up?'signup':'signin'}" novalidate>
+      <p class="muted" style="margin:0 0 12px;font-size:14px">${up ? 'Create a free account to back up your log and sync it across your devices. You’re signed in right away.' : 'Welcome back! Sign in to sync this device with your account.'}</p>
+      <label class="f"><span>Username</span><input class="inp" id="authUser" type="text" name="username" value="${esc(st.user)}" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="20" ${up?'placeholder="e.g. sam_r"':''} ${busy}></label>
+      ${up ? `<p class="muted small" style="margin:-6px 0 10px">3–20 letters, numbers, _ or . — not case-sensitive.</p>` : ''}
+      <label class="f"><span>Password</span><input class="inp" type="password" name="password" value="${esc(st.pw)}" autocomplete="${up?'new-password':'current-password'}" ${up?'placeholder="At least 8 characters" minlength="8"':''} ${busy}></label>
+      ${up ? `<label class="f"><span>Confirm password</span><input class="inp" type="password" name="password2" value="${esc(st.pw2)}" autocomplete="new-password" ${busy}></label>` : ''}
+      ${st.err ? `<div class="notice bad" role="alert">${esc(st.err)}</div>` : ''}
+      <button class="btn primary block" type="submit" style="margin-top:4px" ${busy}>${st.busy ? `<span class="spinner"></span> ${up?'Creating account…':'Signing in…'}` : (up?'Create account':'Sign in')}</button>
+      <p class="muted small" style="margin:12px 0 0;text-align:center">${up ? 'Keep your password somewhere safe. Forgot it later? Ask Steven to reset it.' : 'Forgot your password? Ask Steven to reset it.'}</p>
+      <p class="muted small" style="margin:6px 0 0;text-align:center">Your food log syncs privately to your account; nobody else can see it.</p></form>`;
 }
 function authErr(e){
   const msg = (e && e.message) || String(e||'Something went wrong');
   if(netErr(e)) return 'You’re offline. Connect to the internet to sign in.';
-  if(e && (e.code==='over_email_send_rate_limit' || /email rate limit/i.test(msg))) return 'Too many sign-in emails were sent recently. Please try again in a little while (or use your password if you set one).';
-  if(/security purposes|after \d+ seconds/i.test(msg)) return 'Please wait a moment before requesting another code.';
-  if((e && e.code==='email_address_not_authorized') || /not authorized/i.test(msg)) return 'Fuel can’t send sign-in emails to this address yet (email sending is still being set up). Please try again later.';
-  if((e && e.code==='email_address_invalid') || /email address .* is invalid/i.test(msg)) return 'That email address can’t receive sign-in codes. Check it for typos.';
   if(e && e.status===429) return 'Too many attempts. Please wait a few minutes and try again.';
-  if(/expired|invalid.*(otp|token|code)|token.*(invalid|not found)/i.test(msg) || (e && e.code==='otp_expired')) return 'That code is wrong or has expired. Check the newest email, or send a new code.';
-  if(/invalid login credentials/i.test(msg)) return 'Wrong email or password.';
+  if(/invalid login credentials/i.test(msg)) return 'Wrong username or password.';
+  if((e && e.code==='user_already_exists') || /already registered|already exists/i.test(msg)) return 'That username is taken. Pick another one (or tap “Sign in” if it’s yours).';
+  if((e && e.code==='email_address_invalid') || /email address .* is invalid|invalid format/i.test(msg)) return 'That username can’t be used. Try letters and numbers only.';
+  if((e && e.code==='email_not_confirmed') || /not confirmed/i.test(msg)) return 'This account isn’t active yet. Please ask Steven to activate it.';
   if(/password should be|weak/i.test(msg)) return 'Please choose a longer password (at least 8 characters).';
   if(/signups? not allowed/i.test(msg)) return 'New sign-ups are turned off right now.';
   return msg;
 }
-const validEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
 function authPaint(){ if(UI.sheet && UI.sheet.mode==='auth') renderSheet(); }
 async function authRun(fn){ const st = UI.sheet; st.busy = true; st.err = ''; authPaint(); try { await fn(st); } catch(e){ st.err = authErr(e); } if(UI.sheet===st){ st.busy = false; authPaint(); } }
-let resendTick = null;
-function toCodeStep(st, kind, info){ st.step = 'code'; st.kind = kind; st.info = info||''; st.resendAt = Date.now()+60000;
-  clearInterval(resendTick); resendTick = setInterval(()=>{ const b = $('#authResend'); if(!UI.sheet || UI.sheet.mode!=='auth' || UI.sheet.step!=='code'){ clearInterval(resendTick); return; }
-    const w = Math.max(0, Math.ceil((UI.sheet.resendAt-Date.now())/1000)); if(b){ b.textContent = w?`Resend in ${w}s`:'Send a new code'; b.disabled = !!w || UI.sheet.busy; } if(!w) clearInterval(resendTick); }, 1000);
-  setTimeout(()=>{ const c = $('#authCode'); if(c) c.focus(); }, 60); }
-async function sendCode(st){ const {error} = await ACC.client.auth.signInWithOtp({email:st.email, options:{shouldCreateUser:true}}); if(error) throw error; toCodeStep(st, 'otp'); }
-async function finishSignIn(user){
+async function finishSignIn(user, created){
   closeSheet(); await adoptUser(user);
   render();
-  toast(`Signed in as ${user.email}`);
+  toast(created ? `Account created · signed in as ${userName(user)}` : `Signed in as ${userName(user)}`);
 }
-function authSubmit(form, submitter){
+function authSubmit(form){
   const st = UI.sheet; if(!st || st.busy) return;
   if(!ACC.client){ st.err = ACC.libErr ? 'Sync is unavailable right now. Please try again later.' : 'Still connecting… try again in a moment.'; authPaint(); return; }
-  if(form.id==='authEmailForm'){
-    const email = form.elements.email.value.trim().toLowerCase(); st.email = email;
-    if(!validEmail(email)){ st.err = 'Enter a valid email address.'; authPaint(); return; }
-    authRun(sendCode);
-  } else if(form.id==='authCodeForm'){
-    const code = form.elements.code.value.replace(/\D/g,'');
-    if(code.length!==6){ st.err = 'Enter the 6-digit code from the email.'; authPaint(); return; }
-    authRun(async st=>{
-      let r = await ACC.client.auth.verifyOtp({email:st.email, token:code, type:st.kind==='signup'?'signup':'email'});
-      if(r.error && st.kind!=='signup' && !netErr(r.error)){ const r2 = await ACC.client.auth.verifyOtp({email:st.email, token:code, type:'signup'}); if(!r2.error) r = r2; }
-      if(r.error) throw r.error;
-      await finishSignIn(r.data.user);
-    });
-  } else if(form.id==='authPwForm'){
-    const email = form.elements.email.value.trim().toLowerCase(), pw = form.elements.password.value, how = submitter && submitter.value==='signup' ? 'signup' : 'signin';
-    st.email = email;
-    if(!validEmail(email)){ st.err = 'Enter a valid email address.'; authPaint(); return; }
-    if(pw.length < 8){ st.err = 'Passwords are at least 8 characters.'; authPaint(); return; }
-    authRun(async st=>{
-      if(how==='signin'){
-        const {data, error} = await ACC.client.auth.signInWithPassword({email, password:pw});
-        if(error && /not confirmed/i.test(error.message||'')){ const x = await ACC.client.auth.resend({type:'signup', email}); if(x.error) throw x.error; toCodeStep(st, 'signup', 'Your email isn’t confirmed yet, so we sent a new confirmation code.'); return; }
-        if(error) throw error; await finishSignIn(data.user);
-      } else {
-        const {data, error} = await ACC.client.auth.signUp({email, password:pw});
-        if(error) throw error;
-        if(data.session) await finishSignIn(data.user);
-        else toCodeStep(st, 'signup', 'If this email already has an account, no code is sent — use Sign in instead.');
-      }
-    });
-  }
+  const up = st.tab==='signup', user = form.elements.username.value.trim().replace(/^@/, ''), pw = form.elements.password.value, pw2 = up ? form.elements.password2.value : pw;
+  Object.assign(st, {user, pw, pw2});
+  const fail = m => { st.err = m; authPaint(); };
+  if(!user) return fail('Enter your username.');
+  if(!validUser(user)) return fail(up ? 'Usernames are 3–20 characters: letters, numbers, _ or . (not starting or ending with a dot).' : 'Wrong username or password.');
+  if(!pw) return fail('Enter your password.');
+  if(up && pw.length < 8) return fail('Choose a password with at least 8 characters.');
+  if(up && pw !== pw2) return fail('The two passwords don’t match.');
+  authRun(async st=>{
+    if(up){
+      const {data, error} = await ACC.client.auth.signUp({email:loginOf(user), password:pw, options:{data:{username:user}}});
+      if(error) throw error;
+      if(!data.session) throw new Error('Your account was created but isn’t active yet. Please ask Steven to activate it.');
+      await finishSignIn(data.user, true);
+    } else {
+      const {data, error} = await ACC.client.auth.signInWithPassword({email:loginOf(user), password:pw});
+      if(error) throw error;
+      await finishSignIn(data.user);
+    }
+  });
 }
 
 /* ---------- events ---------- */
@@ -1955,10 +1929,8 @@ document.addEventListener('click', async ev=>{
     case 'q-del-weight': { const d = UI.sheet && UI.sheet.date; const i = S.weights.findIndex(w=>w.date===d); if(i<0) break; const [w] = S.weights.splice(i,1); save(); closeSheet(); render();
       toast('Weigh-in deleted', ()=>{ S.weights.push(w); S.weights.sort((a,b)=>a.date<b.date?-1:1); save(); render(); }); break; }
     case 'auth-open': closeSheet(); openAuth(); break;
-    case 'auth-mode': if(UI.sheet){ UI.sheet.step = el.dataset.m==='password' ? 'password' : 'email'; UI.sheet.err = UI.sheet.info = ''; renderSheet(); } break;
-    case 'auth-back': if(UI.sheet){ UI.sheet.step = 'email'; UI.sheet.err = UI.sheet.info = ''; renderSheet(); } break;
-    case 'auth-resend': if(UI.sheet && ACC.client) authRun(async st=>{ if(st.kind==='signup'){ const {error} = await ACC.client.auth.resend({type:'signup', email:st.email}); if(error) throw error; toCodeStep(st,'signup','New code sent.'); } else { await sendCode(st); st.info = 'New code sent.'; } }); break;
-    case 'auth-clear': if(await confirmDialog({title:'Remove data from this device?', text:`Changes that were never synced will be lost. Data already backed up stays in ${loadMeta().email||'your account'}.`, ok:'Remove', danger:true})){ clearDevice(); toast('This device’s data was removed'); } break;
+    case 'auth-tab': if(UI.sheet && UI.sheet.mode==='auth' && !UI.sheet.busy){ const f = $('#authPwForm'); if(f){ UI.sheet.user = f.elements.username.value.trim(); } UI.sheet.tab = el.dataset.t==='signup' ? 'signup' : 'signin'; UI.sheet.err = ''; UI.sheet.pw = UI.sheet.pw2 = ''; renderSheet(); } break;
+    case 'auth-clear': if(await confirmDialog({title:'Remove data from this device?', text:`Changes that were never synced will be lost. Data already backed up stays in ${loadMeta().user||'your account'}.`, ok:'Remove', danger:true})){ clearDevice(); toast('This device’s data was removed'); } break;
     case 'sync-now': syncNow(); break;
     case 'sign-out': signOut(); break;
     case 'sync-prompt-x': try { localStorage.setItem(PROMPT_KEY, '1'); } catch(e){} render(); toast('You can sign in any time from Goals'); break;
@@ -1968,9 +1940,10 @@ document.addEventListener('click', async ev=>{
   }
 });
 document.addEventListener('submit', ev=>{
-  if(/^auth(Email|Code|Pw)Form$/.test(ev.target.id)){ ev.preventDefault(); authSubmit(ev.target, ev.submitter); return; }
+  if(ev.target.id==='authPwForm'){ ev.preventDefault(); authSubmit(ev.target); return; }
   if(ev.target.id==='pwSetForm'){ ev.preventDefault(); const pw = ev.target.elements.pw.value;
-    if(pw.length<8){ ev.target.elements.pw.classList.add('err'); toast('Passwords are at least 8 characters'); return; }
+    if(pw.length<8){ ev.target.elements.pw.classList.add('err'); toast('Choose a password with at least 8 characters'); return; }
+    if(pw!==ev.target.elements.pw2.value){ ev.target.elements.pw2.classList.add('err'); toast('The two passwords don’t match'); return; }
     if(!ACC.client) return;
     ACC.client.auth.updateUser({password:pw}).then(({error})=>{ if(error) toast(authErr(error)); else { ev.target.reset(); toast('Password saved'); } }); return; }
   if(ev.target.id==='qWeightForm'){ ev.preventDefault(); const d = UI.sheet && UI.sheet.date; const r = setWeight(d, ev.target.elements.w.value);
@@ -1992,7 +1965,6 @@ document.addEventListener('input', ev=>{
   const t = ev.target;
   if(t.closest && t.closest('#foodForm')){ t.classList.remove('err'); if(t.name==='servings') t.closest('.stepper').style.borderColor=''; updatePreview(); }
   else if(t.id==='dbSearch'){ dbQueue(t.value); }
-  else if(t.id==='authCode'){ t.value = t.value.replace(/\D/g,'').slice(0,6); if(UI.sheet) UI.sheet.err = ''; if(t.value.length===6){ const f = $('#authCodeForm'); if(f) f.requestSubmit ? f.requestSubmit() : authSubmit(f); } }
   else if(t.id==='customG'){ const g = num(t.value); UI.sheet.grams = g>0 ? g : 0; syncPortionToForm(); }
   else if(t.id==='foodSearch'){ UI.sheet.q = t.value; $('#foodList').innerHTML = foodListHTML(); }
   else if(['hW','hP','hA','hG'].includes(t.id)) updateHelper();
