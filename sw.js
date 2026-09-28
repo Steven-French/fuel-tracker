@@ -5,7 +5,7 @@
    - vendor/supabase (sync library): precached like the other static files so sign-in state and sync code work offline.
    - cross-origin requests (USDA, Open Food Facts, and the Supabase auth/database API) are never intercepted or cached.
    - localStorage is never touched. VERSION is bumped automatically by deploy.sh. */
-const VERSION = '20260927-221009';
+const VERSION = '20260927-224243';
 const CACHE = 'fuel-shell-' + VERSION;
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/apple-touch-icon.png', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-512-maskable.png',
   './vendor/zxing/zxing-reader.js', './vendor/zxing/zxing_reader.wasm', // barcode decoder for browsers without BarcodeDetector (iPhone) — precached so scanning works offline
