@@ -1,11 +1,12 @@
 /* Fuel service worker: caches the app shell for offline use.
    - index.html / navigations: network-first (revalidated), so a new deploy shows up on the next open.
-   - other same-origin static files (icons, manifest): stale-while-revalidate.
+   - other same-origin static files (icons, manifest, vendor/zxing barcode decoder): precached + stale-while-revalidate.
    - cross-origin requests (USDA, Open Food Facts APIs) are never intercepted or cached.
    - localStorage is never touched. VERSION is bumped automatically by deploy.sh. */
-const VERSION = '20260927-201210';
+const VERSION = '20260927-202204';
 const CACHE = 'fuel-shell-' + VERSION;
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/apple-touch-icon.png', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-512-maskable.png'];
+const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/apple-touch-icon.png', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-512-maskable.png',
+  './vendor/zxing/zxing-reader.js', './vendor/zxing/zxing_reader.wasm']; // barcode decoder for browsers without BarcodeDetector (iPhone) — precached so scanning works offline
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL.map(u => new Request(u, {cache: 'reload'})))).then(() => self.skipWaiting()));

@@ -172,7 +172,7 @@ label.f>span{display:block;margin-bottom:5px}
 .no{color:var(--muted)}
 .big-streak{display:flex;align-items:center;gap:14px}
 .big-streak .n{font-size:44px;font-weight:850;letter-spacing:-.04em;color:var(--pro);line-height:1}
-.toast{position:fixed;left:50%;bottom:calc(var(--tabh) + env(safe-area-inset-bottom) + 76px);transform:translate(-50%,20px);opacity:0;z-index:80;
+.toast{position:fixed;left:50%;bottom:calc(var(--tabh) + env(safe-area-inset-bottom) + 76px);transform:translate(-50%,20px);opacity:0;z-index:100;
   background:#1b1e25;color:#fff;border-radius:14px;padding:11px 14px;font-size:14px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 30px rgba(0,0,0,.3);
   transition:all .25s;pointer-events:none;max-width:calc(100% - 32px);width:max-content}
 .toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
@@ -218,11 +218,24 @@ details.helper[open] summary::after{transform:rotate(90deg)}
 .nutgrid div{background:var(--card);border-radius:10px;padding:8px 4px;text-align:center}
 .nutgrid b{display:block;font-size:17px;font-weight:800;letter-spacing:-.02em}
 .nutgrid span{font-size:10.5px;color:var(--muted);font-weight:600}
-.scanner{position:fixed;inset:0;z-index:95;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.scanner video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.scanner .frame{position:relative;width:78%;max-width:340px;aspect-ratio:1.6;border:3px solid rgba(255,255,255,.9);border-radius:18px;box-shadow:0 0 0 9999px rgba(0,0,0,.45)}
-.scanner .hint{position:relative;color:#fff;margin-top:18px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.6)}
-.scanner .btn{position:absolute;bottom:calc(30px + env(safe-area-inset-bottom));background:rgba(255,255,255,.95);color:#111}
+.scanner{position:fixed;inset:0;z-index:95;background:#000;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
+.scanner video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+.scanner .scanmid{position:absolute;left:0;right:0;top:44%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center}
+.scanner .aim{position:relative;width:min(84vw,380px);aspect-ratio:1.75;border-radius:14px;box-shadow:0 0 0 200vmax rgba(0,0,0,.52);outline:1px solid rgba(255,255,255,.35)}
+.scanner .aim .c{position:absolute;width:30px;height:30px;border:4px solid #fff;border-radius:3px}
+.scanner .aim .tl{left:-3px;top:-3px;border-right:0;border-bottom:0;border-top-left-radius:14px}.scanner .aim .tr{right:-3px;top:-3px;border-left:0;border-bottom:0;border-top-right-radius:14px}
+.scanner .aim .bl{left:-3px;bottom:-3px;border-right:0;border-top:0;border-bottom-left-radius:14px}.scanner .aim .br{right:-3px;bottom:-3px;border-left:0;border-top:0;border-bottom-right-radius:14px}
+.scanner .laser{position:absolute;left:7%;right:7%;top:50%;height:2px;border-radius:2px;background:#ff453a;box-shadow:0 0 10px 1px #ff453a;animation:scanline 1.6s ease-in-out infinite alternate}
+@keyframes scanline{from{top:18%}to{top:82%}}
+@media (prefers-reduced-motion:reduce){.scanner .laser{animation:none}}
+.scanner .status{position:relative;margin-top:20px;padding:0 24px;color:#fff;font-weight:600;font-size:16px;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.7)}
+.scanner .sbar{position:absolute;top:0;left:0;right:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:calc(12px + env(safe-area-inset-top)) 14px 12px}
+.scanner .sbottom{position:absolute;left:0;right:0;z-index:2;bottom:calc(28px + env(safe-area-inset-bottom));display:flex;justify-content:center}
+.scanner .sbtn{display:inline-flex;align-items:center;gap:6px;height:44px;min-width:44px;padding:0 16px;border:0;border-radius:999px;background:rgba(28,28,30,.72);color:#fff;font:600 16px/1 inherit;font-family:inherit;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);cursor:pointer}
+.scanner .sbtn[hidden]{display:none}
+.scanner .sbtn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.scanner .sbtn.torch[aria-pressed="true"]{background:#ffd60a;color:#111}
+.notice ol.steps{margin:6px 0 8px;padding-left:20px}.notice ol.steps li{margin:3px 0}
 .small{font-size:12px}
 @media (min-width:700px){ .app{padding-top:24px} .ring .big{font-size:34px} }
 </style>
@@ -695,9 +708,10 @@ const OFF_SEARCH_HOSTS = ['https://us.openfoodfacts.org','https://us.openfoodfac
 const OFF_PRODUCT = 'https://world.openfoodfacts.org/api/v2/product/';
 const OFF_FIELDS = 'code,product_name,product_name_en,generic_name,brands,nutriments,serving_size,serving_quantity,serving_quantity_unit,product_quantity,product_quantity_unit,quantity,countries_tags';
 const USDA_GENERIC = ['Foundation','SR Legacy','Survey (FNDDS)'];
-const CAN_SCAN = 'BarcodeDetector' in window && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+const CAN_SCAN = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && (location.protocol==='https:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)); // native BarcodeDetector or bundled ZXing
 const usdaKey = () => (S.settings.usdaKey||'').trim() || 'DEMO_KEY';
 const dbCache = new Map();
+ICON.close = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 ICON.scan = '<svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg>';
 
 class HttpError extends Error { constructor(status, code){ super('HTTP '+status); this.status = status; this.code = code; } }
@@ -849,7 +863,35 @@ async function dbRun(q){
   if(!errs.usda && !errs.off) dbCache.set(ck, st.db.results);
   paintDb();
 }
-async function barcodeLookup(raw){
+// UPC-A (12) and EAN-13 (13, leading 0) are the same number; UPC-E (8) is a compressed UPC-A. Try every spelling.
+function upcCheck(d11){ let s = 0; for(let i=0;i<11;i++) s += (+d11[i]) * (i%2===0 ? 3 : 1); return String((10 - s%10) % 10); }
+function upcEtoA(e){
+  if(!/^[01]\d{7}$/.test(e)) return null;
+  const s = e[0], d = e.slice(1,7), c = e[7], l = d[5];
+  const m = l<='2' ? d[0]+d[1]+l+'0000'+d[2]+d[3]+d[4]
+    : l==='3' ? d[0]+d[1]+d[2]+'00000'+d[3]+d[4]
+    : l==='4' ? d[0]+d[1]+d[2]+d[3]+'00000'+d[4]
+    : d.slice(0,5)+'0000'+l;
+  const a11 = s+m;
+  return upcCheck(a11)===c ? a11+c : null;
+}
+function barcodeCandidates(raw, format){
+  let d = String(raw||'').replace(/\D/g,'');
+  const fmt = String(format||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const out = [], add = x => { if(x && !out.includes(x)) out.push(x); };
+  if(d.length===14 && d[0]==='0') d = d.slice(1); // GTIN-14 with a leading 0
+  if(d.length===12){ add('0'+d); add(d); }
+  else if(d.length===13){ add(d); if(d[0]==='0') add(d.slice(1)); }
+  else if(d.length===8){
+    const a = upcEtoA(d);
+    if(fmt==='UPCE' && a){ add('0'+a); add(a); add(d); }
+    else { add(d); if(a && fmt!=='EAN8'){ add('0'+a); add(a); } }
+  }
+  else add(d);
+  return out;
+}
+window.FuelBarcode = {candidates:barcodeCandidates, upcEtoA}; // read-only helpers (handy for debugging/tests)
+async function barcodeLookup(raw, format){
   const st = UI.sheet; if(!st) return;
   const code = String(raw||'').replace(/\D/g,'');
   if(!/^\d{8,14}$/.test(code)){ toast('Barcodes are 8–14 digits'); return; }
@@ -858,15 +900,21 @@ async function barcodeLookup(raw){
   if(st.tab!=='search'){ st.tab='search'; renderSheet(); }
   if(!navigator.onLine){ st.db.status='offline'; paintDb(); return; }
   st.db.status='loading'; st.db.msg=`Looking up barcode ${code}…`; st.db.errs={}; paintDb();
+  const cands = barcodeCandidates(code, format);
   let food = null, err = null, noNutrition = null;
-  try{
-    const d = await fetchJSON(`${OFF_PRODUCT}${code}?fields=${OFF_FIELDS}`, {signal:ctrl.signal});
-    if(d && d.product){ food = fromOFF(d.product); if(!food) noNutrition = d.product.product_name || code; }
-  } catch(e){ if(e.cancelled) return; if(e.status!==404) err = e; }
-  if(!food && !ctrl.signal.aborted){ // fall back to USDA Branded (matched on GTIN/UPC)
+  for(const c of cands){
     try{
-      const d = await fetchJSON(`${USDA_SEARCH}?api_key=${encodeURIComponent(usdaKey())}&query=${code}&pageSize=5&dataType=Branded`, {signal:ctrl.signal});
-      const hit = ((d && d.foods)||[]).find(f=>String(f.gtinUpc||'').replace(/^0+/,'')===code.replace(/^0+/,''));
+      const d = await fetchJSON(`${OFF_PRODUCT}${c}?fields=${OFF_FIELDS}`, {signal:ctrl.signal});
+      if(d && d.product){ food = fromOFF(d.product); if(food) break; noNutrition = noNutrition || d.product.product_name || c; }
+    } catch(e){ if(e.cancelled) return; if(e.status===404) continue; err = e; break; }
+    if(ctrl.signal.aborted) return;
+  }
+  if(!food && !ctrl.signal.aborted){ // fall back to USDA Branded (matched on GTIN/UPC)
+    const strip = x => String(x||'').replace(/^0+/,''), want = new Set(cands.map(strip));
+    const q = cands.find(c=>c.length===12) || cands[0];
+    try{
+      const d = await fetchJSON(`${USDA_SEARCH}?api_key=${encodeURIComponent(usdaKey())}&query=${q}&pageSize=5&dataType=Branded`, {signal:ctrl.signal});
+      const hit = ((d && d.foods)||[]).find(f=>want.has(strip(f.gtinUpc)));
       if(hit) food = fromUSDA(hit);
     } catch(e){ if(e.cancelled) return; }
   }
@@ -909,8 +957,9 @@ function dbListHTML(){
   const st = UI.sheet, d = st.db;
   const offline = `<div class="notice"><b>You’re offline.</b> Food search needs an internet connection. You can still log from <button class="linkbtn" data-act="stab" data-tab="recent">Recent</button>, <button class="linkbtn" data-act="stab" data-tab="mine">My foods</button>, or <button class="linkbtn" data-act="stab" data-tab="new">enter a food manually</button>.</div>`;
   if(d.status==='offline' || (!navigator.onLine && d.status!=='done')) return offline;
-  if(d.status==='idle') return `<p class="muted small" style="margin:12px 0 0">Search generic foods from <b>USDA FoodData Central</b> and packaged products from <b>Open Food Facts</b>, or enter a barcode${CAN_SCAN?' / tap the scan button':''}.</p>`;
+  if(d.status==='idle') return `<p class="muted small" style="margin:12px 0 0">Search generic foods from <b>USDA FoodData Central</b> and packaged products from <b>Open Food Facts</b>, or enter a barcode${CAN_SCAN?' — or tap the scan button to use your camera':''}.</p>`;
   if(d.status==='loading') return `<div class="row" style="margin:14px 0 4px"><div class="spinner"></div><span class="muted small">${esc(d.msg||'Searching…')}</span></div><div class="skel"></div><div class="skel"></div><div class="skel"></div>`;
+  if(d.status==='cam-error') return camErrHTML(d.camErr);
   if(d.status==='barcode-miss') return `<div class="notice">${esc(d.msg)} <button class="linkbtn" data-act="stab" data-tab="new">Enter it manually →</button></div>`;
   let h = '';
   if(d.errs.usda) h += `<div class="notice ${d.errs.usda.status===429||d.errs.usda.status===403?'':'bad'}" data-err="usda">${esc(usdaErrMsg(d.errs.usda))}${(d.errs.usda.status===429||d.errs.usda.status===403||d.errs.usda.status===401)?` <button class="linkbtn" data-act="goto-key">Open settings</button>`:''}</div>`;
@@ -983,37 +1032,169 @@ function syncPortionToForm(){ // update fields in place (keeps focus in the cust
   $('#nutGrid').innerHTML = nutGridHTML(); updatePreview();
 }
 
-/* --- camera barcode scanning (BarcodeDetector: Chrome on Android/macOS/ChromeOS; not iOS Safari) --- */
-let scanStop = null;
-async function startScan(){
-  if(!window.isSecureContext){ toast('Camera scanning needs https (or localhost). Type the barcode instead.'); return; }
-  let det;
+/* --- camera barcode scanning ---
+   Native BarcodeDetector when the browser has it (Chrome on Android/macOS); otherwise the bundled ZXing decoder
+   (vendor/zxing, WebAssembly) — that's the path iPhone Safari and the iOS Home Screen app use. The decoder is only
+   loaded the first time the scan button is tapped, and the service worker caches it for offline use. */
+const SCAN_FORMATS = ['ean_13','ean_8','upc_a','upc_e'];
+const ZX_FORMATS = ['EAN13','EAN8','UPCA','UPCE'];
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+let scanStop = null, zxingP = null;
+function loadZXing(){
+  if(zxingP) return zxingP;
+  zxingP = new Promise((res, rej)=>{
+    if(window.ZXingWASM) return res(window.ZXingWASM);
+    const s = document.createElement('script'); s.src = 'vendor/zxing/zxing-reader.js'; s.async = true; s.id = 'zxingScript';
+    s.onload = ()=> window.ZXingWASM ? res(window.ZXingWASM) : rej(new Error('scanner failed to initialise'));
+    s.onerror = ()=>{ s.remove(); rej(new Error('scanner failed to load')); };
+    document.head.appendChild(s);
+  }).then(Z => Promise.race([
+    Z.prepareZXingModule({overrides:{locateFile:(p, prefix)=> p.endsWith('.wasm') ? new URL('vendor/zxing/zxing_reader.wasm', document.baseURI).href : prefix+p}, fireImmediately:true}),
+    new Promise((_, rej)=>setTimeout(()=>rej(new Error('scanner load timed out')), 30000))
+  ]).then(()=>Z));
+  zxingP.catch(()=>{ zxingP = null; }); // allow a retry on the next tap
+  return zxingP;
+}
+async function nativeDetector(){
+  if(!('BarcodeDetector' in window)) return null;
   try{
-    const supported = await BarcodeDetector.getSupportedFormats();
-    const formats = ['ean_13','ean_8','upc_a','upc_e'].filter(x=>supported.includes(x));
-    if(!formats.length) throw new Error('none');
-    det = new BarcodeDetector({formats});
-  } catch(e){ toast('Barcode scanning isn’t supported on this device. Type the barcode instead.'); return; }
-  let stream;
-  try{ stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}, audio:false}); }
-  catch(e){ toast(e && e.name==='NotAllowedError' ? 'Camera permission was denied.' : 'Couldn’t open the camera.'); return; }
-  const ov = document.createElement('div'); ov.className='scanner'; ov.id='scanner';
-  ov.innerHTML = `<video playsinline muted autoplay></video><div class="frame"></div><div class="hint">Point the camera at a barcode</div><button class="btn" data-act="scan-cancel">Cancel</button>`;
+    const sup = await BarcodeDetector.getSupportedFormats();
+    const formats = SCAN_FORMATS.filter(x=>sup.includes(x));
+    return formats.length ? new BarcodeDetector({formats}) : null;
+  } catch(e){ return null; }
+}
+async function openCamera(){
+  const md = navigator.mediaDevices;
+  try{ return await md.getUserMedia({audio:false, video:{facingMode:{ideal:'environment'}, width:{ideal:1280}, height:{ideal:720}}}); }
+  catch(e){
+    if(e && (e.name==='OverconstrainedError' || e.name==='ConstraintNotSatisfiedError')) return md.getUserMedia({audio:false, video:{facingMode:'environment'}});
+    throw e;
+  }
+}
+// Copy the part of the video under the aiming box (with some margin) to a canvas; every few frames use the whole frame.
+function grabFrame(video, aim, canvas, ctx, full){
+  const vw = video.videoWidth, vh = video.videoHeight;
+  let sx = 0, sy = 0, sw = vw, sh = vh;
+  if(!full && aim){
+    const vr = video.getBoundingClientRect(), ar = aim.getBoundingClientRect();
+    const scale = Math.max(vr.width/vw, vr.height/vh); // object-fit: cover
+    const ox = (vr.width - vw*scale)/2, oy = (vr.height - vh*scale)/2;
+    const mx = ar.width*0.15, my = ar.height*0.4;
+    sx = Math.max(0, (ar.left - mx - vr.left - ox)/scale); sy = Math.max(0, (ar.top - my - vr.top - oy)/scale);
+    sw = Math.min(vw - sx, (ar.width + 2*mx)/scale); sh = Math.min(vh - sy, (ar.height + 2*my)/scale);
+    if(!(sw>40 && sh>40)){ sx = 0; sy = 0; sw = vw; sh = vh; }
+  }
+  const k = Math.min(1, 1280/sw), cw = Math.max(1, Math.round(sw*k)), ch = Math.max(1, Math.round(sh*k));
+  if(canvas.width!==cw) canvas.width = cw;
+  if(canvas.height!==ch) canvas.height = ch;
+  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, cw, ch);
+  return ctx.getImageData(0, 0, cw, ch);
+}
+function setupTorch(track, btn){
+  let caps = {};
+  try{ caps = track.getCapabilities ? track.getCapabilities() : {}; } catch(e){}
+  if(!caps || !caps.torch) return false;
+  let on = false; btn.hidden = false;
+  btn.onclick = async ()=>{
+    try{ await track.applyConstraints({advanced:[{torch:!on}]}); on = !on; btn.setAttribute('aria-pressed', String(on)); btn.querySelector('span').textContent = on ? 'Light on' : 'Light'; }
+    catch(e){ toast('Couldn’t switch the flashlight on'); }
+  };
+  return true;
+}
+function cameraError(e){
+  const n = e && e.name;
+  const kind = (n==='NotAllowedError' || n==='SecurityError' || n==='PermissionDeniedError') ? 'denied'
+    : (n==='NotFoundError' || n==='DevicesNotFoundError' || n==='OverconstrainedError') ? 'nocam'
+    : (n==='NotReadableError' || n==='TrackStartError' || n==='AbortError') ? 'busy' : 'other';
+  const st = UI.sheet;
+  if(!st){ toast('Couldn’t open the camera'); return; }
+  if(dbCtrl) dbCtrl.abort();
+  if(st.tab!=='search'){ st.tab = 'search'; renderSheet(); }
+  st.db.status = 'cam-error'; st.db.camErr = kind; paintDb();
+}
+function camErrHTML(kind){
+  const manual = `You can still type the barcode number in the field above and tap <b>Look up</b>, or <button class="linkbtn" data-act="stab" data-tab="new">enter the food manually</button>.`;
+  if(kind==='denied') return `<div class="notice" data-err="camera"><b>Fuel isn’t allowed to use the camera.</b> To scan barcodes on iPhone:
+    <ol class="steps"><li>Open the <b>Settings</b> app → <b>Safari</b> → <b>Camera</b>, and choose <b>Ask</b> or <b>Allow</b>.</li>
+    <li>Or in Safari, tap <b>aA</b> in the address bar → <b>Website Settings</b> → <b>Camera</b> → <b>Allow</b>.</li>
+    <li>Come back and tap the scan button again. (Using Fuel from your Home Screen? The same Safari camera setting applies — close and reopen Fuel after changing it.)</li></ol>
+    ${IS_IOS?'':'On other devices, allow the camera for this site in your browser’s site settings. '}${manual}</div>`;
+  if(kind==='nocam') return `<div class="notice" data-err="camera"><b>No camera was found</b> on this device. ${manual}</div>`;
+  if(kind==='busy') return `<div class="notice" data-err="camera"><b>The camera is busy</b> — another app or tab may be using it. Close it and try again. ${manual}</div>`;
+  return `<div class="notice" data-err="camera"><b>Couldn’t start the camera.</b> ${manual}</div>`;
+}
+async function startScan(){
+  if(scanStop) return;
+  if(!CAN_SCAN){ toast('Camera scanning needs https. Type the barcode instead.'); return; }
+  const ov = document.createElement('div'); ov.className = 'scanner'; ov.id = 'scanner';
+  ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label','Scan a barcode');
+  ov.innerHTML = `<video playsinline webkit-playsinline muted autoplay disablepictureinpicture></video>
+    <div class="scanmid"><div class="aim"><i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i><span class="laser"></span></div>
+      <div class="status" aria-live="polite">Starting camera…</div></div>
+    <div class="sbar"><button class="sbtn" data-act="scan-cancel" aria-label="Cancel scanning">${ICON.close}<span>Cancel</span></button>
+      <button class="sbtn torch" hidden aria-pressed="false" aria-label="Flashlight"><svg viewBox="0 0 24 24"><path d="M8 2h8l-1 6H9zM9 8h6v3l-1.5 2V22h-3v-9L9 11z"/></svg><span>Light</span></button></div>
+    <div class="sbottom"><button class="sbtn" data-scan="type">Type barcode instead</button></div>`;
   document.body.appendChild(ov);
-  const video = ov.querySelector('video'); video.srcObject = stream;
-  try{ await video.play(); }catch(e){}
-  let active = true;
-  scanStop = ()=>{ active=false; stream.getTracks().forEach(t=>t.stop()); ov.remove(); scanStop=null; };
+  const video = ov.querySelector('video'), aim = ov.querySelector('.aim'), status = ov.querySelector('.status');
+  video.muted = true; video.playsInline = true; video.autoplay = true;
+  let stopped = false, stream = null, timer = 0;
+  const onVis = ()=>{ if(document.hidden) stop(); };
+  const stop = ()=>{
+    if(stopped) return; stopped = true; clearTimeout(timer);
+    if(stream) stream.getTracks().forEach(t=>t.stop());
+    try{ video.pause(); video.srcObject = null; } catch(e){}
+    ov.remove(); document.removeEventListener('visibilitychange', onVis);
+    if(scanStop===stop) scanStop = null;
+  };
+  scanStop = stop; document.addEventListener('visibilitychange', onVis);
+  ov.querySelector('[data-scan=type]').onclick = ()=>{ stop(); const bi = $('#barcodeInp'); if(bi){ bi.focus(); bi.scrollIntoView({block:'center'}); } };
+  // Start the camera right away (inside the tap), and load the decoder in parallel.
+  const camP = openCamera();
+  const engP = nativeDetector().then(d => d ? {engine:'native', det:d} : loadZXing().then(Z=>({engine:'zxing', Z})));
+  engP.catch(()=>{});
+  try{ stream = await camP; }
+  catch(e){ stop(); cameraError(e); return; }
+  if(stopped){ stream.getTracks().forEach(t=>t.stop()); return; }
+  video.srcObject = stream;
+  try{ await video.play(); } catch(e){}
+  const track = stream.getVideoTracks()[0], torchBtn = ov.querySelector('.torch');
+  if(track && !setupTorch(track, torchBtn)) setTimeout(()=>{ if(!stopped) setupTorch(track, torchBtn); }, 700); // some devices report torch only once frames flow
+  status.textContent = 'Loading scanner…';
+  let eng;
+  try{ eng = await engP; }
+  catch(e){ if(stopped) return; stop(); toast('Couldn’t load the barcode scanner. Type the barcode instead.'); const bi = $('#barcodeInp'); if(bi) bi.focus(); return; }
+  if(stopped) return;
+  ov.dataset.engine = eng.engine;
+  status.textContent = 'Line up the barcode inside the box';
+  const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d', {willReadFrequently:true});
+  let n = 0;
   const tick = async ()=>{
-    if(!active) return;
+    if(stopped) return;
+    let hit = null;
     try{
-      if(video.readyState>=2){
-        const codes = await det.detect(video);
-        const c = codes.map(x=>String(x.rawValue||'')).find(x=>/^\d{8,14}$/.test(x));
-        if(c){ scanStop(); if(navigator.vibrate) navigator.vibrate(60); const bi = $('#barcodeInp'); if(bi) bi.value = c; barcodeLookup(c); return; }
+      if(video.readyState>=2 && video.videoWidth){
+        if(eng.engine==='native'){
+          const r = await eng.det.detect(video);
+          const b = r.find(x=>/^\d{6,14}$/.test(String(x.rawValue||'')));
+          if(b) hit = {text:String(b.rawValue), format:b.format};
+        } else {
+          const img = grabFrame(video, aim, canvas, ctx, (n++ % 3)===2);
+          const r = await eng.Z.readBarcodes(img, {formats:ZX_FORMATS, tryHarder:true, maxNumberOfSymbols:1});
+          const b = r.find(x=>x.isValid && /^\d{6,14}$/.test(x.text));
+          if(b) hit = {text:b.text, format:b.format};
+        }
       }
-    }catch(e){}
-    setTimeout(tick, 180);
+    } catch(e){}
+    if(stopped) return;
+    if(hit){
+      stop();
+      window.dispatchEvent(new CustomEvent('fuel:scan', {detail:{text:hit.text, format:hit.format, engine:eng.engine}}));
+      if(navigator.vibrate) navigator.vibrate(60);
+      const bi = $('#barcodeInp'); if(bi) bi.value = hit.text;
+      barcodeLookup(hit.text, hit.format);
+      return;
+    }
+    timer = setTimeout(tick, eng.engine==='native' ? 150 : 80);
   };
   tick();
 }
@@ -1143,7 +1324,7 @@ function renderSettings(){
     <form id="keyForm" novalidate><label class="f" style="margin-bottom:8px"><span>USDA API key</span>
       <div class="row" style="gap:8px"><input class="inp" name="key" id="usdaKeyInp" value="${esc(usdaKey())}" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" style="flex:1;font-family:ui-monospace,Menlo,monospace;font-size:15px"><button class="btn primary" type="submit">Save</button></div></label></form>
     <p class="muted small" style="margin:0">${usdaKey()==='DEMO_KEY'?'<b>You’re using DEMO_KEY</b>, a shared key that is heavily rate-limited (only a handful of searches per hour), so only USDA generic foods are searched with it. ':''}<a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener" style="color:var(--pro);font-weight:600">Get a free personal key</a> (instant, by email) for much higher limits (about 1,000 requests/hour); it also adds USDA branded foods to search.</p>
-    <p class="muted small" style="margin:8px 0 0">Barcode camera scanning works in Chrome on Android over https. On iPhone, type the barcode number instead.</p>
+    <p class="muted small" style="margin:8px 0 0">Barcode camera scanning works in Safari on iPhone (including the Home Screen app) and Chrome on Android. It needs the https site, and the scanner works offline once it has loaded. You can always type the barcode number instead.</p>
   </section>
   <section class="card"><h2>Weight units</h2>
     <div class="seg"><button class="${u==='lb'?'on':''}" data-act="unit" data-u="lb">Pounds (lb)</button><button class="${u==='kg'?'on':''}" data-act="unit" data-u="kg">Kilograms (kg)</button></div>
