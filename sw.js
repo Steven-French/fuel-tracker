@@ -3,7 +3,7 @@
    - other same-origin static files (icons, manifest): stale-while-revalidate.
    - cross-origin requests (USDA, Open Food Facts APIs) are never intercepted or cached.
    - localStorage is never touched. VERSION is bumped automatically by deploy.sh. */
-const VERSION = '20260927-201052';
+const VERSION = '20260927-201210';
 const CACHE = 'fuel-shell-' + VERSION;
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/apple-touch-icon.png', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-512-maskable.png'];
 
