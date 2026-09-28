@@ -1322,6 +1322,8 @@ function paintRangeCards(){ const el = $('#rangeCards'); if(el) el.innerHTML = r
 
 /* ---------- Food database: USDA FoodData Central + Open Food Facts ---------- */
 const USDA_SEARCH = 'https://api.nal.usda.gov/fdc/v1/foods/search';
+// encodeURIComponent leaves ( ) ! ' * as-is; USDA's server rejects a raw "(" (e.g. "Survey (FNDDS)") with HTTP 400
+const uenc = s => encodeURIComponent(s).replace(/[()!'*]/g, c=>'%'+c.charCodeAt(0).toString(16).toUpperCase());
 const OFF_SEARCH_HOSTS = ['https://us.openfoodfacts.org','https://us.openfoodfacts.org','https://world.openfoodfacts.org']; // retry US once, then world
 const OFF_PRODUCT = 'https://world.openfoodfacts.org/api/v2/product/';
 const OFF_FIELDS = 'code,product_name,product_name_en,generic_name,brands,nutriments,serving_size,serving_quantity,serving_quantity_unit,product_quantity,product_quantity_unit,quantity,countries_tags';
@@ -1421,7 +1423,7 @@ async function searchUSDA(q, signal){
   // DEMO_KEY is heavily rate-limited, so only generic foods are queried with it (Open Food Facts covers brands).
   const reqs = [{types:USDA_GENERIC, size:20}];
   if(key!=='DEMO_KEY') reqs.push({types:['Branded'], size:15});
-  const settled = await Promise.allSettled(reqs.map(r=>fetchJSON(`${USDA_SEARCH}?api_key=${encodeURIComponent(key)}&query=${encodeURIComponent(q)}&pageSize=${r.size}&dataType=${encodeURIComponent(r.types.join(','))}`, {signal})));
+  const settled = await Promise.allSettled(reqs.map(r=>fetchJSON(`${USDA_SEARCH}?api_key=${uenc(key)}&query=${uenc(q)}&pageSize=${r.size}&dataType=${uenc(r.types.join(','))}`, {signal})));
   const ok = settled.filter(s=>s.status==='fulfilled');
   if(!ok.length) throw settled[0].reason;
   return ok.flatMap(s=>(s.value && s.value.foods)||[]).map(fromUSDA).filter(Boolean);
@@ -1534,7 +1536,7 @@ async function barcodeLookup(raw, format){
     const strip = x => String(x||'').replace(/^0+/,''), want = new Set(cands.map(strip));
     const q = cands.find(c=>c.length===12) || cands[0];
     try{
-      const d = await fetchJSON(`${USDA_SEARCH}?api_key=${encodeURIComponent(usdaKey())}&query=${q}&pageSize=5&dataType=Branded`, {signal:ctrl.signal});
+      const d = await fetchJSON(`${USDA_SEARCH}?api_key=${uenc(usdaKey())}&query=${q}&pageSize=5&dataType=Branded`, {signal:ctrl.signal});
       const hit = ((d && d.foods)||[]).find(f=>want.has(strip(f.gtinUpc)));
       if(hit) food = fromUSDA(hit);
     } catch(e){ if(e.cancelled) return; }
