@@ -62,19 +62,27 @@ input,select{font-size:16px}
 .datelabel span{font-size:12px;color:var(--muted)}
 .datelabel input{position:absolute;inset:0;opacity:0;width:100%;height:100%;pointer-events:none}
 .pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--pro-soft);color:var(--pro);white-space:nowrap}
-.hero{padding:18px 14px 14px}
-.rings{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.ringbox{text-align:center}
-.ringbox .lbl{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-.ring{position:relative;width:100%;max-width:168px;margin:0 auto;aspect-ratio:1}
+.hero{padding:16px 10px 14px}
+.rings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.ringbox{text-align:center;min-width:0;display:block;width:100%;color:inherit;border-radius:14px}
+button.ringbox{padding:0}
+button.ringbox:active{background:var(--card2)}
+.ringbox .lbl{font-size:11.5px;font-weight:750;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;white-space:nowrap}
+.ring{position:relative;width:100%;max-width:150px;margin:0 auto;aspect-ratio:1}
+.ring svg.spark{position:absolute;inset:0;transform:none}
+.ring svg.spark circle{fill:var(--muted);fill-opacity:.45;stroke:none}
 .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
 .ring circle{fill:none;stroke-width:12}
 .ring .track{stroke:var(--card2)}
 .ring .prog{stroke-linecap:round;transition:stroke-dashoffset .6s cubic-bezier(.2,.8,.2,1),stroke .3s}
 .ring .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.ring .big{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1}
-.ring .of{font-size:12px;color:var(--muted);margin-top:4px}
-.remain{margin-top:8px;font-size:14px;font-weight:650}
+.ring .big{font-size:clamp(17px,5.4vw,26px);font-weight:800;letter-spacing:-.03em;line-height:1;white-space:nowrap}
+.ring .big .u{font-size:.6em;font-weight:700;letter-spacing:0}
+.ring .of{font-size:clamp(10px,2.9vw,11.5px);color:var(--muted);margin-top:3px;white-space:nowrap}
+.ring .center.top{justify-content:flex-start;padding-top:27%}
+.remain{margin-top:6px;font-size:12.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.remain.sub{margin-top:1px;font-size:11px;font-weight:500;color:var(--muted)}
+.remain .down{color:var(--good)}.remain .up{color:var(--bad)}
 .remain.over{color:var(--bad)}
 .remain.hit{color:var(--good)}
 .secondary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
@@ -237,7 +245,19 @@ details.helper[open] summary::after{transform:rotate(90deg)}
 .scanner .sbtn.torch[aria-pressed="true"]{background:#ffd60a;color:#111}
 .notice ol.steps{margin:6px 0 8px;padding-left:20px}.notice ol.steps li{margin:3px 0}
 .small{font-size:12px}
-@media (min-width:700px){ .app{padding-top:24px} .ring .big{font-size:34px} }
+@media (min-width:700px){ .app{padding-top:24px} .ring .big{font-size:30px} }
+.acct{display:flex;align-items:center;gap:12px}
+.avatar{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;font-size:18px;color:#fff;background:linear-gradient(135deg,var(--cal),var(--pro))}
+.acct-email{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px;background:var(--muted)}
+.dot.good{background:var(--good)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
+details.pwset{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+details.pwset summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--pro)}
+.inp.code{font:700 30px/1 ui-monospace,Menlo,monospace;letter-spacing:.35em;text-align:center;padding:12px 0 12px .35em}
+.btn:disabled,.linkbtn:disabled{opacity:.5}
+.banner.syncprompt{padding:8px 8px 8px 14px}
+.banner.syncprompt .grow{flex:1;text-align:left;padding:4px 0}
+.banner .x2{width:32px;height:32px;border-radius:50%;flex:none;color:var(--muted);display:grid;place-items:center}
 </style>
 </head>
 <body>
@@ -257,6 +277,7 @@ details.helper[open] summary::after{transform:rotate(90deg)}
 <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastUndo" class="hidden">Undo</button></div>
 <div id="dialogRoot"></div>
 <input type="file" id="importFile" accept="application/json,.json" class="hidden">
+<script src="config.js"></script>
 <script>
 (function(){
 'use strict';
@@ -273,7 +294,28 @@ const MEAL_LABEL = Object.fromEntries(MEALS.map(m=>[m.id,m.label]));
 const $ = (s,r=document)=>r.querySelector(s);
 const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const uid = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+/* Record ids are UUIDs so they can sync. Older ids (and weigh-in dates) map to a deterministic UUID, so the same
+   record gets the same id on every device and in every re-imported backup. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+function cyrb128(str){ let h1=1779033703,h2=3144134277,h3=1013904242,h4=2773480762;
+  for(let i=0,k;i<str.length;i++){ k=str.charCodeAt(i); h1=h2^Math.imul(h1^k,597399067); h2=h3^Math.imul(h2^k,2869860233); h3=h4^Math.imul(h3^k,951274213); h4=h1^Math.imul(h4^k,2716044179); }
+  h1=Math.imul(h3^(h1>>>18),597399067); h2=Math.imul(h4^(h2>>>22),2869860233); h3=Math.imul(h1^(h3>>>17),951274213); h4=Math.imul(h2^(h4>>>19),2716044179);
+  h1^=(h2^h3^h4); h2^=h1; h3^=h1; h4^=h1; return [h1>>>0,h2>>>0,h3>>>0,h4>>>0]; }
+const hex32 = a => a.map(x=>x.toString(16).padStart(8,'0')).join('');
+const fmtUUID = h => `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20,32)}`;
+function uid(){
+  try { if(crypto.randomUUID) return crypto.randomUUID(); } catch(e){}
+  const b = crypto.getRandomValues(new Uint8Array(16)); b[6] = b[6]&15|64; b[8] = b[8]&63|128;
+  return fmtUUID(Array.from(b, x=>x.toString(16).padStart(2,'0')).join(''));
+}
+const stableUUID = s => { const h = hex32(cyrb128('fuel:'+s)); return fmtUUID(h.slice(0,12)+'8'+h.slice(13,16)+(8|parseInt(h[16],16)&3).toString(16)+h.slice(17,32)); };
+function normId(v, seen, salt){
+  let s = String(v==null?'':v).trim(); const l = s.toLowerCase();
+  let id = UUID_RE.test(l) ? l : (s ? stableUUID(s) : uid());
+  if(seen){ if(seen.has(id)) id = stableUUID(id+'|'+salt); seen.add(id); }
+  return id;
+}
+const weightId = date => stableUUID('weight:'+date);
 const num = v => { if(v==null) return NaN; return parseFloat(String(v).replace(',','.')); };
 const nz = v => { const n = num(v); return isFinite(n) && n>0 ? n : 0; };
 const r0 = n => Math.round(n);
@@ -294,7 +336,7 @@ const ICON = {
 
 /* ---------- state ---------- */
 function defaults(){
-  return {version:1, settings:{unit:'lb', goals:{calories:2000, protein:150, carbs:null, fat:null, fiber:null}, goalsSet:false, usdaKey:''}, entries:{}, foods:[], weights:[]};
+  return {version:1, settings:{unit:'lb', goals:{calories:2000, protein:150, carbs:null, fat:null, fiber:null}, goalsSet:false, usdaKey:'', goalWeight:null, goalWeightStart:null}, entries:{}, foods:[], weights:[]};
 }
 function normalize(d){
   const s = defaults();
@@ -307,19 +349,23 @@ function normalize(d){
     s.settings.goals.calories = nz(g.calories) || s.settings.goals.calories;
     s.settings.goals.protein = nz(g.protein) || s.settings.goals.protein;
     ['carbs','fat','fiber'].forEach(k=>{ s.settings.goals[k] = nz(g[k]) || null; });
+    const kgOk = v => { v = nz(v); return v>0 && v<1000 ? v : null; };
+    s.settings.goalWeight = kgOk(d.settings.goalWeight); s.settings.goalWeightStart = s.settings.goalWeight ? kgOk(d.settings.goalWeightStart) : null;
   }
+  const seen = new Set();
   if(d.entries && typeof d.entries==='object'){
     for(const k of Object.keys(d.entries)){
       if(!/^\d{4}-\d{2}-\d{2}$/.test(k) || !Array.isArray(d.entries[k])) continue;
-      const list = d.entries[k].filter(e=>e && typeof e==='object').map(e=>({
-        id: String(e.id||uid()), name: String(e.name||'Food').slice(0,120), meal: MEAL_LABEL[e.meal]? e.meal : 'snack',
+      const list = d.entries[k].filter(e=>e && typeof e==='object').map((e,i)=>({
+        id: normId(e.id, seen, k+'|'+i), name: String(e.name||'Food').slice(0,120), meal: MEAL_LABEL[e.meal]? e.meal : 'snack',
         servings: nz(e.servings)||1, cal:nz(e.cal), p:nz(e.p), c:nz(e.c), f:nz(e.f), fib:nz(e.fib), ts: +e.ts||Date.now(), ...servOf(e)
       }));
       if(list.length) s.entries[k] = list;
     }
   }
-  if(Array.isArray(d.foods)) s.foods = d.foods.filter(f=>f&&f.name).map(f=>({id:String(f.id||uid()), name:String(f.name).slice(0,120), cal:nz(f.cal), p:nz(f.p), c:nz(f.c), f:nz(f.f), fib:nz(f.fib), servings:nz(f.servings)||1, ...servOf(f)}));
-  if(Array.isArray(d.weights)) s.weights = d.weights.filter(w=>w && /^\d{4}-\d{2}-\d{2}$/.test(w.date) && nz(w.kg)).map(w=>({date:w.date, kg:nz(w.kg)})).sort((a,b)=>a.date<b.date?-1:1);
+  if(Array.isArray(d.foods)) s.foods = d.foods.filter(f=>f&&f.name).map((f,i)=>({id:normId(f.id, seen, 'food|'+i), name:String(f.name).slice(0,120), cal:nz(f.cal), p:nz(f.p), c:nz(f.c), f:nz(f.f), fib:nz(f.fib), servings:nz(f.servings)||1, ...servOf(f)}));
+  if(Array.isArray(d.weights)){ const byDate = new Map(); d.weights.filter(w=>w && /^\d{4}-\d{2}-\d{2}$/.test(w.date) && nz(w.kg)).forEach(w=>byDate.set(w.date, {date:w.date, kg:nz(w.kg)}));
+    s.weights = Array.from(byDate.values()).sort((a,b)=>a.date<b.date?-1:1); }
   return s;
 }
 function servOf(o){ return o && o.serv ? {serv:String(o.serv).slice(0,80)} : {}; }
@@ -327,7 +373,8 @@ function load(){ try { return normalize(JSON.parse(localStorage.getItem(KEY))); 
 let S = load();
 function save(){
   try { localStorage.setItem(KEY, JSON.stringify(S)); }
-  catch(e){ toast('Could not save — storage unavailable or full'); }
+  catch(e){ toast('Could not save — storage unavailable or full'); return; }
+  if(typeof trackChanges==='function') trackChanges();   // cloud sync change tracker (no-op when sync isn't configured)
 }
 const UI = { view:'today', date: todayKey(), wRange:'3m', sheet:null };
 const G = () => S.settings.goals;
@@ -402,11 +449,11 @@ function toast(msg, undo){
   toastTimer = setTimeout(()=>$('#toast').classList.remove('show'), undo?5000:2400);
 }
 $('#toastUndo').addEventListener('click',()=>{ if(toastUndoFn){ toastUndoFn(); toastUndoFn=null; } $('#toast').classList.remove('show'); });
-function confirmDialog({title, text, ok='Confirm', danger=false}){
+function confirmDialog({title, text, ok='Confirm', cancel='Cancel', danger=false}){
   return new Promise(res=>{
     const root = $('#dialogRoot');
     root.innerHTML = `<div class="dialog" role="alertdialog"><div class="box"><h3>${esc(title)}</h3><p>${esc(text)}</p>
-      <div class="acts"><button class="btn" data-r="0">Cancel</button><button class="btn ${danger?'danger':'primary'}" data-r="1">${esc(ok)}</button></div></div></div>`;
+      <div class="acts"><button class="btn" data-r="0">${esc(cancel)}</button><button class="btn ${danger?'danger':'primary'}" data-r="1">${esc(ok)}</button></div></div></div>`;
     root.querySelectorAll('[data-r]').forEach(b=>b.addEventListener('click',ev=>{ ev.stopPropagation(); root.innerHTML=''; res(b.dataset.r==='1'); }));
   });
 }
@@ -429,15 +476,61 @@ function ringHTML({kind, label, value, goal, color}){
     if(over){ strokeColor='var(--bad)'; remain = `<div class="remain over">${fmtN(value-goal)} over</div>`; }
     else remain = `<div class="remain">${fmtN(goal-value)} left</div>`;
   } else {
-    if(value >= goal-0.5 && value>0) remain = `<div class="remain hit">✓ Goal hit${over?` · +${fmtG(value-goal)}g`:''}</div>`;
+    if(value >= goal-0.5 && value>0) remain = `<div class="remain hit">✓ Hit${over?` · +${fmtG(value-goal)}g`:''}</div>`;
     else remain = `<div class="remain">${fmtG(goal-value)}g to go</div>`;
   }
   return `<div class="ringbox" data-ring="${kind}">
     <div class="lbl" style="color:${color}">${label}</div>
     <div class="ring"><svg viewBox="0 0 124 124"><circle class="track" cx="62" cy="62" r="${R}"/>
       <circle class="prog" cx="62" cy="62" r="${R}" stroke="${strokeColor}" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}"/></svg>
-      <div class="center"><div class="big" data-val>${kind==='cal'?fmtN(value):fmtG(value)+'<span style="font-size:18px">g</span>'}</div><div class="of">of ${kind==='cal'?fmtN(goal)+' kcal':fmtG(goal)+' g'}</div></div>
+      <div class="center"><div class="big" data-val>${kind==='cal'?fmtN(value):fmtG(value)+'<span class="u">g</span>'}</div><div class="of">of ${kind==='cal'?fmtN(goal):fmtG(goal)+' g'}</div></div>
     </div>${remain}</div>`;
+}
+/* Weight tile: latest weigh-in on or before the viewed day, 7-day change, and either progress toward the
+   optional goal weight or a 30-day sparkline (weigh-ins + 7-day average). Tapping it opens quick weight logging. */
+function weightAt(k){ let w = null; for(const x of S.weights){ if(x.date<=k) w = x; else break; } return w; }
+function weightChangeAt(k, days){
+  const cur = weightAt(k); if(!cur) return null;
+  const target = addDays(cur.date, -days); let ref = null;
+  for(const x of S.weights){ if(x.date<=target) ref = x; else break; }
+  return ref ? {delta:cur.kg-ref.kg, from:ref.date} : null;
+}
+function goalProgress(cur){
+  const g = S.settings.goalWeight; if(!g || !cur) return null;
+  const start = S.settings.goalWeightStart || (S.weights[0]||cur).kg;
+  if(Math.abs(start-g) < 0.05) return Math.abs(cur.kg-g) < 0.25 ? 1 : 0;
+  return Math.max(0, Math.min(1, (start-cur.kg)/(start-g)));
+}
+function sparkSVG(k){
+  const from = addDays(k,-29), pts = withMA(S.weights).filter(p=>p.date>=from && p.date<=k);
+  if(!pts.length) return '';
+  const x0=30, x1=94, y0=70, y1=92, vals = pts.flatMap(p=>[p.kg,p.ma]);
+  let lo = Math.min(...vals), hi = Math.max(...vals); const pad = Math.max(0.3,(hi-lo)*0.12); lo-=pad; hi+=pad;
+  const X = d => pts.length===1 ? (x0+x1)/2 : x0 + (x1-x0)*(29-diffDays(d,k))/29, Y = v => y1 - (y1-y0)*(v-lo)/(hi-lo);
+  const dots = pts.map(p=>`<circle cx="${X(p.date).toFixed(1)}" cy="${Y(p.kg).toFixed(1)}" r="1.6"/>`).join('');
+  const line = pts.length>1 ? `<polyline points="${pts.map(p=>X(p.date).toFixed(1)+','+Y(p.ma).toFixed(1)).join(' ')}" fill="none" stroke="var(--fib)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>` : '';
+  return `<svg class="spark" viewBox="0 0 124 124" aria-hidden="true">${dots}${line}</svg>`;
+}
+function weightTileHTML(k){
+  const cur = weightAt(k), u = unit(), gw = S.settings.goalWeight, R = 52, C = 2*Math.PI*R, color = 'var(--fib)';
+  const label = `<div class="lbl" style="color:${color}">Weight</div>`;
+  if(!cur) return `<button class="ringbox" data-ring="wt" data-act="log-weight" aria-label="Log weight">${label}
+    <div class="ring"><svg viewBox="0 0 124 124"><circle class="track" cx="62" cy="62" r="${R}"/></svg>
+      <div class="center"><div class="big" data-val style="color:var(--muted)">—</div><div class="of">${u}</div></div></div>
+    <div class="remain" style="color:var(--pro)">+ Log weight</div></button>`;
+  const ch = weightChangeAt(k, 7), pr = goalProgress(cur);
+  const gaining = gw && gw > cur.kg;
+  let chTxt = '<span class="muted" style="font-weight:500">no 7-day change yet</span>';
+  if(ch){ const v = r1(toDisp(ch.delta)); const good = gaining ? v>0 : v<0; chTxt = `<span class="${v===0?'':good?'down':'up'}">${v>0?'+':v<0?'−':'±'}${Math.abs(v).toFixed(1)} ${u}</span> <span class="muted" style="font-weight:500">7d</span>`; }
+  const ring = pr==null
+    ? `<svg viewBox="0 0 124 124"><circle class="track" cx="62" cy="62" r="${R}"/></svg>${sparkSVG(k)}`
+    : `<svg viewBox="0 0 124 124"><circle class="track" cx="62" cy="62" r="${R}"/><circle class="prog" cx="62" cy="62" r="${R}" stroke="${color}" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${(C*(1-pr)).toFixed(2)}"/></svg>`;
+  const sub = pr==null ? u : `goal ${fmtW(gw)}`;
+  const when = cur.date===k ? '' : `<div class="remain sub">${esc(cur.date===addDays(k,-1)?'from yesterday':'from '+fmtDate(cur.date,{month:'short',day:'numeric'}))}</div>`;
+  return `<button class="ringbox" data-ring="wt" data-act="log-weight" aria-label="Weight ${fmtW(cur.kg)} ${u}. Tap to log weight">${label}
+    <div class="ring" data-mode="${pr==null?'spark':'goal'}">${ring}
+      <div class="center${pr==null?' top':''}"><div class="big" data-val>${fmtW(cur.kg)}</div><div class="of">${esc(sub)}</div></div></div>
+    <div class="remain" data-change>${chTxt}</div>${when}</button>`;
 }
 function macroHTML(label, val, goal, color){
   const w = goal ? Math.min(100, val/goal*100) : (val>0?100:0);
@@ -461,11 +554,12 @@ function renderToday(){
     <button class="arrow" data-act="day" data-d="1" aria-label="Next day" ${isToday?'disabled':''}>›</button>
   </div>
   ${!isToday?`<div style="text-align:center;margin:-6px 0 12px"><button class="linkbtn" data-act="goto-today">Jump to today →</button></div>`:''}
-  ${!S.settings.goalsSet?`<button class="banner" data-act="tab" data-tab="settings"><span style="font-size:20px">🎯</span><span>Using default goals (2,000 kcal · 150 g protein). <b>Set your goals →</b></span></button>`:''}
+  ${!S.settings.goalsSet?`<button class="banner" data-act="tab" data-tab="settings"><span style="font-size:20px">🎯</span><span>Using default goals (2,000 kcal · 150 g protein). <b>Set your goals →</b></span></button>`:syncPromptHTML()}
   <section class="card hero" id="hero">
     <div class="rings">
       ${ringHTML({kind:'cal',label:'Calories',value:t.cal,goal:g.calories,color:'var(--cal)'})}
       ${ringHTML({kind:'pro',label:'Protein',value:t.p,goal:g.protein,color:'var(--pro)'})}
+      ${weightTileHTML(k)}
     </div>
     <div class="secondary">
       ${macroHTML('Carbs',t.c,g.carbs,'var(--carb)')}
@@ -515,6 +609,30 @@ function closeSheet(){
   UI.sheet=null; $('#scrim').classList.remove('show'); $('#sheet').classList.remove('show'); document.body.style.overflow='';
   if(document.activeElement) document.activeElement.blur();
 }
+function openWeight(k){
+  openSheet({mode:'weight', date:k});
+  setTimeout(()=>{ const i = $('#qWeight'); if(i){ i.focus(); i.select(); } }, 80);
+}
+function quickWeightHTML(st){
+  const u = unit(), ex = S.weights.find(w=>w.date===st.date), prev = weightAt(addDays(st.date,-1));
+  return `<form id="qWeightForm" novalidate>
+    <label class="f"><span>Weight (${u}) on ${esc(fmtDate(st.date,{weekday:'long',month:'short',day:'numeric'}))}</span>
+      <input class="inp" id="qWeight" name="w" inputmode="decimal" value="${ex?fmtW(ex.kg):''}" placeholder="${prev?fmtW(prev.kg):(u==='lb'?'180.0':'80.0')}" style="font-size:26px;font-weight:750;text-align:center" enterkeyhint="done"></label>
+    <p class="muted small" style="margin:-2px 0 12px;text-align:center">${prev?`Previous: ${fmtW(prev.kg)} ${u} on ${esc(fmtDate(prev.date,{month:'short',day:'numeric'}))}`:'Your first weigh-in — morning, before breakfast, is most consistent.'}${S.settings.goalWeight?` · Goal ${fmtW(S.settings.goalWeight)} ${u}`:''}</p>
+    <button class="btn primary block" type="submit">${ex?'Update weigh-in':'Save weigh-in'}</button>
+    ${ex?`<button class="btn danger block" type="button" data-act="q-del-weight" style="margin-top:10px">Delete this weigh-in</button>`:''}
+    <p style="text-align:center;margin:10px 0 0"><button type="button" class="linkbtn" data-act="tab" data-tab="weight">See weight trend →</button></p></form>`;
+}
+/* one place that validates + stores a weigh-in (Weight tab form and the Today tile's quick sheet) */
+function setWeight(d, raw){
+  const w = num(raw), lim = unit()==='lb' ? [50,800] : [20,360];
+  if(!(w>=lim[0] && w<=lim[1])) return {err:`Enter a weight between ${lim[0]} and ${lim[1]} ${unit()}`};
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(d) || d>todayKey()) return {err:'Pick a valid date'};
+  const kg = toKg(w), ex = S.weights.find(x=>x.date===d);
+  if(ex) ex.kg = kg; else { S.weights.push({date:d, kg}); S.weights.sort((a,b)=>a.date<b.date?-1:1); }
+  if(S.settings.goalWeight && !S.settings.goalWeightStart) S.settings.goalWeightStart = kg;
+  save(); return {updated:!!ex};
+}
 function openAdd(meal){
   const hasHistory = Object.keys(S.entries).length>0 || S.foods.length>0;
   openSheet({mode:'add', meal: meal||defaultMeal(), tab: hasHistory?'recent':'new', q:'', db:{q:'',status:'idle',results:[],errs:{}}, form:{name:'',serv:'',servings:1,cal:'',p:'',c:'',f:'',fib:'',saveFood:false}});
@@ -534,6 +652,8 @@ function foodRow(f, src){
 }
 function renderSheet(){
   const st = UI.sheet; if(!st) return;
+  if(st.mode==='weight'){ $('#sheetTitle').textContent = 'Weight · ' + (st.date===todayKey() ? 'Today' : fmtDate(st.date)); $('#sheetBody').innerHTML = quickWeightHTML(st); return; }
+  if(st.mode==='auth'){ $('#sheetTitle').textContent = st.step==='code' ? 'Enter your code' : 'Sign in to Fuel'; $('#sheetBody').innerHTML = authSheetHTML(st); return; }
   $('#sheetTitle').textContent = st.mode==='edit' ? 'Edit entry' : `Add to ${MEAL_LABEL[st.meal]}`;
   let h = `<div class="chips" style="margin-bottom:12px">${MEALS.map(m=>`<button class="chip ${st.meal===m.id?'on':''}" data-act="meal" data-meal="${m.id}">${m.label}</button>`).join('')}</div>`;
   if(st.mode==='add'){
@@ -1293,7 +1413,7 @@ function renderSettings(){
   const opt = (v,l,sel)=>`<option value="${v}" ${String(v)===String(sel)?'selected':''}>${l}</option>`;
   const perOpts = u==='lb' ? [[0.7,'0.7 g / lb'],[0.8,'0.8 g / lb'],[1,'1.0 g / lb'],[1.2,'1.2 g / lb']]
                            : [[1.6,'1.6 g / kg'],[1.8,'1.8 g / kg'],[2.2,'2.2 g / kg'],[2.6,'2.6 g / kg']];
-  $('#view').innerHTML = `
+  $('#view').innerHTML = accountCardHTML() + `
   <section class="card"><h2>Daily goals</h2>
     <form id="goalsForm" novalidate>
       <div class="grid2">
@@ -1306,6 +1426,8 @@ function renderSettings(){
         <label class="f"><span>Fat (g)</span><input class="inp" name="fat" inputmode="numeric" value="${g.fat?r0(g.fat):''}" placeholder="—"></label>
         <label class="f"><span>Fiber (g)</span><input class="inp" name="fiber" inputmode="numeric" value="${g.fiber?r0(g.fiber):''}" placeholder="—"></label>
       </div>
+      <div class="grid2"><label class="f"><span style="color:var(--fib)">Goal weight (${u})</span><input class="inp" name="goalWeight" inputmode="decimal" value="${S.settings.goalWeight?fmtW(S.settings.goalWeight):''}" placeholder="—"></label>
+        <p class="muted small" style="margin:22px 0 0;align-self:start">Optional. Shows progress on Today’s weight ring.</p></div>
       <button class="btn primary block" type="submit">Save goals</button>
     </form></section>
   <section class="card"><details class="helper" id="helper"><summary>Goal helper</summary>
@@ -1330,7 +1452,7 @@ function renderSettings(){
     <div class="seg"><button class="${u==='lb'?'on':''}" data-act="unit" data-u="lb">Pounds (lb)</button><button class="${u==='kg'?'on':''}" data-act="unit" data-u="kg">Kilograms (kg)</button></div>
   </section>
   <section class="card"><h2>Backup &amp; data</h2>
-    <p class="muted" style="font-size:13px;margin:-4px 0 12px">Your data is stored only in this browser on this device. Export a backup now and then.</p>
+    <p class="muted" style="font-size:13px;margin:-4px 0 12px" id="backupNote">${backupNoteHTML()}</p>
     <div class="grid2" style="gap:10px"><button class="btn" data-act="export">Export JSON</button><button class="btn" data-act="import">Import JSON</button></div>
     <button class="btn danger block" data-act="reset" style="margin-top:10px">Reset all data…</button>
     <p class="muted" style="font-size:12px;margin:12px 0 0">${Object.keys(S.entries).length} days logged · ${Object.values(S.entries).reduce((s,l)=>s+l.length,0)} entries · ${S.foods.length} saved foods · ${S.weights.length} weigh-ins</p>
@@ -1353,9 +1475,14 @@ function saveGoals(){
   let bad=false;
   ['calories','protein'].forEach(n=>{ const x=v(n); const okv = n==='calories' ? x>=500 && x<=10000 : x>=10 && x<=600; fm.elements[n].classList.toggle('err',!okv); if(!okv) bad=true; });
   if(bad){ toast('Calories must be 500–10,000 and protein 10–600 g'); return false; }
+  const gwRaw = fm.elements.goalWeight ? fm.elements.goalWeight.value.trim() : '', gwLim = unit()==='lb' ? [50,800] : [20,360];
+  if(gwRaw && !(v('goalWeight')>=gwLim[0] && v('goalWeight')<=gwLim[1])){ fm.elements.goalWeight.classList.add('err'); toast(`Goal weight must be ${gwLim[0]}–${gwLim[1]} ${unit()}, or blank`); return false; }
   const g = S.settings.goals;
   g.calories = r0(v('calories')); g.protein = r0(v('protein'));
   ['carbs','fat','fiber'].forEach(n=>{ const x = v(n); g[n] = x>0 ? r0(x) : null; });
+  const st = S.settings, gwKg = gwRaw ? toKg(v('goalWeight')) : null;
+  if(!gwKg){ st.goalWeight = null; st.goalWeightStart = null; }
+  else if(!st.goalWeight || Math.abs(gwKg-st.goalWeight) > 0.02){ st.goalWeight = gwKg; const last = S.weights[S.weights.length-1]; st.goalWeightStart = last ? last.kg : null; } // progress is measured from your weight when the goal was set
   S.settings.goalsSet = true; save(); toast('Goals saved');
   return true;
 }
@@ -1375,10 +1502,402 @@ $('#importFile').addEventListener('change', async ev=>{
     if(!data || typeof data!=='object' || !('entries' in data || 'weights' in data || 'foods' in data)) throw new Error('bad');
     next = normalize(data);
   } catch(e){ toast('That file isn’t a valid backup'); return; }
-  const ok = await confirmDialog({title:'Replace current data?', text:`Import ${Object.keys(next.entries).length} days of food logs, ${next.foods.length} saved foods and ${next.weights.length} weigh-ins. This replaces everything currently stored on this device.`, ok:'Import'});
+  const ok = await confirmDialog({title:'Replace current data?', text:`Import ${Object.keys(next.entries).length} days of food logs, ${next.foods.length} saved foods and ${next.weights.length} weigh-ins. This replaces everything currently stored on this device${CFG && loadMeta().uid ? ' and in your account on all your devices' : ''}.`, ok:'Import'});
   if(!ok) return;
   S = next; save(); render(); toast('Backup imported');
 });
+
+/* ---------- cloud account & sync (Supabase) ----------
+   Local-first: localStorage (S) stays the working copy and the app works fully without an account.
+   * trackChanges() runs after every save(): it compares each record with a fingerprint of its last known state,
+     so edits, deletes, imports and resets are all caught in one place. Changed records are marked dirty with a
+     change time; deleted ones become tombstones.
+   * sync = pull (rows changed on the server since our cursor) then push (dirty rows, upserted with their change time).
+     The server keeps the newest change per record (last write wins) and stores deletes as tombstones.
+   * Triggers: app open, returning to the app, coming back online, ~2 s after an edit, and every 90 s while visible.
+   * The feature is hidden unless config.js has a project URL + public key. The Supabase API is never cached by sw.js. */
+var SYNC_ON = false;
+const CFG = (()=>{
+  const c = window.FUEL_CONFIG || {};
+  const url = String(c.supabaseUrl||'').trim().replace(/\/+$/,''), key = String(c.supabaseKey||'').trim();
+  if(!/^https?:\/\/\S+$/.test(url) || !key) return null;
+  if(/^sb_secret_/i.test(key)) return null;                         // never run with a secret key
+  try { const p = key.split('.'); if(p.length===3){ const j = JSON.parse(atob(p[1].replace(/-/g,'+').replace(/_/g,'/'))); if(j.role && j.role!=='anon') return null; } } catch(e){}
+  return {url, key};
+})();
+const SKEY = 'fuel.sync.v1', PROMPT_KEY = 'fuel.syncPrompt.dismissed';
+const TABLE = {p:'profiles', e:'food_entries', f:'saved_foods', w:'weight_entries'};
+const KINDS = ['p','e','f','w'];
+const NULLS = {
+  e:{day:null, meal:null, name:null, servings:null, calories:null, protein:null, carbs:null, fat:null, fiber:null, serving:null, logged_at:null},
+  f:{name:null, servings:null, calories:null, protein:null, carbs:null, fat:null, fiber:null, serving:null},
+  w:{day:null, kg:null}
+};
+const ACC = {client:null, ready:false, expired:false, state:'idle', err:'', libErr:false};
+const blankMeta = () => ({v:1, uid:null, email:null, recs:{p:{},e:{},f:{},w:{}}, dirty:{p:{},e:{},f:{},w:{}}, cur:{}, last:0, rejected:0});
+function loadMeta(){ try { const m = JSON.parse(localStorage.getItem(SKEY)); if(m && m.v===1 && m.recs && m.dirty){ KINDS.forEach(k=>{ m.recs[k]=m.recs[k]||{}; m.dirty[k]=m.dirty[k]||{}; }); m.cur=m.cur||{}; return m; } } catch(e){} return blankMeta(); }
+function saveMeta(m){ try { localStorage.setItem(SKEY, JSON.stringify(m)); } catch(e){} }
+const dirtyCount = m => KINDS.reduce((n,k)=>n+Object.keys(m.dirty[k]).length, 0);
+const fp = o => hex32(cyrb128(JSON.stringify(o)).slice(0,2));   // 64-bit fingerprint of a record's synced fields
+
+/* local record -> server columns (clamped to the server's CHECK limits so one odd value can't block a batch) */
+const cl = (v, max) => { v = +v; return isFinite(v) && v>=0 ? Math.min(v, max) : 0; };
+const goal = (v, max) => { v = +v; return isFinite(v) && v>0 ? Math.min(v, max) : null; };
+const validDay = k => typeof k==='string' && /^\d{4}-\d{2}-\d{2}$/.test(k) && keyOf(parseKey(k))===k;
+const isoMs = ms => { ms = +ms; return isFinite(ms) && Math.abs(ms) < 8e15 ? new Date(ms).toISOString() : null; };
+const rowE = (k, e) => validDay(k) ? {day:k, meal:MEAL_LABEL[e.meal]?e.meal:'snack', name:String(e.name||'Food').slice(0,200), servings:cl(e.servings,99999), calories:cl(e.cal,999999),
+  protein:cl(e.p,99999), carbs:cl(e.c,99999), fat:cl(e.f,99999), fiber:cl(e.fib,99999), serving:e.serv?String(e.serv).slice(0,120):null, logged_at:isoMs(e.ts)} : null;
+const rowF = f => ({name:String(f.name||'Food').slice(0,200), servings:cl(f.servings,99999), calories:cl(f.cal,999999), protein:cl(f.p,99999), carbs:cl(f.c,99999), fat:cl(f.f,99999), fiber:cl(f.fib,99999), serving:f.serv?String(f.serv).slice(0,120):null});
+const rowW = w => validDay(w.date) && +w.kg>0 ? {day:w.date, kg:Math.min(+w.kg, 999)} : null;
+function rowP(){ const st = S.settings, g = st.goals;
+  return {unit:st.unit==='kg'?'kg':'lb', goal_calories:goal(g.calories,99999), goal_protein:goal(g.protein,9999), goal_carbs:goal(g.carbs,9999), goal_fat:goal(g.fat,9999), goal_fiber:goal(g.fiber,9999),
+    goals_set:!!st.goalsSet, usda_key:(st.usdaKey||'').slice(0,100)||null,
+    goal_weight_kg:st.goalWeight>0 && st.goalWeight<1000 ? st.goalWeight : null, goal_weight_start_kg:st.goalWeight && st.goalWeightStart>0 && st.goalWeightStart<1000 ? st.goalWeightStart : null}; }
+const isDefaultProfile = () => fp(rowP()) === fp((()=>{ const keep = S; S = defaults(); const r = rowP(); S = keep; return r; })());
+
+/* server row -> local record */
+function entryFromRow(r){ const e = {id:r.id, name:String(r.name||'Food').slice(0,120), meal:MEAL_LABEL[r.meal]?r.meal:'snack', servings:nz(r.servings)||1, cal:nz(r.calories), p:nz(r.protein), c:nz(r.carbs), f:nz(r.fat), fib:nz(r.fiber),
+  ts:Date.parse(r.logged_at)||Date.parse(r.updated_at)||Date.now()}; if(r.serving) e.serv = String(r.serving).slice(0,80); return e; }
+function foodFromRow(r){ const f = {id:r.id, name:String(r.name||'Food').slice(0,120), cal:nz(r.calories), p:nz(r.protein), c:nz(r.carbs), f:nz(r.fat), fib:nz(r.fiber), servings:nz(r.servings)||1}; if(r.serving) f.serv = String(r.serving).slice(0,80); return f; }
+function profileFromRow(r){ const st = S.settings, d = defaults().settings.goals;
+  st.unit = r.unit==='kg'?'kg':'lb'; st.goalsSet = !!r.goals_set; st.usdaKey = typeof r.usda_key==='string' ? r.usda_key.slice(0,100) : '';
+  st.goals = {calories:nz(r.goal_calories)||d.calories, protein:nz(r.goal_protein)||d.protein, carbs:nz(r.goal_carbs)||null, fat:nz(r.goal_fat)||null, fiber:nz(r.goal_fiber)||null};
+  st.goalWeight = nz(r.goal_weight_kg)||null; st.goalWeightStart = st.goalWeight ? (nz(r.goal_weight_start_kg)||null) : null; }
+
+function snapshot(){
+  const o = {p:{me:fp(rowP())}, e:{}, f:{}, w:{}};
+  for(const k of Object.keys(S.entries)) for(const e of S.entries[k]) o.e[e.id] = fp(rowE(k,e));
+  for(const f of S.foods) o.f[f.id] = fp(rowF(f));
+  for(const w of S.weights) o.w[weightId(w.date)] = fp(rowW(w));
+  return o;
+}
+/* Change tracker, called by save(). While the device belongs to an account (meta.uid), changes are queued for upload. */
+function trackChanges(){
+  if(!SYNC_ON) return 0;
+  const m = loadMeta(), snap = snapshot(), now = Date.now(), owned = !!m.uid; let n = 0;
+  for(const k of KINDS){ const R = m.recs[k], cur = snap[k];
+    for(const id in cur){ const r = R[id]; if(!r || r[0]!==cur[id]){ R[id] = [cur[id], now]; if(owned){ m.dirty[k][id] = 1; n++; } } }
+    for(const id in R){ if(!(id in cur) && R[id][0]!==null){ if(owned){ R[id] = [null, now]; m.dirty[k][id] = 1; n++; } else delete R[id]; } }
+  }
+  saveMeta(m);
+  if(n && ACC.client){ scheduleSync(2000); paintAccount(); }
+  return n;
+}
+function writeLocal(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} }
+
+/* apply rows pulled from the server; a local change that is newer and not yet uploaded wins */
+function applyRemote(k, rows){
+  const m = loadMeta(); let changed = false;
+  const where = new Map(); if(k==='e') for(const d in S.entries) for(const e of S.entries[d]) where.set(e.id, d);
+  for(const r of rows){
+    const id = k==='p' ? 'me' : r.id, rt = Date.parse(r.updated_at)||0, R = m.recs[k][id];
+    if(m.dirty[k][id] && R && R[1] > rt) continue;
+    if(k==='p'){ const before = JSON.stringify(S.settings); profileFromRow(r); if(JSON.stringify(S.settings)!==before) changed = true; m.recs.p.me = [fp(rowP()), rt]; delete m.dirty.p.me; continue; }
+    if(r.deleted){
+      if(k==='e'){ const d = where.get(id); if(d){ S.entries[d] = S.entries[d].filter(e=>e.id!==id); if(!S.entries[d].length) delete S.entries[d]; where.delete(id); changed = true; } }
+      else if(k==='f'){ const i = S.foods.findIndex(f=>f.id===id); if(i>=0){ S.foods.splice(i,1); changed = true; } }
+      else { const i = S.weights.findIndex(w=>weightId(w.date)===id); if(i>=0){ S.weights.splice(i,1); changed = true; } }
+      delete m.recs[k][id]; delete m.dirty[k][id]; continue;
+    }
+    let h;
+    if(k==='e'){ const e = entryFromRow(r), d = where.get(id);
+      if(d && d!==r.day){ S.entries[d] = S.entries[d].filter(x=>x.id!==id); if(!S.entries[d].length) delete S.entries[d]; }
+      const list = S.entries[r.day] = S.entries[r.day]||[]; const i = list.findIndex(x=>x.id===id);
+      if(i>=0){ if(JSON.stringify(list[i])!==JSON.stringify(e)){ list[i] = e; changed = true; } } else { list.push(e); changed = true; }
+      where.set(id, r.day); h = fp(rowE(r.day, e));
+    } else if(k==='f'){ const f = foodFromRow(r), i = S.foods.findIndex(x=>x.id===id);
+      if(i>=0){ if(JSON.stringify(S.foods[i])!==JSON.stringify(f)){ S.foods[i] = f; changed = true; } } else { S.foods.push(f); changed = true; }
+      h = fp(rowF(f));
+    } else { const w = {date:r.day, kg:nz(r.kg)}, i = S.weights.findIndex(x=>x.date===r.day);
+      if(i>=0){ if(S.weights[i].kg!==w.kg){ S.weights[i] = w; changed = true; } } else { S.weights.push(w); S.weights.sort((a,b)=>a.date<b.date?-1:1); changed = true; }
+      h = fp(rowW(w));
+    }
+    m.recs[k][id] = [h, rt]; delete m.dirty[k][id];
+  }
+  saveMeta(m);
+  if(changed) writeLocal();
+  return changed;
+}
+
+let syncTimer = null, syncing = null, syncAgain = false, pendingRender = false;
+function scheduleSync(ms){ if(!ACC.client) return; clearTimeout(syncTimer); syncTimer = setTimeout(()=>{ syncNow(); }, ms); }
+function syncNow(){
+  if(!ACC.client || !loadMeta().uid) return Promise.resolve();
+  if(syncing){ syncAgain = true; return syncing; }
+  const locked = fn => (navigator.locks && navigator.locks.request) ? navigator.locks.request('fuel-sync', fn) : fn();  // one sync at a time across tabs
+  syncing = (async()=>{ do { syncAgain = false; await locked(syncOnce); } while(syncAgain); })().finally(()=>{ syncing = null; });
+  return syncing;
+}
+const netErr = e => !navigator.onLine || /failed to fetch|networkerror|network request failed|load failed|fetch failed|timeout|aborted/i.test((e && (e.message||e.details))||'') || (e && e.status===0);
+function setSync(state, err){ ACC.state = state; ACC.err = err||''; paintAccount(); }
+async function syncOnce(){
+  if(!navigator.onLine){ setSync('offline'); return; }
+  const {data, error} = await ACC.client.auth.getSession();
+  const session = data && data.session;
+  if(!session){ if(error && netErr(error)) setSync('offline'); else { ACC.expired = true; setSync('idle'); } return; }
+  const meta0 = loadMeta();
+  if(!meta0.uid || meta0.uid!==session.user.id){ setSync('idle'); return; }
+  setSync('syncing');
+  try {
+    S = load(); trackChanges();              // pick up edits made in other tabs before merging
+    let changed = false;
+    for(const k of KINDS) if(await pull(k, session.user.id)) changed = true;
+    await push(session.user.id);
+    const m = loadMeta(); m.last = Date.now(); saveMeta(m);
+    setSync('ok');
+    if(changed) onRemoteChange();
+  } catch(e){ setSync(netErr(e) ? 'offline' : 'error', (e && e.message) || String(e)); }
+}
+async function pull(k, userId){
+  let m = loadMeta();
+  const since = m.cur[k] ? new Date(Date.parse(m.cur[k]) - 60000).toISOString() : null;  // 60 s overlap: never miss a row committed late
+  let from = 0, last = null, changed = false;
+  for(;;){
+    let q = ACC.client.from(TABLE[k]).select('*').eq('user_id', userId);
+    if(since) q = q.gte('synced_at', since);
+    q = q.order('synced_at', {ascending:true}); if(k!=='p') q = q.order('id', {ascending:true});
+    const {data, error} = await q.range(from, from+999); if(error) throw error;
+    if(data.length){ if(applyRemote(k, data)) changed = true; last = data[data.length-1].synced_at; }
+    if(data.length < 1000) break; from += 1000;
+  }
+  if(last){ m = loadMeta(); if(!m.cur[k] || Date.parse(last) >= Date.parse(m.cur[k])) m.cur[k] = last; saveMeta(m); }
+  return changed;
+}
+async function push(userId){
+  let m = loadMeta();
+  const E = new Map(); for(const d in S.entries) for(const e of S.entries[d]) E.set(e.id, [d,e]);
+  const F = new Map(S.foods.map(f=>[f.id,f])), W = new Map(S.weights.map(w=>[weightId(w.date), w]));
+  for(const k of KINDS){
+    const ids = Object.keys(m.dirty[k]); if(!ids.length) continue;
+    const rows = [], sent = [];
+    for(const id of ids){
+      const R = m.recs[k][id]; let data = null;
+      if(R){ if(k==='p') data = rowP(); else if(R[0]===null) data = {deleted:true, ...NULLS[k]};
+        else { const x = k==='e' ? E.get(id) : k==='f' ? F.get(id) : W.get(id); const r = x && (k==='e' ? rowE(x[0], x[1]) : k==='f' ? rowF(x) : rowW(x)); if(r) data = {deleted:false, ...r}; } }
+      if(!data){ delete m.dirty[k][id]; continue; }                       // nothing sendable (stale marker or invalid date)
+      const row = {user_id:userId, updated_at:new Date(R[1]).toISOString(), ...data}; if(k!=='p') row.id = id;
+      rows.push(row); sent.push([id, R[1], R[0]===null]);
+    }
+    saveMeta(m);
+    const rejected = await upsertRows(k, rows);
+    m = loadMeta();
+    for(const [id, t, del] of sent){ const R = m.recs[k][id]; if(R && R[1]===t){ delete m.dirty[k][id]; if(del) delete m.recs[k][id]; } }
+    m.rejected = (m.rejected||0) + rejected;
+    saveMeta(m);
+  }
+}
+async function upsertRows(k, rows){
+  const onConflict = k==='p' ? 'user_id' : 'user_id,id', dataErr = e => /^(22|23)/.test((e && e.code)||''); let rejected = 0;
+  for(let i=0; i<rows.length; i+=500){
+    const chunk = rows.slice(i, i+500);
+    const {error} = await ACC.client.from(TABLE[k]).upsert(chunk, {onConflict});
+    if(!error) continue;
+    if(!dataErr(error)) throw error;
+    for(const r of chunk){ const x = await ACC.client.from(TABLE[k]).upsert(r, {onConflict}); if(x.error){ if(dataErr(x.error)) rejected++; else throw x.error; } } // skip only the row the server refuses
+  }
+  return rejected;
+}
+const typing = () => { const a = document.activeElement; return !!(a && a.closest && a.closest('#view') && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)); };
+function onRemoteChange(){
+  if(typing()){ pendingRender = true; return; }
+  render();
+  if(UI.sheet && UI.sheet.mode!=='auth' && $('#foodList')) $('#foodList').innerHTML = foodListHTML();
+}
+document.addEventListener('focusout', ()=>setTimeout(()=>{ if(pendingRender && !typing()){ pendingRender = false; render(); } }, 0));
+
+/* ---- account lifecycle ---- */
+function loadScript(src){ return new Promise((res, rej)=>{ if(window.supabase && window.supabase.createClient) return res(); const el = document.createElement('script'); el.src = src; el.async = true; el.onload = ()=>res(); el.onerror = ()=>rej(new Error('Could not load '+src)); document.head.appendChild(el); }); }
+async function initAccount(){
+  if(!CFG) return;
+  SYNC_ON = true; trackChanges();       // baseline fingerprints for data created before sync existed
+  try { await loadScript('vendor/supabase/supabase.js'); }
+  catch(e){ ACC.libErr = true; ACC.ready = true; paintAccount(); return; }
+  ACC.client = window.supabase.createClient(CFG.url, CFG.key, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:false, storageKey:'fuel.auth'}});
+  ACC.client.auth.onAuthStateChange((event, session)=>{ setTimeout(()=>onAuthEvent(event, session), 0); });
+}
+async function onAuthEvent(event, session){
+  const m = loadMeta();
+  if(event==='INITIAL_SESSION'){
+    ACC.ready = true;
+    if(session){ ACC.expired = false; if(m.uid!==session.user.id) await adoptUser(session.user); else { if(session.user.email && m.email!==session.user.email){ m.email = session.user.email; saveMeta(m); } syncNow(); } }
+    else if(m.uid){ ACC.expired = navigator.onLine; }       // offline: the session may only need a refresh later
+    paintAccount(); if(UI.view==='today') render();
+  } else if(event==='SIGNED_OUT'){ if(loadMeta().uid) ACC.expired = true; paintAccount(); }
+  else if(session && (event==='TOKEN_REFRESHED' || event==='SIGNED_IN')){ if(m.uid===session.user.id && ACC.expired){ ACC.expired = false; paintAccount(); syncNow(); } }
+}
+/* First sign-in on this device: everything already here is merged into the account (union by record id). */
+async function adoptUser(user){
+  let m = loadMeta();
+  if(m.uid && m.uid!==user.id){
+    const n = dirtyCount(m);
+    const keep = await confirmDialog({title:'Data from another account', text:`This device still has data from ${m.email||'another account'}${n?` (${n} change${n===1?'':'s'} never synced)`:''}. Add it to ${user.email||'this account'}, or remove it from this device?`, ok:'Add to this account', cancel:'Remove it'});
+    if(!keep){ S = defaults(); writeLocal(); }
+    m = blankMeta(); saveMeta(m); trackChanges();
+    m = loadMeta();
+  }
+  if(!m.uid){
+    m.uid = user.id; m.email = user.email||''; m.cur = {}; m.last = 0;
+    const plainProfile = isDefaultProfile();
+    for(const k of KINDS) for(const id in m.recs[k]){ if(m.recs[k][id][0]===null) delete m.recs[k][id]; else if(!(k==='p' && plainProfile)) m.dirty[k][id] = 1; }
+    if(plainProfile && m.recs.p.me) m.recs.p.me[1] = 0;   // a fresh device's default goals never overwrite the account's goals
+    saveMeta(m);
+  }
+  ACC.expired = false; paintAccount();
+  await syncNow();
+}
+function clearDevice(){
+  localStorage.removeItem(KEY); saveMeta(blankMeta());
+  S = defaults(); trackChanges();
+  UI.date = todayKey(); ACC.expired = false; setSync('idle');
+  render();
+}
+async function signOut(){
+  let m = loadMeta();
+  if(ACC.client && dirtyCount(m)){ await syncNow(); m = loadMeta(); }
+  const n = dirtyCount(m);
+  if(n && !(await confirmDialog({title:'Sign out without syncing?', text:`${n} change${n===1?'':'s'} on this device ${n===1?'hasn’t':'haven’t'} been backed up yet (you seem to be offline). Signing out removes ${n===1?'it':'them'} from this device.`, ok:'Sign out anyway', danger:true}))) return;
+  if(ACC.client) await ACC.client.auth.signOut({scope:'local'}).catch(()=>{});   // this device only; other devices stay signed in
+  clearDevice();
+  toast('Signed out · this device’s data was removed');
+}
+window.FuelSync = { now: ()=>syncNow(), status: ()=>{ const m = loadMeta(); return {configured:!!CFG, ready:ACC.ready, signedIn:!!m.uid && !ACC.expired, email:m.email, state:ACC.state, err:ACC.err, pending:dirtyCount(m), last:m.last}; } };
+
+/* ---- account UI ---- */
+function ago(ms){ const s = (Date.now()-ms)/1000; if(s<45) return 'just now'; if(s<3600) return Math.round(s/60)+' min ago'; if(s<86400) return Math.round(s/3600)+' h ago'; return fmtDate(keyOf(new Date(ms)),{month:'short',day:'numeric'}); }
+function syncStatusText(m){
+  const n = dirtyCount(m), pend = n ? `${n} change${n===1?'':'s'} waiting to sync` : '';
+  if(ACC.libErr) return 'Sync is unavailable right now (couldn’t load). Your data is safe on this device.';
+  if(!ACC.ready) return 'Connecting…';
+  if(ACC.state==='syncing') return 'Syncing…';
+  if(ACC.state==='offline' || !navigator.onLine) return 'Offline' + (pend ? ` · ${pend} — they’ll upload when you’re back online` : ' · will sync when you’re back online');
+  if(ACC.state==='error') return `Couldn’t sync (${ACC.err.slice(0,120)}) · will retry` + (pend?` · ${pend}`:'');
+  if(pend) return pend;
+  return m.last ? `Backed up & synced · ${ago(m.last)}` : 'Signed in';
+}
+function accountCardHTML(){
+  if(!CFG) return '';
+  const m = loadMeta();
+  if(m.uid && ACC.expired) return `<section class="card" id="acctCard"><h2>Account &amp; sync</h2>
+    <p class="muted small" style="margin:-4px 0 12px">You were signed out of <b>${esc(m.email)}</b>. Sign in again to keep syncing${dirtyCount(m)?` — ${dirtyCount(m)} change${dirtyCount(m)===1?' is':'s are'} waiting`:''}. Your data is still on this device.</p>
+    <button class="btn primary block" data-act="auth-open">Sign in again</button>
+    <button class="btn block" data-act="auth-clear" style="margin-top:10px">Remove data from this device</button></section>`;
+  if(m.uid) return `<section class="card" id="acctCard"><h2>Account &amp; sync</h2>
+    <div class="acct"><div class="avatar" aria-hidden="true">${esc((m.email||'?').charAt(0).toUpperCase())}</div><div style="min-width:0;flex:1"><b class="acct-email">${esc(m.email)}</b>
+      <div class="muted small" id="syncStatus"><span class="dot ${ACC.state==='error'?'bad':(ACC.state==='offline'||!navigator.onLine||dirtyCount(m))?'warn':'good'}"></span>${esc(syncStatusText(m))}</div></div></div>
+    <div class="grid2" style="gap:10px;margin-top:12px"><button class="btn" data-act="sync-now" ${ACC.state==='syncing'?'disabled':''}>Sync now</button><button class="btn" data-act="sign-out">Sign out</button></div>
+    <details class="pwset"><summary>Set a password (optional)</summary>
+      <form id="pwSetForm" novalidate style="margin-top:10px"><p class="muted small" style="margin:0 0 8px">Lets you sign in with email + password instead of waiting for a code.</p>
+        <input type="email" name="username" value="${esc(m.email)}" autocomplete="username" class="hidden" tabindex="-1" aria-hidden="true">
+        <div class="row" style="gap:8px"><input class="inp" type="password" name="pw" autocomplete="new-password" minlength="8" placeholder="New password (8+ characters)" style="flex:1"><button class="btn primary" type="submit">Save</button></div></form>
+    </details></section>`;
+  return `<section class="card" id="acctCard"><h2>Account &amp; sync</h2>
+    <p class="muted small" style="margin:-4px 0 12px">Sign in to back up your log and use Fuel on more than one device (phone, iPad, computer). Everything keeps working offline and stays on this device too. Free — just your email.</p>
+    <button class="btn primary block" data-act="auth-open">Sign in or create account</button></section>`;
+}
+function paintAccount(){
+  const c = $('#acctCard'); if(c) c.outerHTML = accountCardHTML();
+  const b = $('#backupNote'); if(b) b.innerHTML = backupNoteHTML();
+}
+const backupNoteHTML = () => (CFG && loadMeta().uid) ? 'Your data is saved on this device and backed up to your account, which keeps your devices in sync. You can still export a JSON copy.' : 'Your data is stored only in this browser on this device. Export a backup now and then.';
+function syncPromptHTML(){
+  if(!CFG || loadMeta().uid) return '';
+  try { if(localStorage.getItem(PROMPT_KEY)) return ''; } catch(e){ return ''; }
+  const n = Object.values(S.entries).reduce((s,l)=>s+l.length,0) + S.weights.length;
+  if(n < 3) return '';
+  return `<div class="banner syncprompt"><span style="font-size:20px">☁️</span><button class="grow" data-act="auth-open">Back up your log and sync it across your devices. <b>Sign in →</b></button><button class="x2" data-act="sync-prompt-x" aria-label="Dismiss">✕</button></div>`;
+}
+
+/* sign-in sheet: 6-digit email code (default) or email + password */
+function openAuth(){ openSheet({mode:'auth', step:'email', email:loadMeta().email||'', kind:'otp', busy:false, err:'', info:'', resendAt:0}); if(matchMedia('(pointer:fine)').matches) setTimeout(()=>{ const i = $('#authEmail'); if(i) i.focus(); }, 50); }
+function authSheetHTML(st){
+  const err = st.err ? `<div class="notice bad" role="alert">${esc(st.err)}</div>` : '', info = st.info ? `<div class="notice info">${esc(st.info)}</div>` : '';
+  const busy = st.busy ? 'disabled' : '';
+  if(st.step==='code'){
+    const wait = Math.max(0, Math.ceil((st.resendAt-Date.now())/1000));
+    return `<form id="authCodeForm" novalidate autocomplete="off">
+      <p style="margin:0 0 12px">We emailed a 6-digit code to <b>${esc(st.email)}</b>. Enter it here${st.kind==='signup'?' to confirm your account':''}.</p>
+      <input class="inp code" id="authCode" name="code" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="6" placeholder="••••••" aria-label="6-digit code" ${busy}>
+      ${err}${info}
+      <button class="btn primary block" type="submit" style="margin-top:12px" ${busy}>${st.busy?'<span class="spinner"></span> Checking…':'Verify & sign in'}</button>
+      <div class="row" style="justify-content:space-between;margin-top:8px"><button type="button" class="linkbtn" data-act="auth-back">← Use a different email</button>
+        <button type="button" class="linkbtn" data-act="auth-resend" ${wait||st.busy?'disabled':''} id="authResend">${wait?`Resend in ${wait}s`:'Send a new code'}</button></div>
+      <p class="muted small" style="margin:8px 0 0">Not there? Check spam/junk. The code works for 1 hour; only the newest code works.</p></form>`;
+  }
+  if(st.step==='password') return `<form id="authPwForm" novalidate>
+      <label class="f"><span>Email</span><input class="inp" id="authEmail" type="email" name="email" value="${esc(st.email)}" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false" ${busy}></label>
+      <label class="f"><span>Password</span><input class="inp" type="password" name="password" autocomplete="current-password" placeholder="8+ characters" ${busy}></label>
+      ${err}${info}
+      <div class="grid2" style="gap:10px;margin-top:4px"><button class="btn primary" type="submit" name="how" value="signin" ${busy}>Sign in</button><button class="btn" type="submit" name="how" value="signup" ${busy}>Create account</button></div>
+      <p class="muted small" style="margin:12px 0 0">Forgot it? <button type="button" class="linkbtn" data-act="auth-mode" data-m="email">Sign in with an email code instead</button></p></form>`;
+  return `<form id="authEmailForm" novalidate>
+      <p class="muted" style="margin:0 0 12px;font-size:14px">Enter your email and we’ll send you a 6-digit code. New here? The same code creates your account.</p>
+      <label class="f"><span>Email</span><input class="inp" id="authEmail" type="email" name="email" value="${esc(st.email)}" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="you@example.com" enterkeyhint="send" ${busy}></label>
+      ${err}${info}
+      <button class="btn primary block" type="submit" ${busy}>${st.busy?'<span class="spinner"></span> Sending…':'Email me a code'}</button>
+      <p class="muted small" style="margin:12px 0 0;text-align:center"><button type="button" class="linkbtn" data-act="auth-mode" data-m="password">Use a password instead</button></p>
+      <p class="muted small" style="margin:6px 0 0">Your food log syncs privately to your account; nobody else can see it.</p></form>`;
+}
+function authErr(e){
+  const msg = (e && e.message) || String(e||'Something went wrong');
+  if(netErr(e)) return 'You’re offline. Connect to the internet to sign in.';
+  if(e && (e.code==='over_email_send_rate_limit' || /email rate limit/i.test(msg))) return 'Too many sign-in emails were sent recently. Please try again in a little while (or use your password if you set one).';
+  if(/security purposes|after \d+ seconds/i.test(msg)) return 'Please wait a moment before requesting another code.';
+  if(e && e.status===429) return 'Too many attempts. Please wait a few minutes and try again.';
+  if(/expired|invalid.*(otp|token|code)|token.*(invalid|not found)/i.test(msg) || (e && e.code==='otp_expired')) return 'That code is wrong or has expired. Check the newest email, or send a new code.';
+  if(/invalid login credentials/i.test(msg)) return 'Wrong email or password.';
+  if(/password should be|weak/i.test(msg)) return 'Please choose a longer password (at least 8 characters).';
+  if(/signups? not allowed/i.test(msg)) return 'New sign-ups are turned off right now.';
+  return msg;
+}
+const validEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+function authPaint(){ if(UI.sheet && UI.sheet.mode==='auth') renderSheet(); }
+async function authRun(fn){ const st = UI.sheet; st.busy = true; st.err = ''; authPaint(); try { await fn(st); } catch(e){ st.err = authErr(e); } if(UI.sheet===st){ st.busy = false; authPaint(); } }
+let resendTick = null;
+function toCodeStep(st, kind, info){ st.step = 'code'; st.kind = kind; st.info = info||''; st.resendAt = Date.now()+60000;
+  clearInterval(resendTick); resendTick = setInterval(()=>{ const b = $('#authResend'); if(!UI.sheet || UI.sheet.mode!=='auth' || UI.sheet.step!=='code'){ clearInterval(resendTick); return; }
+    const w = Math.max(0, Math.ceil((UI.sheet.resendAt-Date.now())/1000)); if(b){ b.textContent = w?`Resend in ${w}s`:'Send a new code'; b.disabled = !!w || UI.sheet.busy; } if(!w) clearInterval(resendTick); }, 1000);
+  setTimeout(()=>{ const c = $('#authCode'); if(c) c.focus(); }, 60); }
+async function sendCode(st){ const {error} = await ACC.client.auth.signInWithOtp({email:st.email, options:{shouldCreateUser:true}}); if(error) throw error; toCodeStep(st, 'otp'); }
+async function finishSignIn(user){
+  closeSheet(); await adoptUser(user);
+  render();
+  toast(`Signed in as ${user.email}`);
+}
+function authSubmit(form, submitter){
+  const st = UI.sheet; if(!st || st.busy) return;
+  if(!ACC.client){ st.err = ACC.libErr ? 'Sync is unavailable right now. Please try again later.' : 'Still connecting… try again in a moment.'; authPaint(); return; }
+  if(form.id==='authEmailForm'){
+    const email = form.elements.email.value.trim().toLowerCase(); st.email = email;
+    if(!validEmail(email)){ st.err = 'Enter a valid email address.'; authPaint(); return; }
+    authRun(sendCode);
+  } else if(form.id==='authCodeForm'){
+    const code = form.elements.code.value.replace(/\D/g,'');
+    if(code.length!==6){ st.err = 'Enter the 6-digit code from the email.'; authPaint(); return; }
+    authRun(async st=>{
+      let r = await ACC.client.auth.verifyOtp({email:st.email, token:code, type:st.kind==='signup'?'signup':'email'});
+      if(r.error && st.kind!=='signup' && !netErr(r.error)){ const r2 = await ACC.client.auth.verifyOtp({email:st.email, token:code, type:'signup'}); if(!r2.error) r = r2; }
+      if(r.error) throw r.error;
+      await finishSignIn(r.data.user);
+    });
+  } else if(form.id==='authPwForm'){
+    const email = form.elements.email.value.trim().toLowerCase(), pw = form.elements.password.value, how = submitter && submitter.value==='signup' ? 'signup' : 'signin';
+    st.email = email;
+    if(!validEmail(email)){ st.err = 'Enter a valid email address.'; authPaint(); return; }
+    if(pw.length < 8){ st.err = 'Passwords are at least 8 characters.'; authPaint(); return; }
+    authRun(async st=>{
+      if(how==='signin'){
+        const {data, error} = await ACC.client.auth.signInWithPassword({email, password:pw});
+        if(error && /not confirmed/i.test(error.message||'')){ const x = await ACC.client.auth.resend({type:'signup', email}); if(x.error) throw x.error; toCodeStep(st, 'signup', 'Your email isn’t confirmed yet, so we sent a new confirmation code.'); return; }
+        if(error) throw error; await finishSignIn(data.user);
+      } else {
+        const {data, error} = await ACC.client.auth.signUp({email, password:pw});
+        if(error) throw error;
+        if(data.session) await finishSignIn(data.user);
+        else toCodeStep(st, 'signup', 'If this email already has an account, no code is sent — use Sign in instead.');
+      }
+    });
+  }
+}
 
 /* ---------- events ---------- */
 document.addEventListener('click', async ev=>{
@@ -1387,7 +1906,7 @@ document.addEventListener('click', async ev=>{
   const el = ev.target.closest('[data-act]'); if(!el) return;
   const a = el.dataset.act;
   switch(a){
-    case 'tab': UI.view = el.dataset.tab; render(); window.scrollTo(0,0); break;
+    case 'tab': if(UI.sheet) closeSheet(); UI.view = el.dataset.tab; render(); window.scrollTo(0,0); break;
     case 'day': { const n = addDays(UI.date, +el.dataset.d); if(n<=todayKey()){ UI.date = n; render(); } break; }
     case 'goto-today': UI.date = todayKey(); render(); break;
     case 'goto-day': UI.date = el.dataset.k; UI.view='today'; render(); window.scrollTo(0,0); break;
@@ -1430,12 +1949,31 @@ document.addEventListener('click', async ev=>{
     case 'apply-helper': { const r = helperCalc(); if(!r){ toast('Enter your body weight first'); break; }
       const fm = $('#goalsForm'); fm.elements.calories.value = r.cal; fm.elements.protein.value = r.protein; saveGoals(); break; }
     case 'export': exportData(); break;
+    case 'log-weight': openWeight(UI.date); break;
+    case 'q-del-weight': { const d = UI.sheet && UI.sheet.date; const i = S.weights.findIndex(w=>w.date===d); if(i<0) break; const [w] = S.weights.splice(i,1); save(); closeSheet(); render();
+      toast('Weigh-in deleted', ()=>{ S.weights.push(w); S.weights.sort((a,b)=>a.date<b.date?-1:1); save(); render(); }); break; }
+    case 'auth-open': closeSheet(); openAuth(); break;
+    case 'auth-mode': if(UI.sheet){ UI.sheet.step = el.dataset.m==='password' ? 'password' : 'email'; UI.sheet.err = UI.sheet.info = ''; renderSheet(); } break;
+    case 'auth-back': if(UI.sheet){ UI.sheet.step = 'email'; UI.sheet.err = UI.sheet.info = ''; renderSheet(); } break;
+    case 'auth-resend': if(UI.sheet && ACC.client) authRun(async st=>{ if(st.kind==='signup'){ const {error} = await ACC.client.auth.resend({type:'signup', email:st.email}); if(error) throw error; toCodeStep(st,'signup','New code sent.'); } else { await sendCode(st); st.info = 'New code sent.'; } }); break;
+    case 'auth-clear': if(await confirmDialog({title:'Remove data from this device?', text:`Changes that were never synced will be lost. Data already backed up stays in ${loadMeta().email||'your account'}.`, ok:'Remove', danger:true})){ clearDevice(); toast('This device’s data was removed'); } break;
+    case 'sync-now': syncNow(); break;
+    case 'sign-out': signOut(); break;
+    case 'sync-prompt-x': try { localStorage.setItem(PROMPT_KEY, '1'); } catch(e){} render(); toast('You can sign in any time from Goals'); break;
     case 'import': $('#importFile').click(); break;
-    case 'reset': { const ok = await confirmDialog({title:'Reset all data?', text:'This permanently deletes all food logs, saved foods, weigh-ins and goals on this device. Consider exporting a backup first.', ok:'Delete everything', danger:true});
+    case 'reset': { const ok = await confirmDialog({title:'Reset all data?', text:`This permanently deletes all food logs, saved foods, weigh-ins and goals ${CFG && loadMeta().uid ? 'on this device and in your account, on all your devices' : 'on this device'}. Consider exporting a backup first.`, ok:'Delete everything', danger:true});
       if(ok){ S = defaults(); save(); UI.date = todayKey(); UI.view='today'; render(); toast('All data reset'); } break; }
   }
 });
 document.addEventListener('submit', ev=>{
+  if(/^auth(Email|Code|Pw)Form$/.test(ev.target.id)){ ev.preventDefault(); authSubmit(ev.target, ev.submitter); return; }
+  if(ev.target.id==='pwSetForm'){ ev.preventDefault(); const pw = ev.target.elements.pw.value;
+    if(pw.length<8){ ev.target.elements.pw.classList.add('err'); toast('Passwords are at least 8 characters'); return; }
+    if(!ACC.client) return;
+    ACC.client.auth.updateUser({password:pw}).then(({error})=>{ if(error) toast(authErr(error)); else { ev.target.reset(); toast('Password saved'); } }); return; }
+  if(ev.target.id==='qWeightForm'){ ev.preventDefault(); const d = UI.sheet && UI.sheet.date; const r = setWeight(d, ev.target.elements.w.value);
+    if(r.err){ ev.target.elements.w.classList.add('err'); toast(r.err); return; }
+    closeSheet(); render(); toast(r.updated ? 'Weigh-in updated' : 'Weigh-in saved'); return; }
   if(ev.target.id==='foodForm') submitForm(ev);
   else if(ev.target.id==='goalsForm'){ ev.preventDefault(); saveGoals(); }
   else if(ev.target.id==='barcodeForm'){ ev.preventDefault(); const v = $('#barcodeInp').value; barcodeLookup(v); }
@@ -1443,19 +1981,16 @@ document.addEventListener('submit', ev=>{
     if(v && !/^[A-Za-z0-9_\-]{6,100}$/.test(v)){ ev.target.elements.key.classList.add('err'); toast('That doesn’t look like an API key'); return; }
     S.settings.usdaKey = (!v || v==='DEMO_KEY') ? '' : v; save(); dbCache.clear(); renderSettings(); toast(S.settings.usdaKey ? 'USDA API key saved' : 'Using DEMO_KEY'); }
   else if(ev.target.id==='weightForm'){
-    ev.preventDefault(); const fm = ev.target; const w = num(fm.elements.w.value); const d = fm.elements.d.value;
-    const lim = unit()==='lb' ? [50,800] : [20,360];
-    if(!(w>=lim[0] && w<=lim[1])){ fm.elements.w.classList.add('err'); toast(`Enter a weight between ${lim[0]} and ${lim[1]} ${unit()}`); return; }
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(d) || d>todayKey()){ toast('Pick a valid date'); return; }
-    const kg = toKg(w); const ex = S.weights.find(x=>x.date===d);
-    if(ex) ex.kg = kg; else { S.weights.push({date:d, kg}); S.weights.sort((a,b)=>a.date<b.date?-1:1); }
-    save(); renderWeight(); toast(ex ? 'Weigh-in updated' : 'Weigh-in saved');
+    ev.preventDefault(); const fm = ev.target; const r = setWeight(fm.elements.d.value, fm.elements.w.value);
+    if(r.err){ if(/weight/.test(r.err)) fm.elements.w.classList.add('err'); toast(r.err); return; }
+    renderWeight(); toast(r.updated ? 'Weigh-in updated' : 'Weigh-in saved');
   }
 });
 document.addEventListener('input', ev=>{
   const t = ev.target;
   if(t.closest && t.closest('#foodForm')){ t.classList.remove('err'); if(t.name==='servings') t.closest('.stepper').style.borderColor=''; updatePreview(); }
   else if(t.id==='dbSearch'){ dbQueue(t.value); }
+  else if(t.id==='authCode'){ t.value = t.value.replace(/\D/g,'').slice(0,6); if(UI.sheet) UI.sheet.err = ''; if(t.value.length===6){ const f = $('#authCodeForm'); if(f) f.requestSubmit ? f.requestSubmit() : authSubmit(f); } }
   else if(t.id==='customG'){ const g = num(t.value); UI.sheet.grams = g>0 ? g : 0; syncPortionToForm(); }
   else if(t.id==='foodSearch'){ UI.sheet.q = t.value; $('#foodList').innerHTML = foodListHTML(); }
   else if(['hW','hP','hA','hG'].includes(t.id)) updateHelper();
@@ -1478,7 +2013,12 @@ let rT; window.addEventListener('resize', ()=>{ clearTimeout(rT); rT = setTimeou
 let lastToday = todayKey();
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ const t = todayKey(); if(t!==lastToday){ if(UI.date===lastToday) UI.date = t; lastToday = t; render(); } } });
 // Keep multiple open tabs in sync
-window.addEventListener('storage', e=>{ if(e.key===KEY){ S = load(); render(); } });
+window.addEventListener('storage', e=>{ if(e.key===KEY || e.key===null){ S = load(); render(); } else if(e.key===SKEY) paintAccount(); });
+// Cloud sync triggers (all no-ops when sync isn't configured or nobody is signed in)
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) scheduleSync(300); else if(ACC.client && dirtyCount(loadMeta())) syncNow(); });
+window.addEventListener('online', ()=>{ scheduleSync(500); paintAccount(); });
+window.addEventListener('offline', ()=>{ if(ACC.client && loadMeta().uid) setSync('offline'); });
+setInterval(()=>{ if(!document.hidden && ACC.client) syncNow(); }, 90000);
 
 /* ---------- service worker (offline app shell; http(s) only) ---------- */
 if('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && (location.protocol==='https:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname))){
@@ -1486,6 +2026,7 @@ if('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && (locat
 }
 
 render();
+initAccount();
 })();
 </script>
 </body>
