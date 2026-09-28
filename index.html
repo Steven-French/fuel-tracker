@@ -164,6 +164,10 @@ label.f>span{display:block;margin-bottom:5px}
 .stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:12px;background:var(--card2);overflow:hidden}
 .stepper button{width:44px;height:44px;font-size:20px;color:var(--accent);font-weight:600}
 .stepper input{flex:1;min-width:0;text-align:center;border:0;background:transparent;padding:10px 0;outline:none;font-weight:650}
+.addrow{display:grid;grid-template-columns:minmax(118px,40%) minmax(0,1fr);gap:10px;align-items:end;margin:2px 0 10px}
+.addrow .f{margin:0}
+.addrow .btn{height:46px;padding:0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.picked .srccard{margin-bottom:12px}
 .preview{display:flex;gap:10px;flex-wrap:wrap;background:var(--card2);border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px}
 .preview b{font-weight:700}
 .scrim{position:fixed;inset:0;background:rgba(10,12,16,.45);z-index:50;opacity:0;pointer-events:none;transition:opacity .2s}
@@ -1213,24 +1217,23 @@ function renderSheet(){
   if(st.mode==='add'){
     h += `<div class="seg four" style="margin-bottom:12px">
       <button class="${st.tab==='search'||st.tab==='detail'?'on':''}" data-act="stab" data-tab="search">Search</button>
-      <button class="${st.tab==='recent'?'on':''}" data-act="stab" data-tab="recent">Recent</button>
-      <button class="${st.tab==='mine'?'on':''}" data-act="stab" data-tab="mine">My foods${S.foods.length?` (${S.foods.length})`:''}</button>
+      <button class="${st.tab==='recent'||(st.tab==='pick'&&st.from!=='mine')?'on':''}" data-act="stab" data-tab="recent">Recent</button>
+      <button class="${st.tab==='mine'||(st.tab==='pick'&&st.from==='mine')?'on':''}" data-act="stab" data-tab="mine">My foods${S.foods.length?` (${S.foods.length})`:''}</button>
       <button class="${st.tab==='new'?'on':''}" data-act="stab" data-tab="new">New</button></div>`;
   }
   if(st.mode==='add' && st.tab==='search'){
     h += searchTabHTML();
-  } else if(st.mode==='add' && st.tab!=='new' && st.tab!=='detail'){
+  } else if(st.mode==='add' && st.tab!=='new' && st.tab!=='detail' && st.tab!=='pick'){
     h += `<input class="inp" id="foodSearch" type="search" placeholder="Search foods…" value="${esc(st.q)}" autocomplete="off" style="margin-bottom:6px">
       <p class="muted" style="font-size:12px;margin:4px 0 0">Tap <b style="color:var(--accent)">+</b> to log instantly, or tap a food to adjust servings first.</p>
       <div id="foodList">${foodListHTML()}</div>`;
   } else {
     const f = st.form;
-    h += (st.tab==='detail' && st.food ? detailCardHTML() : '') + `<form id="foodForm" autocomplete="off" novalidate>
-      <label class="f"><span>Food name</span><input class="inp" name="name" value="${esc(f.name)}" placeholder="e.g. Greek yogurt" maxlength="120" enterkeyhint="next"></label>
-      <label class="f"><span>Serving size <span style="font-weight:500">(optional label)</span></span><input class="inp" name="serv" value="${esc(f.serv||'')}" placeholder="e.g. 1 cup (140 g)" maxlength="80"></label>
-      <label class="f"><span>Number of servings</span><div class="stepper"><button type="button" data-act="step" data-d="-0.5" aria-label="Fewer servings">−</button>
-        <input name="servings" inputmode="decimal" value="${esc(r1(+f.servings||1))}" aria-label="Servings"><button type="button" data-act="step" data-d="0.5" aria-label="More servings">+</button></div></label>
-      <div class="sect" style="margin-top:4px">Nutrition per serving</div>
+    const stepper = `<div class="stepper"><button type="button" data-act="step" data-d="-0.5" aria-label="Fewer servings">−</button>
+        <input name="servings" inputmode="decimal" value="${esc(r1(+f.servings||1))}" aria-label="Number of servings"><button type="button" data-act="step" data-d="0.5" aria-label="More servings">+</button></div>`;
+    const nameF = `<label class="f"><span>Food name</span><input class="inp" name="name" value="${esc(f.name)}" placeholder="e.g. Greek yogurt" maxlength="120" enterkeyhint="next"></label>
+      <label class="f"><span>Serving size <span style="font-weight:500">(optional label)</span></span><input class="inp" name="serv" value="${esc(f.serv||'')}" placeholder="e.g. 1 cup (140 g)" maxlength="80"></label>`;
+    const macroF = `<div class="sect" style="margin-top:4px">Nutrition per serving</div>
       <div class="grid2" style="margin-top:8px">
         <label class="f"><span style="color:var(--cal)">Calories (kcal) *</span><input class="inp req" name="cal" inputmode="decimal" value="${esc(f.cal)}" placeholder="0"></label>
         <label class="f"><span style="color:var(--pro)">Protein (g)</span><input class="inp req" name="p" inputmode="decimal" value="${esc(f.p)}" placeholder="0"></label>
@@ -1239,12 +1242,32 @@ function renderSheet(){
         <label class="f"><span>Carbs (g)</span><input class="inp" name="c" inputmode="decimal" value="${esc(f.c)}" placeholder="0"></label>
         <label class="f"><span>Fat (g)</span><input class="inp" name="f" inputmode="decimal" value="${esc(f.f)}" placeholder="0"></label>
         <label class="f"><span>Fiber (g)</span><input class="inp" name="fib" inputmode="decimal" value="${esc(f.fib)}" placeholder="0"></label>
-      </div>
+      </div>`;
+    const saveF = f.inFoods ? '' : `<label class="check"><input type="checkbox" name="saveFood" ${f.saveFood?'checked':''}> Save to My foods</label>`;
+    const addLabel = st.mode==='edit' ? 'Save changes' : `Add to ${MEAL_LABEL[st.meal]}`;
+    if(isPickedView(st)){
+      // a food picked from search / scan / Recent / My foods: summary, then servings + the Add button up top (visible without scrolling);
+      // the editable name / serving / macro fields follow below
+      h += `<form id="foodForm" class="picked" autocomplete="off" novalidate>${st.tab==='detail' ? detailCardHTML() : pickCardHTML()}
+      <div class="addrow" id="addRow"><label class="f"><span>Servings</span>${stepper}</label>
+        <button class="btn primary" type="submit" id="addBtn">${esc(addLabel)}</button></div>
       <div class="preview" id="preview"></div>
-      ${f.inFoods?'':`<label class="check"><input type="checkbox" name="saveFood" ${f.saveFood?'checked':''}> Save to My foods</label>`}
-      <button class="btn primary block" type="submit">${st.mode==='edit'?'Save changes':`Add to ${MEAL_LABEL[st.meal]}`}</button>
+      ${saveF}
+      ${st.tab==='detail' ? per100HTML() : (st.meta && st.meta.nut ? `<div class="muted small"><button type="button" class="linkbtn" data-act="jump-nutrients" id="allNutsLink">All nutrients (${Object.keys(st.meta.nut).length}) ↓</button></div>` : '')}
+      <div class="sect" id="editDetails" style="margin-top:14px">Edit details</div>
+      ${nameF}${macroF}
+    </form>${sheetPanelWrapHTML()}`;
+    } else {
+      h += `<form id="foodForm" autocomplete="off" novalidate>
+      ${nameF}
+      <label class="f"><span>Number of servings</span>${stepper}</label>
+      ${macroF}
+      <div class="preview" id="preview"></div>
+      ${saveF}
+      <button class="btn primary block" type="submit">${esc(addLabel)}</button>
       ${st.mode==='edit'?`<button class="btn danger block" type="button" data-act="delete-entry" style="margin-top:10px">Delete entry</button>`:''}
     </form>${sheetPanelWrapHTML()}`;
+    }
   }
   $('#sheetBody').innerHTML = h;
   if($('#foodForm')) updatePreview();
@@ -1278,6 +1301,7 @@ function readForm(){
 function updatePreview(){
   const f = readForm(); const s = f.servings>0 ? f.servings : 1;
   $('#preview').innerHTML = `<span class="muted">Total${s!==1?` (${r1(s)}×)`:''}:</span><span><b style="color:var(--cal)">${fmtN(nz(f.cal)*s)}</b> kcal</span><span><b style="color:var(--pro)">${fmtG(nz(f.p)*s)}g</b> protein</span><span>C ${fmtG(nz(f.c)*s)}g</span><span>F ${fmtG(nz(f.f)*s)}g</span>`;
+  const g = $('#nutGrid'); if(g) g.innerHTML = nutGridHTML(f);
   paintSheetPanel();
 }
 function upsertFood(e){
@@ -1780,8 +1804,9 @@ function applyPortion(){
   Object.assign(st.form, {serv:p.label, cal:r0(n.cal), p:rm(n.p), c:rm(n.c), f:rm(n.f), fib:rm(n.fib)});
   st.meta = foodMeta(st.food, p);
 }
-function nutGridHTML(){
-  const n = portionNutr(UI.sheet.food, currentPortion());
+const isPickedView = st => st.mode==='add' && ((st.tab==='detail' && !!st.food) || st.tab==='pick');
+function nutGridHTML(v){   // per-serving summary from the form's values (so edits below are reflected)
+  const n = {cal:nz(v.cal), p:nz(v.p), c:nz(v.c), f:nz(v.f), fib:nz(v.fib)};
   const g1 = x => x>=100 ? String(r0(x)) : String(r1(x));
   return `<div><b style="color:var(--cal)">${fmtN(n.cal)}</b><span>kcal</span></div><div><b style="color:var(--pro)">${g1(n.p)}g</b><span>protein</span></div>
     <div><b>${g1(n.c)}</b><span>carbs g</span></div><div><b>${g1(n.f)}</b><span>fat g</span></div><div><b>${g1(n.fib)}</b><span>fiber g</span></div>`;
@@ -1791,7 +1816,7 @@ function detailCardHTML(){
   const opts = f.portions.map((p,i)=>`<option value="${i}" ${st.portion===i?'selected':''}>${esc(p.label)}</option>`).join('')
     + `<option value="-1" ${st.portion===-1?'selected':''}>100 ${b}</option><option value="-2" ${st.portion===-2?'selected':''}>Custom amount (${b})</option>`;
   return `<div class="srccard" id="srcCard">
-    <button class="linkbtn" data-act="db-back" style="padding:0 0 6px">‹ Back to results</button>
+    <button type="button" class="linkbtn" data-act="db-back" style="padding:0 0 6px">‹ Back to results</button>
     <div class="nm">${esc(f.name)}</div>
     <div class="meta">${srcBadge(f)}${f.brand?esc(f.brand):''}${f.brand&&typeLabel(f)?' · ':''}${esc(typeLabel(f))}${f.barcode?` · ${esc(f.barcode)}`:''}</div>
     <div class="row" style="gap:8px;align-items:flex-end">
@@ -1799,15 +1824,28 @@ function detailCardHTML(){
       ${st.portion===-2?`<label class="f" style="width:96px;margin-bottom:8px"><span>Amount (${b})</span><input class="inp" id="customG" inputmode="decimal" value="${esc(st.grams)}"></label>`:''}
     </div>
     <div class="sect" style="margin:2px 0 6px">Per serving</div>
-    <div class="nutgrid" id="nutGrid">${nutGridHTML()}</div>
-    <div class="muted small">Per 100 ${b}: ${fmtN(q.cal)} kcal · ${fmtG(q.p)}g protein · C ${fmtG(q.c)} · F ${fmtG(q.f)} · fiber ${fmtG(q.fib)}. Adjust the number of servings below, then log it. <button class="linkbtn" data-act="jump-nutrients" id="allNutsLink">All nutrients${f.nut100?` (${Object.keys(f.nut100).length})`:''} ↓</button></div>
+    <div class="nutgrid" id="nutGrid">${nutGridHTML(st.form)}</div>
+  </div>`;
+}
+function per100HTML(){
+  const f = UI.sheet.food, q = f.per100, b = f.basis;
+  return `<div class="muted small" id="per100">Per 100 ${b}: ${fmtN(q.cal)} kcal · ${fmtG(q.p)}g protein · C ${fmtG(q.c)} · F ${fmtG(q.f)} · fiber ${fmtG(q.fib)} · <button type="button" class="linkbtn" data-act="jump-nutrients" id="allNutsLink">All nutrients${f.nut100?` (${Object.keys(f.nut100).length})`:''} ↓</button></div>`;
+}
+function pickCardHTML(){   // a food from Recent / My foods
+  const st = UI.sheet, f = st.form, from = st.from==='mine' ? 'mine' : 'recent', m = st.meta||{};
+  return `<div class="srccard" id="srcCard">
+    <button type="button" class="linkbtn" data-act="stab" data-tab="${from}" style="padding:0 0 6px">‹ Back to ${from==='mine'?'My foods':'Recent'}</button>
+    <div class="nm">${esc(f.name)}</div>
+    <div class="meta">${esc(f.serv || '1 serving')}${m.src?` · ${esc(m.src)}`:''}</div>
+    <div class="sect" style="margin:2px 0 6px">Per serving</div>
+    <div class="nutgrid" id="nutGrid">${nutGridHTML(f)}</div>
   </div>`;
 }
 function syncPortionToForm(){ // update fields in place (keeps focus in the custom-amount input)
   applyPortion();
   const fm = $('#foodForm'), f = UI.sheet.form; if(!fm) return;
   ['serv','cal','p','c','f','fib'].forEach(k=>{ fm.elements[k].value = f[k]; fm.elements[k].classList.remove('err'); });
-  $('#nutGrid').innerHTML = nutGridHTML(); updatePreview();
+  updatePreview();
 }
 
 /* --- Cronometer-style nutrient panel (food detail, entry edit/view) and the Nutrition tab --- */
@@ -2719,7 +2757,8 @@ document.addEventListener('click', async ev=>{
     case 'scan-cancel': if(scanStop) scanStop(); break;
     case 'fill': { const f = findFood(el.dataset.src, el.dataset.key); if(!f) break;
       const inFoods = S.foods.some(x=>x.name.trim().toLowerCase()===f.name.trim().toLowerCase());
-      UI.sheet.form = {name:f.name, serv:f.serv||'', servings:f.servings||1, cal:f.cal, p:f.p, c:f.c, f:f.f, fib:f.fib, saveFood:false, inFoods}; UI.sheet.tab='new'; UI.sheet.food=null; UI.sheet.meta = metaOf(f); renderSheet(); break; }
+      UI.sheet.form = {name:f.name, serv:f.serv||'', servings:f.servings||1, cal:f.cal, p:f.p, c:f.c, f:f.f, fib:f.fib, saveFood:false, inFoods}; UI.sheet.from = UI.sheet.tab==='mine' ? 'mine' : 'recent'; UI.sheet.tab='pick'; UI.sheet.food=null; UI.sheet.meta = metaOf(f); renderSheet();
+      { const sb = $('#sheet .sb'); if(sb) sb.scrollTop = 0; } break; }
     case 'quick': { const f = findFood(el.dataset.src, el.dataset.key); if(!f) break;
       const k = UI.date, entry = logEntry({name:f.name, serv:f.serv||'', servings:f.servings||1, cal:f.cal, p:f.p, c:f.c, f:f.f, fib:f.fib, ...metaOf(f)});
       if(!entry){ closeSheet(); render(); break; }
@@ -2781,9 +2820,9 @@ document.addEventListener('submit', ev=>{
 });
 document.addEventListener('input', ev=>{
   const t = ev.target;
-  if(t.closest && t.closest('#foodForm')){ t.classList.remove('err'); if(t.name==='servings') t.closest('.stepper').style.borderColor=''; updatePreview(); }
+  if(t.id==='customG'){ const g = num(t.value); UI.sheet.grams = g>0 ? g : 0; syncPortionToForm(); }   // (inside #foodForm, so checked first)
+  else if(t.closest && t.closest('#foodForm')){ t.classList.remove('err'); if(t.name==='servings') t.closest('.stepper').style.borderColor=''; updatePreview(); }
   else if(t.id==='dbSearch'){ dbQueue(t.value); }
-  else if(t.id==='customG'){ const g = num(t.value); UI.sheet.grams = g>0 ? g : 0; syncPortionToForm(); }
   else if(t.id==='exSearch'){ UI.sheet.q = t.value; $('#exList').innerHTML = exListHTML(); }
   else if(t.id==='exMin' || t.id==='exW'){ t.classList.remove('err'); if(t.id==='exMin'){ UI.sheet.min = t.value; $$('[data-act=x-min]').forEach(c=>c.classList.toggle('on', c.dataset.m===t.value)); } updateExOut(); }
   else if(t.id==='foodSearch'){ UI.sheet.q = t.value; $('#foodList').innerHTML = foodListHTML(); }
@@ -2799,6 +2838,7 @@ document.addEventListener('change', ev=>{
 document.addEventListener('toggle', ev=>{ if(ev.target.id==='wList') UI.wOpen = ev.target.open; else if(ev.target.id==='helper') UI.helperOpen = ev.target.open; }, true);
 document.addEventListener('keydown', ev=>{
   if(ev.key==='Escape'){ if(scanStop) scanStop(); else if($('#dialogRoot').innerHTML) $('#dialogRoot').innerHTML=''; else if(UI.sheet) closeSheet(); }
+  else if(ev.key==='Enter' && ev.target.id==='customG'){ ev.preventDefault(); ev.target.blur(); }
   else if(ev.key==='Enter' && ev.target.id==='dbSearch'){ ev.preventDefault(); dbQueue(ev.target.value, true); }
 });
 window.addEventListener('online', ()=>{ if(UI.sheet && UI.sheet.tab==='search'){ if(UI.sheet.db.status==='offline') UI.sheet.db.status='idle'; paintDb(); } });
