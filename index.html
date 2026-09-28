@@ -136,7 +136,7 @@ button.ringbox:active{background:var(--card2)}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:saturate(1.8) blur(18px);-webkit-backdrop-filter:saturate(1.8) blur(18px);
   border-top:1px solid var(--line);padding:0 var(--sar) var(--sab) var(--sal)}
 /* 4 tabs, each an equal share of the full bar width (inside the left/right safe areas) */
-.tabbar .in{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));height:var(--tabh)}
+.tabbar .in{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));height:var(--tabh)}
 .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:100%;height:100%;padding:0;margin:0;text-align:center;font-size:11px;font-weight:600;color:var(--muted);min-width:0;white-space:nowrap}
 .tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tab.on{color:var(--accent)}
@@ -280,6 +280,45 @@ details.helper[open] summary::after{transform:rotate(90deg)}
 .srccard .nm{font-weight:700;font-size:16px;line-height:1.3;margin:2px 0 3px}
 .srccard .meta{font-size:12px;color:var(--muted);margin-bottom:10px}
 .srccard .inp{background:var(--card)}
+.nutwrap .nsec,.srccard + .nsec{background:var(--card2)}
+.nsec{border-radius:14px;padding:8px 12px 6px;margin-bottom:10px;background:var(--card2)}
+.nsh{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:2px 0 4px}
+.nr{display:grid;grid-template-columns:minmax(0,1fr) auto 56px 36px;gap:8px;align-items:center;font-size:13px;padding:4px 0;border-top:1px solid var(--line)}
+.nsh + .nr{border-top:0}
+.nr .nl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nr.sub .nl{padding-left:10px;color:var(--muted)}
+.nr .nv{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.nr .nb{height:7px;border-radius:4px;background:var(--line);overflow:hidden}
+.nr .nb i{display:block;height:100%;border-radius:4px}
+.nr .np{text-align:right;font-size:11.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.nr.miss .nv{color:var(--muted);font-weight:500}
+.ning p{font-size:12.5px;line-height:1.45;margin:0 0 6px}
+.nnote{margin:4px 0 10px}.nsrc{margin:6px 0 4px}
+.nsum-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.nsum-g div{background:var(--card2);border-radius:12px;padding:10px 4px;text-align:center;min-width:0}
+.nsum-g b{display:block;font-size:18px;font-weight:800;letter-spacing:-.02em}
+.nsum-g span{font-size:10.5px;color:var(--muted);font-weight:600}
+.nsum-g .st-met b{color:var(--good)}.nsum-g .st-over b{color:var(--bad)}.nsum-g .st-under b{color:var(--cal-over)}
+.nover{color:var(--bad);margin:10px 0 0}
+details.nnote{margin:10px 0 0;color:var(--muted)}details.nnote summary{cursor:pointer}details.nnote ul{margin:6px 0 0;padding-left:18px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.st-under{--st:var(--warn)}.st-met,.st-ok{--st:var(--good)}.st-over{--st:var(--bad)}.st-none,.st-miss{--st:var(--muted)}
+.legend .st-under i,.legend .st-met i,.legend .st-over i{background:var(--st)}
+.nsecT h3{margin:0 0 6px;font-size:15px}
+.tr{padding:7px 0;border-top:1px solid var(--line)}
+.nsecT h3 + .tr{border-top:0}
+.tl{display:flex;align-items:baseline;gap:8px;font-size:13.5px}
+.tl b{font-weight:650;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr.sub .tl b{font-weight:500;color:var(--muted);padding-left:10px}
+.tl span{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12.5px}
+.tl span small{color:var(--muted);font-size:11px}
+.tl em{font-style:normal;font-weight:800;font-size:12.5px;min-width:42px;text-align:right;color:var(--st);font-variant-numeric:tabular-nums}
+.tr.st-miss .tl span,.tr.st-miss .tl em{color:var(--muted);font-weight:500}
+.tb{position:relative;height:8px;border-radius:4px;background:var(--line);margin-top:5px;overflow:hidden}
+.tb i{display:block;height:100%;border-radius:4px;background:var(--st)}
+.tr.st-miss .tb{opacity:.5}
+.ntarget{margin:4px 2px 18px;line-height:1.5}
 .nutgrid{display:grid;grid-template-columns:1.2fr 1.2fr 1fr 1fr 1fr;gap:6px;margin:4px 0 6px}
 .nutgrid div{background:var(--card);border-radius:10px;padding:8px 4px;text-align:center}
 .nutgrid b{display:block;font-size:17px;font-weight:800;letter-spacing:-.02em}
@@ -325,6 +364,7 @@ details.pwset summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--
 <div class="fabs hidden" id="fabs"><button class="fab" id="fab" data-act="open-add" aria-label="Log food"><span class="pl">+</span><span class="lg">Log food</span><span class="sm">Food</span></button><button class="fab" id="fabW" data-act="log-weight" aria-label="Log weight"><span class="pl">+</span><span class="lg">Log weight</span><span class="sm">Weight</span></button><button class="fab" id="fabX" data-act="log-exercise" aria-label="Log exercise"><span class="pl">+</span><span>Exercise</span></button></div>
 <nav class="tabbar"><div class="in">
   <button class="tab" data-tab="today"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Today</button>
+  <button class="tab" data-tab="nutrition"><svg viewBox="0 0 24 24"><path d="M4 6h9"/><path d="M4 12h16"/><path d="M4 18h6"/><circle cx="17" cy="6" r="1.4"/><circle cx="14" cy="18" r="1.4"/></svg>Nutrition</button>
   <button class="tab" data-tab="progress"><svg viewBox="0 0 24 24"><path d="M3 20h18"/><path d="M4 15l5-5 4 3 7-7"/><path d="M15 6h5v5"/></svg>Progress</button>
   <button class="tab" data-tab="goals"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg>Goals</button>
   <button class="tab" data-tab="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</button>
@@ -334,6 +374,7 @@ details.pwset summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--
 <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastUndo" class="hidden">Undo</button></div>
 <div id="dialogRoot"></div>
 <script src="config.js"></script>
+<script src="dri.js"></script>
 <script>
 (function(){
 'use strict';
@@ -419,7 +460,7 @@ function normalize(d){
       if(!/^\d{4}-\d{2}-\d{2}$/.test(k) || !Array.isArray(d.entries[k])) continue;
       const list = d.entries[k].filter(e=>e && typeof e==='object').map((e,i)=>{ const ts = +e.ts||Date.now(); if(!MEAL_LABEL[e.meal]) mealFixes++;
         return {id: normId(e.id, seen, k+'|'+i), name: String(e.name||'Food').slice(0,120), meal: fixMeal(e.meal, ts),
-        servings: nz(e.servings)||1, cal:nz(e.cal), p:nz(e.p), c:nz(e.c), f:nz(e.f), fib:nz(e.fib), ts, ...servOf(e)}; });
+        servings: nz(e.servings)||1, cal:nz(e.cal), p:nz(e.p), c:nz(e.c), f:nz(e.f), fib:nz(e.fib), ts, ...servOf(e), ...metaOf(e)}; });
       if(list.length) s.entries[k] = list;
     }
   }
@@ -430,7 +471,7 @@ function normalize(d){
       if(list.length) s.exercise[k] = list;
     }
   }
-  if(Array.isArray(d.foods)) s.foods = d.foods.filter(f=>f&&f.name).map((f,i)=>({id:normId(f.id, seen, 'food|'+i), name:String(f.name).slice(0,120), cal:nz(f.cal), p:nz(f.p), c:nz(f.c), f:nz(f.f), fib:nz(f.fib), servings:nz(f.servings)||1, ...servOf(f)}));
+  if(Array.isArray(d.foods)) s.foods = d.foods.filter(f=>f&&f.name).map((f,i)=>({id:normId(f.id, seen, 'food|'+i), name:String(f.name).slice(0,120), cal:nz(f.cal), p:nz(f.p), c:nz(f.c), f:nz(f.f), fib:nz(f.fib), servings:nz(f.servings)||1, ...servOf(f), ...metaOf(f)}));
   if(Array.isArray(d.weights)){ const byDate = new Map(); d.weights.filter(w=>w && /^\d{4}-\d{2}-\d{2}$/.test(w.date) && nz(w.kg)).forEach(w=>byDate.set(w.date, {date:w.date, kg:nz(w.kg)}));
     s.weights = Array.from(byDate.values()).sort((a,b)=>a.date<b.date?-1:1); }
   return s;
@@ -604,6 +645,124 @@ function normExercise(x, id){
     min: min>0 && min<=1440 ? Math.round(min*10)/10 : null, kcal: kcal>=0 && kcal<20000 ? Math.round(kcal) : 0, ts: +x.ts || Date.now()};
 }
 function servOf(o){ return o && o.serv ? {serv:String(o.serv).slice(0,80)} : {}; }
+/* ---------- nutrients (Cronometer-style detail) ----------
+   Registry: [key, label, unit, section, USDA FDC nutrient ids (first one found wins), Open Food Facts nutriment key].
+   A food's nutrients live in an object keyed by these keys, in these units. A missing key means "the source doesn't report it"
+   (shown as –); 0 means the source reports zero. Macros (kcal, protein, carbs, fat, fiber) stay in their own fields. */
+const NUTS = [
+  ['water','Water','g','general',[1051],null], ['alcohol','Alcohol','g','general',[1018],null], ['caffeine','Caffeine','mg','general',[1057],'caffeine'],
+  ['starch','Starch','g','carbs',[1009],'starch'], ['sugar','Sugars','g','carbs',[2000,1063],'sugars'], ['addedSugar','Added sugars','g','carbs',[1235],'added-sugars'],
+  ['satFat','Saturated','g','lipids',[1258],'saturated-fat'], ['monoFat','Monounsaturated','g','lipids',[1292],'monounsaturated-fat'],
+  ['polyFat','Polyunsaturated','g','lipids',[1293],'polyunsaturated-fat'], ['transFat','Trans fats','g','lipids',[1257],'trans-fat'],
+  ['chol','Cholesterol','mg','lipids',[1253],'cholesterol'], ['omega3','Omega-3','g','lipids',null,'omega-3-fat'], ['omega6','Omega-6','g','lipids',null,'omega-6-fat'],
+  ['cys','Cystine','g','protein',[1216],null], ['his','Histidine','g','protein',[1221],null], ['ile','Isoleucine','g','protein',[1212],null],
+  ['leu','Leucine','g','protein',[1213],null], ['lys','Lysine','g','protein',[1214],null], ['met','Methionine','g','protein',[1215],null],
+  ['phe','Phenylalanine','g','protein',[1217],null], ['thr','Threonine','g','protein',[1211],null], ['trp','Tryptophan','g','protein',[1210],null],
+  ['tyr','Tyrosine','g','protein',[1218],null], ['val','Valine','g','protein',[1219],null],
+  ['b1','B1 (Thiamin)','mg','vit',[1165],'vitamin-b1'], ['b2','B2 (Riboflavin)','mg','vit',[1166],'vitamin-b2'], ['b3','B3 (Niacin)','mg','vit',[1167],'vitamin-pp'],
+  ['b5','B5 (Pantothenic acid)','mg','vit',[1170],'pantothenic-acid'], ['b6','B6 (Pyridoxine)','mg','vit',[1175],'vitamin-b6'], ['b7','B7 (Biotin)','µg','vit',[1176],'biotin'],
+  ['b12','B12 (Cobalamin)','µg','vit',[1178],'vitamin-b12'], ['folate','Folate (DFE)','µg','vit',[1190],'vitamin-b9'], ['choline','Choline','mg','vit',[1180],'choline'],
+  ['vitA','Vitamin A (RAE)','µg','vit',[1106],'vitamin-a'], ['vitC','Vitamin C','mg','vit',[1162],'vitamin-c'], ['vitD','Vitamin D','µg','vit',[1114],'vitamin-d'],
+  ['vitE','Vitamin E','mg','vit',[1109],'vitamin-e'], ['vitK','Vitamin K','µg','vit',[1185],'vitamin-k'],
+  ['ca','Calcium','mg','min',[1087],'calcium'], ['cr','Chromium','µg','min',[1096],'chromium'], ['cu','Copper','mg','min',[1098],'copper'],
+  ['fl','Fluoride','mg','min',[1099],'fluoride'], ['iod','Iodine','µg','min',[1100],'iodine'], ['fe','Iron','mg','min',[1089],'iron'],
+  ['mg','Magnesium','mg','min',[1090],'magnesium'], ['mn','Manganese','mg','min',[1101],'manganese'], ['mo','Molybdenum','µg','min',[1102],'molybdenum'],
+  ['phos','Phosphorus','mg','min',[1091],'phosphorus'], ['k','Potassium','mg','min',[1092],'potassium'], ['se','Selenium','µg','min',[1103],'selenium'],
+  ['na','Sodium','mg','min',[1093],'sodium'], ['zn','Zinc','mg','min',[1095],'zinc']
+].map(([key,label,unit,sec,usda,off])=>({key,label,unit,sec,usda,off}));
+const NUT = Object.fromEntries(NUTS.map(n=>[n.key,n]));
+const MICRO_KEYS = NUTS.filter(n=>n.sec==='vit'||n.sec==='min').map(n=>n.key);
+const MICRO_FULL = 10;   // a food with fewer vitamin/mineral values than this counts as "limited micronutrient data"
+const sig4 = v => v===0 ? 0 : +(+v).toPrecision(4);
+const UNIT_G = {g:1, mg:1e-3, 'µg':1e-6, ug:1e-6};          // grams per unit
+const convUnit = (v, from, to) => { const a = UNIT_G[String(from).toLowerCase()], b = UNIT_G[to]; return a && b ? v*a/b : null; };
+function normNut(o){
+  if(!o || typeof o!=='object' || Array.isArray(o)) return null;
+  const r = {}; let n = 0;
+  // registry order, so equal data always serializes the same (local vs. synced copies compare equal)
+  for(const {key:k} of NUTS){ if(!(k in o)) continue; const x = o[k]; if(typeof x!=='number' && !(typeof x==='string' && x.trim()!=='')) continue;
+    const v = +x; if(isFinite(v) && v>=0 && v<1e7){ r[k] = sig4(v); n++; } }
+  return n ? r : null;
+}
+const scaleNut = (nut, k) => { if(!nut) return null; const r = {}; for(const x of Object.keys(nut)) r[x] = sig4(nut[x]*k); return r; };
+/* extra food details carried by entries, saved foods and recents: nut (per serving), ing (ingredients), src (label), fid (source id) */
+function metaOf(o){
+  const m = {}; if(!o || typeof o!=='object') return m;
+  const n = normNut(o.nut); if(n) m.nut = n;
+  if(o.ing && typeof o.ing==='string' && o.ing.trim()) m.ing = o.ing.trim().slice(0,3000);
+  if(o.src && typeof o.src==='string') m.src = o.src.slice(0,80);
+  if(o.fid && typeof o.fid==='string') m.fid = o.fid.slice(0,60);
+  return m;
+}
+const META_KEYS = ['nut','ing','src','fid'];
+const microCount = nut => nut ? MICRO_KEYS.reduce((a,k)=>a+(k in nut ? 1 : 0), 0) : 0;
+/* USDA FoodData Central: foodNutrients from /foods/search ({nutrientId, value, unitName}; per 100 g) or /food/{id} ({nutrient:{id,unitName}, amount}) */
+function usdaNutMap(f){
+  const m = new Map();
+  for(const x of (f.foodNutrients||[])){
+    const id = x.nutrientId ?? (x.nutrient && x.nutrient.id), v = x.value ?? x.amount, u = x.unitName ?? (x.nutrient && x.nutrient.unitName);
+    if(typeof id==='number' && typeof v==='number' && isFinite(v) && v>=0 && !m.has(id)) m.set(id, {v, unit:String(u||'').toUpperCase()});
+  }
+  return m;
+}
+function usdaNutrients(f){
+  const m = usdaNutMap(f), r = {};
+  const get = (id, unit) => { const x = m.get(id); if(!x) return null; return x.unit==='G'||x.unit==='MG'||x.unit==='UG'||x.unit==='µG' ? convUnit(x.v, x.unit==='µG'?'ug':x.unit, unit) : null; };
+  for(const n of NUTS){ if(!n.usda) continue; for(const id of n.usda){ const v = get(id, n.unit); if(v!=null){ r[n.key] = v; break; } } }
+  if(r.vitD==null){ const iu = m.get(1110); if(iu && iu.unit==='IU') r.vitD = iu.v/40; }                 // vitamin D: 40 IU = 1 µg
+  if(r.folate==null){ const food = get(1187,'µg'), fa = get(1186,'µg'); if(food!=null) r.folate = food + 1.7*(fa||0); } // DFE = food folate + 1.7 × folic acid
+  if(r.folate==null && f.dataType==='Foundation' && !m.has(1186)){ const tot = get(1177,'µg'); if(tot!=null) r.folate = tot; } // Foundation = unfortified whole foods: total folate is all food folate
+  if(r.vitA==null && f.dataType!=='Branded'){                // RAE (IOM 2001) = retinol + β-carotene/12 + (α-carotene + β-cryptoxanthin)/24, when the profile has them
+    const ret = get(1105,'µg'), bc = get(1107,'µg'), ac = get(1108,'µg'), cx = get(1120,'µg');
+    if(bc!=null && (ret!=null || f.dataType==='Foundation')) r.vitA = (ret||0) + bc/12 + ((ac||0) + (cx||0))/24;
+  }
+  const sum = ids => { let s = null; for(const id of ids){ const v = Array.isArray(id) ? (get(id[0],'g') ?? get(id[1],'g')) : get(id,'g'); if(v!=null) s = (s||0)+v; } return s; };
+  const o3 = sum([[1404,1270], 1278, 1272, 1280]);          // ALA (n-3, else 18:3 undifferentiated) + EPA + DHA + DPA
+  const o6 = sum([[1316,1269], 1271, 1321]);                 // linoleic (n-6 c,c, else 18:2 undifferentiated) + arachidonic + GLA
+  if(o3!=null) r.omega3 = o3; if(o6!=null) r.omega6 = o6;
+  return normNut(r);
+}
+/* Open Food Facts: nutriments X_100g are grams per 100 g for mass nutrients (sodium falls back to salt ÷ 2.5) */
+function offNutrients(n){
+  n = n || {}; const r = {};
+  const v = k => { const x = typeof n[k]==='string' ? parseFloat(n[k]) : n[k]; return typeof x==='number' && isFinite(x) && x>=0 && x<=100 ? x : null; };
+  for(const nu of NUTS){ if(!nu.off) continue; let g = v(nu.off+'_100g');
+    if(g==null && nu.key==='folate') g = v('folates_100g');
+    if(g==null && nu.key==='na'){ const s = v('salt_100g'); if(s!=null) g = s/2.5; }
+    if(g!=null) r[nu.key] = convUnit(g, 'g', nu.unit); }
+  return normNut(r);
+}
+/* Targets. Micronutrients: NIH ODS / National Academies DRIs (dri.js) for the goal helper's sex + age; FDA Daily Values if unset.
+   Calories, protein, carbs, fat (and fiber, if set) come from the user's Goals. Each target: {goal?, ul?, kind}. */
+const ageBandLabel = b => b[1]>=200 ? `${b[0]}+` : `${b[0]}–${b[1]}`;
+function latestKg(){ const w = S.weights; return w.length ? w[w.length-1].kg : null; }
+function nutTargets(k){
+  const D = window.NDLZ_DRI, pr = S.settings.profile||{}, g = G(), T = {};
+  const sex = pr.sex==='m'||pr.sex==='f' ? pr.sex : null, age = +pr.age||0;
+  let label = '', basis = 'none';
+  if(D && sex && age){
+    let i = D.BANDS.findIndex(b=>age>=b[0] && age<=b[1]); if(i<0) i = age<D.BANDS[0][0] ? 0 : D.BANDS.length-1;
+    for(const key of Object.keys(D.REC)){ const [kind, m, f] = D.REC[key]; T[key] = {goal:(sex==='m'?m:f)[i], kind}; }
+    for(const key of Object.keys(D.UL)) T[key] = {...(T[key]||{kind:'UL'}), ul:D.UL[key][i]};
+    const kg = latestKg();
+    if(age>=19 && kg) for(const [aa, perKg] of Object.entries(D.AMINO_PER_KG)) T[aa] = {goal:perKg*kg/1000, kind:'RDA'};
+    if(age>=19) T.caffeine = {ul:D.CAFFEINE_LIMIT, kind:'limit'};
+    const [sf, sfk] = D.PCT_KCAL_LIMIT.satFat, [as, ask] = D.PCT_KCAL_LIMIT.addedSugar;
+    T.satFat = {ul:g.calories*sf/sfk, kind:'limit'}; T.addedSugar = {ul:g.calories*as/ask, kind:'limit'}; T.chol = {ul:D.CHOL_LIMIT, kind:'limit'};
+    label = `NIH DRI for ${sex==='m'?'male':'female'} ${ageBandLabel(D.BANDS[i])}`; basis = 'dri';
+  } else if(D){
+    for(const key of Object.keys(D.FDA)) if(!['protein','fat','carbs'].includes(key)) T[key] = {goal:D.FDA[key], kind:'DV'};
+    for(const key of Object.keys(D.FDA_LIMIT)) T[key] = {ul:D.FDA_LIMIT[key], kind:'limit'};
+    T.caffeine = {ul:D.CAFFEINE_LIMIT, kind:'limit'};
+    label = 'FDA Daily Values'; basis = 'fda';
+  }
+  T.cal = {goal:g.calories + (k && S.settings.eatBack!==false ? burnedOn(k) : 0), kind:'goal'};
+  T.p = {goal:g.protein, kind:'goal'};
+  if(g.carbs) T.c = {goal:g.carbs, kind:'goal'};
+  if(g.fat) T.f = {goal:g.fat, kind:'goal'};
+  T.fib = g.fiber ? {goal:g.fiber, kind:'goal'} : T.fiber; delete T.fiber;
+  return {T, label, basis, sex, age};
+}
 function load(){ try { return normalize(JSON.parse(localStorage.getItem(KEY))); } catch(e){ return defaults(); } }
 let S = load();
 function save(){
@@ -685,9 +844,9 @@ function recentFoods(){
     for(const e of S.entries[k]){
       const id = e.name.trim().toLowerCase();
       const m = map.get(id);
-      const vals = {name:e.name,cal:e.cal,p:e.p,c:e.c,f:e.f,fib:e.fib,servings:e.servings,ts:e.ts,serv:e.serv||''};
+      const vals = {name:e.name,cal:e.cal,p:e.p,c:e.c,f:e.f,fib:e.fib,servings:e.servings,ts:e.ts,serv:e.serv||'',...metaOf(e)};
       if(!m) map.set(id,{key:id, count:1, ...vals});
-      else { m.count++; if(e.ts>m.ts) Object.assign(m,vals); }
+      else if(e.ts>m.ts) map.set(id,{key:id, count:m.count+1, ...vals}); else m.count++;
     }
   }
   return Array.from(map.values());
@@ -748,7 +907,7 @@ function render(){
   $('#fab').classList.toggle('hidden', UI.view!=='today'); $('#fabX').classList.toggle('hidden', UI.view!=='today');
   const fw = $('#fabW'), fx = $('#fabX'), fut = UI.view==='today' && isPlanned(UI.date); fw.disabled = fut; fw.title = fut ? 'Weight can only be logged for today' : '';
   fx.disabled = fut; fx.title = fut ? 'Exercise can only be logged for today' : '';
-  ({today:renderToday, progress:renderProgress, goals:renderGoals, settings:renderSettings})[UI.view]();
+  ({today:renderToday, nutrition:renderNutrition, progress:renderProgress, goals:renderGoals, settings:renderSettings})[UI.view]();
 }
 
 /* ---------- Today ---------- */
@@ -839,12 +998,7 @@ function renderToday(){
   const list = S.entries[k]||[];
   const showYear = parseKey(k).getFullYear()!==new Date().getFullYear();
   let html = `
-  <div class="datenav">
-    <button class="arrow" data-act="day" data-d="-1" aria-label="Previous day">‹</button>
-    <button class="datelabel" data-act="pick-date"><b>${esc(title)}${planned?'<span class="tag planned">Planned</span>':locked?'<span class="tag locked">🔒 Locked</span>':''}</b><span>${esc(fmtDate(k, showYear?{weekday:'short',month:'long',day:'numeric',year:'numeric'}:{weekday:'short',month:'long',day:'numeric'}))}</span>
-      <input type="date" id="datePick" value="${k}" max="${tomorrowKey()}" tabindex="-1" aria-hidden="true"></button>
-    <button class="arrow" data-act="day" data-d="1" aria-label="${isToday?'Tomorrow (plan ahead)':'Next day'}" ${planned?'disabled':''}>›</button>
-  </div>
+  ${dayNavHTML(k)}
   ${planned?`<div class="plannote" id="planNote">Planning ahead — these count toward your streak and progress once tomorrow arrives. · <button class="linkbtn" data-act="goto-today">Back to today</button></div>`
     : locked?`<div class="plannote" id="lockNote">Past days are locked — view only. · <button class="linkbtn" data-act="goto-today">Jump to today →</button></div>`:''}
   ${!S.settings.goalsSet?`<button class="banner" data-act="tab" data-tab="goals"><span style="font-size:20px">🎯</span><span>Using default goals (2,000 kcal · 150 g protein). <b>Set your goals →</b></span></button>`:syncPromptHTML()}
@@ -866,7 +1020,7 @@ function renderToday(){
     html += `<section class="card meal" data-meal="${m.id}">
       <div class="meal-h"><h3>${m.label}</h3>${items.length?`<span class="tot">${fmtN(mt.cal)} kcal · ${fmtG(mt.p)}g P</span>`:''}<span class="spacer"></span>
       ${locked?'':`<button class="addbtn" data-act="open-add" data-meal="${m.id}" aria-label="Add to ${m.label}">+</button>`}</div>
-      ${items.map(e=>{ const x=entryTotals(e), tg = locked?'div':'button'; return `<${tg} class="entry"${locked?'':` data-act="edit" data-id="${e.id}"`}>
+      ${items.map(e=>{ const x=entryTotals(e), tg = 'button'; return `<${tg} class="entry"${locked?` data-act="view-entry" data-id="${e.id}" title="View nutrients"`:` data-act="edit" data-id="${e.id}"`}>
         <div class="nm"><b>${esc(e.name)}</b><span>${esc(servText(e))}C ${fmtG(x.c)} · F ${fmtG(x.f)}${x.fib?` · Fiber ${fmtG(x.fib)}`:''}</span></div>
         <div class="kc">${fmtN(x.cal)} kcal<span>${fmtG(x.p)}g protein</span></div></${tg}>`; }).join('')}
       ${!items.length?`<div class="empty">Nothing logged</div>`:''}
@@ -1038,7 +1192,7 @@ function openAdd(meal){
 function openEdit(id){
   const e = (S.entries[UI.date]||[]).find(x=>x.id===id); if(!e || denyFood(UI.date)) return;
   const inFoods = S.foods.some(f=>f.name.trim().toLowerCase()===e.name.trim().toLowerCase());
-  openSheet({mode:'edit', id, meal:e.meal, form:{name:e.name,serv:e.serv||'',servings:e.servings,cal:e.cal,p:e.p,c:e.c,f:e.f,fib:e.fib,saveFood:false,inFoods}});
+  openSheet({mode:'edit', id, meal:e.meal, meta:metaOf(e), form:{name:e.name,serv:e.serv||'',servings:e.servings,cal:e.cal,p:e.p,c:e.c,f:e.f,fib:e.fib,saveFood:false,inFoods}});
 }
 const macroLine = f => `${fmtN(f.cal)} kcal · <b style="color:var(--pro)">${fmtG(f.p)}g P</b> · C ${fmtG(f.c)} · F ${fmtG(f.f)}`;
 function foodRow(f, src){
@@ -1052,6 +1206,7 @@ function renderSheet(){
   const st = UI.sheet; if(!st) return;
   if(st.mode==='weight'){ $('#sheetTitle').textContent = 'Weight · ' + (st.date===todayKey() ? 'Today' : fmtDate(st.date)); $('#sheetBody').innerHTML = quickWeightHTML(st); return; }
   if(st.mode==='exercise'){ $('#sheetTitle').textContent = st.editId ? 'Edit exercise' : 'Exercise · Today'; $('#sheetBody').innerHTML = exerciseSheetHTML(st); updateExOut(); return; }
+  if(st.mode==='view'){ const e = (S.entries[st.k]||[]).find(x=>x.id===st.id); $('#sheetTitle').textContent = e ? e.name : 'Entry'; $('#sheetBody').innerHTML = entryViewHTML(st); return; }
   if(st.mode==='auth'){ $('#sheetTitle').textContent = st.tab==='signup' ? 'Create your NDLZ account' : 'Sign in to NDLZ'; $('#sheetBody').innerHTML = authSheetHTML(st); return; }
   $('#sheetTitle').textContent = st.mode==='edit' ? 'Edit entry' : `Add to ${MEAL_LABEL[st.meal]}`;
   let h = `<div class="chips" style="margin-bottom:12px">${MEALS.map(m=>`<button class="chip ${st.meal===m.id?'on':''}" data-act="meal" data-meal="${m.id}">${m.label}</button>`).join('')}</div>`;
@@ -1089,7 +1244,7 @@ function renderSheet(){
       ${f.inFoods?'':`<label class="check"><input type="checkbox" name="saveFood" ${f.saveFood?'checked':''}> Save to My foods</label>`}
       <button class="btn primary block" type="submit">${st.mode==='edit'?'Save changes':`Add to ${MEAL_LABEL[st.meal]}`}</button>
       ${st.mode==='edit'?`<button class="btn danger block" type="button" data-act="delete-entry" style="margin-top:10px">Delete entry</button>`:''}
-    </form>`;
+    </form>${sheetPanelWrapHTML()}`;
   }
   $('#sheetBody').innerHTML = h;
   if($('#foodForm')) updatePreview();
@@ -1123,24 +1278,26 @@ function readForm(){
 function updatePreview(){
   const f = readForm(); const s = f.servings>0 ? f.servings : 1;
   $('#preview').innerHTML = `<span class="muted">Total${s!==1?` (${r1(s)}×)`:''}:</span><span><b style="color:var(--cal)">${fmtN(nz(f.cal)*s)}</b> kcal</span><span><b style="color:var(--pro)">${fmtG(nz(f.p)*s)}g</b> protein</span><span>C ${fmtG(nz(f.c)*s)}g</span><span>F ${fmtG(nz(f.f)*s)}g</span>`;
+  paintSheetPanel();
 }
 function upsertFood(e){
   const key = e.name.trim().toLowerCase();
   const ex = S.foods.find(f=>f.name.trim().toLowerCase()===key);
-  const data = {name:e.name, cal:e.cal, p:e.p, c:e.c, f:e.f, fib:e.fib, servings:1, ...servOf(e)};
+  const data = {name:e.name, cal:e.cal, p:e.p, c:e.c, f:e.f, fib:e.fib, servings:1, ...servOf(e), ...metaOf(e)};
   if(ex && !e.serv) delete ex.serv;
+  if(ex) META_KEYS.forEach(x=>{ if(!(x in data)) delete ex[x]; });   // never keep another food's nutrients under this name
   if(ex) Object.assign(ex,data); else S.foods.push({id:uid(), ...data});
 }
 function logEntry(e, k = UI.date){
   if(denyFood(k)) return null;
-  const entry = {id:uid(), name:e.name||'Quick add', meal:UI.sheet?UI.sheet.meal:defaultMeal(), servings:e.servings||1, cal:nz(e.cal), p:nz(e.p), c:nz(e.c), f:nz(e.f), fib:nz(e.fib), ts:Date.now(), ...servOf(e)};
+  const entry = {id:uid(), name:e.name||'Quick add', meal:UI.sheet?UI.sheet.meal:defaultMeal(), servings:e.servings||1, cal:nz(e.cal), p:nz(e.p), c:nz(e.c), f:nz(e.f), fib:nz(e.fib), ts:Date.now(), ...servOf(e), ...metaOf(e)};
   (S.entries[k] = S.entries[k]||[]).push(entry);
   save();
   return entry;
 }
 function restoreEntry(k,e){ if(denyFood(k)) return; const l = S.entries[k] = S.entries[k]||[]; if(!l.some(x=>x.id===e.id)) l.push(e); save(); }
 function updateEntry(k,id,data,meal){ if(denyFood(k)) return false; const e = (S.entries[k]||[]).find(x=>x.id===id); if(!e) return false;
-  Object.assign(e, data, {meal}); if(!data.serv) delete e.serv; save(); return true; }
+  Object.assign(e, data, {meal}); if(!data.serv) delete e.serv; META_KEYS.forEach(x=>{ if(!(x in data)) delete e[x]; }); save(); return true; }
 function removeEntry(k,id){
   if(denyFood(k)) return null;
   const list = S.entries[k]||[]; const i = list.findIndex(e=>e.id===id); if(i<0) return null;
@@ -1154,7 +1311,7 @@ function submitForm(ev){
   if(!isFinite(cal) || cal<0){ fm.elements.cal.classList.add('err'); bad = true; }
   if(!(f.servings>0)){ fm.elements.servings.closest('.stepper').style.borderColor='var(--bad)'; bad = true; }
   if(bad){ toast(!isFinite(cal)||cal<0 ? 'Enter calories (0 is OK)' : 'Servings must be more than 0'); return; }
-  const data = {name:f.name||'Quick add', servings:f.servings, cal:nz(f.cal), p:nz(f.p), c:nz(f.c), f:nz(f.f), fib:nz(f.fib), ...servOf(f)};
+  const data = {name:f.name||'Quick add', servings:f.servings, cal:nz(f.cal), p:nz(f.p), c:nz(f.c), f:nz(f.f), fib:nz(f.fib), ...servOf(f), ...metaOf(st.meta)};
   if(f.saveFood && f.name) upsertFood(data);
   if(st.mode==='edit'){
     if(!updateEntry(UI.date, st.id, data, st.meal)){ closeSheet(); render(); return; }
@@ -1313,7 +1470,7 @@ const USDA_SEARCH = 'https://api.nal.usda.gov/fdc/v1/foods/search';
 const uenc = s => encodeURIComponent(s).replace(/[()!'*]/g, c=>'%'+c.charCodeAt(0).toString(16).toUpperCase());
 const OFF_SEARCH_HOSTS = ['https://us.openfoodfacts.org','https://us.openfoodfacts.org','https://world.openfoodfacts.org']; // retry US once, then world
 const OFF_PRODUCT = 'https://world.openfoodfacts.org/api/v2/product/';
-const OFF_FIELDS = 'code,product_name,product_name_en,generic_name,brands,nutriments,serving_size,serving_quantity,serving_quantity_unit,product_quantity,product_quantity_unit,quantity,countries_tags';
+const OFF_FIELDS = 'code,product_name,product_name_en,generic_name,brands,nutriments,serving_size,serving_quantity,serving_quantity_unit,product_quantity,product_quantity_unit,quantity,countries_tags,ingredients_text,ingredients_text_en';
 const USDA_GENERIC = ['Foundation','SR Legacy','Survey (FNDDS)'];
 const CAN_SCAN = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && (location.protocol==='https:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)); // native BarcodeDetector or bundled ZXing
 /* USDA key: the app's shared key from config.js (usdaKey); DEMO_KEY only if config.js has none */
@@ -1374,7 +1531,8 @@ function fromUSDA(f){
     add({label:`${t} (${r1(gw)} g)`, grams:gw});
   });
   return {src:'usda', id:'usda:'+f.fdcId, name:capFirst(titleIfCaps(f.description||'Food')), brand:titleIfCaps(f.brandName||f.brandOwner||''),
-    dataType:f.dataType||'USDA', basis, per100, portions:portions.slice(0,12), barcode:String(f.gtinUpc||'')};
+    dataType:f.dataType||'USDA', basis, per100, portions:portions.slice(0,12), barcode:String(f.gtinUpc||''),
+    nut100:usdaNutrients(f), ing:String(f.ingredients||'').trim().slice(0,3000)};
 }
 function fromOFF(p){
   if(!p) return null;
@@ -1400,7 +1558,8 @@ function fromOFF(p){
   let brand = Array.isArray(p.brands) ? p.brands[0] : String(p.brands||'').split(',')[0];
   brand = String(brand||'').trim(); if(brand && brand===brand.toLowerCase()) brand = brand.replace(/(^|\s)([a-z])/g,(m,a,b)=>a+b.toUpperCase());
   return {src:'off', id:'off:'+p.code, name:capFirst(name), brand:titleIfCaps(brand), dataType:'Open Food Facts', basis,
-    per100:{cal, p:pr||0, c:cb||0, f:ft||0, fib:v('fiber_100g')||0}, portions, barcode:String(p.code||''), us:(p.countries_tags||[]).includes('en:united-states')};
+    per100:{cal, p:pr||0, c:cb||0, f:ft||0, fib:v('fiber_100g')||0}, portions, barcode:String(p.code||''), us:(p.countries_tags||[]).includes('en:united-states'),
+    nut100:offNutrients(n), ing:String(p.ingredients_text_en || p.ingredients_text || '').trim().slice(0,3000)};
 }
 
 /* --- searching --- */
@@ -1619,6 +1778,7 @@ function applyPortion(){
   const st = UI.sheet, p = currentPortion(), n = portionNutr(st.food, p);
   const rm = x => x<10 ? Math.round(x*100)/100 : r1(x);
   Object.assign(st.form, {serv:p.label, cal:r0(n.cal), p:rm(n.p), c:rm(n.c), f:rm(n.f), fib:rm(n.fib)});
+  st.meta = foodMeta(st.food, p);
 }
 function nutGridHTML(){
   const n = portionNutr(UI.sheet.food, currentPortion());
@@ -1640,7 +1800,7 @@ function detailCardHTML(){
     </div>
     <div class="sect" style="margin:2px 0 6px">Per serving</div>
     <div class="nutgrid" id="nutGrid">${nutGridHTML()}</div>
-    <div class="muted small">Per 100 ${b}: ${fmtN(q.cal)} kcal · ${fmtG(q.p)}g protein · C ${fmtG(q.c)} · F ${fmtG(q.f)} · fiber ${fmtG(q.fib)}. Adjust the number of servings below, then log it.</div>
+    <div class="muted small">Per 100 ${b}: ${fmtN(q.cal)} kcal · ${fmtG(q.p)}g protein · C ${fmtG(q.c)} · F ${fmtG(q.f)} · fiber ${fmtG(q.fib)}. Adjust the number of servings below, then log it. <button class="linkbtn" data-act="jump-nutrients" id="allNutsLink">All nutrients${f.nut100?` (${Object.keys(f.nut100).length})`:''} ↓</button></div>
   </div>`;
 }
 function syncPortionToForm(){ // update fields in place (keeps focus in the custom-amount input)
@@ -1648,6 +1808,157 @@ function syncPortionToForm(){ // update fields in place (keeps focus in the cust
   const fm = $('#foodForm'), f = UI.sheet.form; if(!fm) return;
   ['serv','cal','p','c','f','fib'].forEach(k=>{ fm.elements[k].value = f[k]; fm.elements[k].classList.remove('err'); });
   $('#nutGrid').innerHTML = nutGridHTML(); updatePreview();
+}
+
+/* --- Cronometer-style nutrient panel (food detail, entry edit/view) and the Nutrition tab --- */
+const srcLabelOf = f => f.src==='usda' ? `USDA FoodData Central · ${typeLabel(f)||'USDA'}` : 'Open Food Facts';
+function foodMeta(food, portion){
+  const m = {src:srcLabelOf(food), fid:food.id};
+  if(food.ing) m.ing = food.ing;
+  if(food.nut100 && portion && portion.grams>0) m.nut = scaleNut(food.nut100, portion.grams/100);
+  return metaOf(m);
+}
+const NUT_SECTIONS = [
+  ['general','General','var(--cal)', [['cal','Energy','kcal'],'alcohol','caffeine','water']],
+  ['carbs','Carbohydrates','var(--carb)', [['c','Carbs','g'],['fib','Fiber','g',1],'starch','sugar','addedSugar',['net','Net carbs','g',1]]],
+  ['lipids','Lipids','var(--fat)', [['f','Fat','g'],'satFat','monoFat','polyFat','transFat','chol','omega3','omega6']],
+  ['protein','Protein','var(--pro)', [['p','Protein','g'],'cys','his','ile','leu','lys','met','phe','thr','trp','tyr','val']],
+  ['vit','Vitamins','var(--accent)', ['b1','b2','b3','b5','b6','b7','b12','folate','choline','vitA','vitC','vitD','vitE','vitK']],
+  ['min','Minerals','var(--fib)', ['ca','cr','cu','fl','iod','fe','mg','mn','mo','phos','k','se','na','zn']]
+].map(([id,title,color,rows])=>({id, title, color, rows:rows.map(r=>typeof r==='string' ? {key:r, label:NUT[r].label, unit:NUT[r].unit, sub:NUT[r].sec!=='vit'&&NUT[r].sec!=='min'&&!['alcohol','caffeine','water'].includes(r)} : {key:r[0], label:r[1], unit:r[2], sub:!!r[3]})}));
+/* values for a set of entries-like records {cal,p,c,f,fib,nut,servings}: macros always, nutrients only where some record has them */
+function nutValues(recs){
+  const v = {cal:0,p:0,c:0,f:0,fib:0}, seen = {};
+  for(const e of recs){ const s = e.servings||1; v.cal += nz(e.cal)*s; v.p += nz(e.p)*s; v.c += nz(e.c)*s; v.f += nz(e.f)*s; v.fib += nz(e.fib)*s;
+    if(e.nut) for(const k of Object.keys(e.nut)){ v[k] = (v[k]||0) + e.nut[k]*s; seen[k] = (seen[k]||0)+1; } }
+  v.net = Math.max(0, v.c - v.fib);
+  return {v, seen};
+}
+function fmtAmt(x){ if(x===0) return '0'; if(x<0.01) return '<0.01'; if(x<1) return String(Math.round(x*100)/100); if(x<100) return String(r1(x)); return fmtN(x); }
+const fmtTgt = x => x>=100 ? fmtN(x) : String(Math.round(x*100)/100);
+/* status of a value against its target: under / met / over (above the UL or a limit) / ok (under a limit) / none */
+function nutStatus(x, t){
+  if(x==null || !t) return {st:'none', pct:null};
+  if(t.goal>0){ const pct = x/t.goal*100; return {st: t.ul && x>t.ul ? 'over' : pct>=99.5 ? 'met' : 'under', pct}; }
+  if(t.ul>0){ const pct = x/t.ul*100; return {st: x>t.ul ? 'over' : 'ok', pct}; }
+  return {st:'none', pct:null};
+}
+/* compact rows for one food (amount · unit · %DV bar) */
+function nutPanelHTML(vals, T, opts={}){
+  const {v} = vals;
+  let h = '';
+  for(const sec of NUT_SECTIONS){
+    h += `<div class="nsec" data-sec="${sec.id}"><div class="nsh">${sec.title}</div>`;
+    for(const r of sec.rows){
+      const has = r.key in v && v[r.key]!=null, x = has ? v[r.key] : null, t = T[r.key], s = nutStatus(x, t);
+      const pct = s.pct==null ? '' : `${Math.round(s.pct)}%`, w = s.pct==null ? 0 : Math.min(100, s.pct);
+      const col = s.st==='over' ? 'var(--bad)' : sec.color;
+      h += `<div class="nr${has?'':' miss'}${r.sub?' sub':''}" data-k="${r.key}"><span class="nl">${esc(r.label)}</span><span class="nv">${has?`${fmtAmt(x)} ${r.unit}`:'–'}</span>`
+        + `<span class="nb">${has&&t?`<i style="width:${w}%;background:${col}"></i>`:''}</span><span class="np"${s.st==='over'?' style="color:var(--bad)"':''}>${has?pct:''}</span></div>`;
+    }
+    h += `</div>`;
+  }
+  return h;
+}
+function foodInfoHTML(meta){
+  const m = meta||{}, n = microCount(m.nut);
+  const note = !m.nut ? 'No micronutrient data for this food: only the macros above were entered or saved. Vitamins and minerals show as – (not tracked).'
+    : n < MICRO_FULL ? `This source lists ${n} vitamin/mineral value${n===1?'':'s'} (typical for a Nutrition Facts label). Nutrients it doesn't report show as – (not tracked), not 0.` : '';
+  return `${note?`<p class="muted small nnote">${note}</p>`:''}
+    ${m.ing?`<div class="nsec ning" id="ingredients"><div class="nsh">Ingredients</div><p>${esc(m.ing)}</p></div>`:''}
+    <p class="muted small nsrc" id="nutSource">Source: ${esc(m.src||'Entered manually')}${m.fid&&/^usda:/.test(m.fid)?` (FDC ${esc(m.fid.slice(5))})`:m.fid&&/^off:/.test(m.fid)?` (barcode ${esc(m.fid.slice(4))})`:''}</p>`;
+}
+/* the panel inside the add/edit sheet: amounts for the current serving × number of servings, from the form's macros + the food's nutrients */
+function sheetPanelVals(){
+  const st = UI.sheet, fm = $('#foodForm'); if(!fm) return null;
+  const f = readForm(), s = f.servings>0 ? f.servings : 1;
+  return nutValues([{cal:f.cal, p:f.p, c:f.c, f:f.f, fib:f.fib, nut:st.meta && st.meta.nut, servings:s}]);
+}
+function sheetPanelTitle(){ const f = readForm(), s = f.servings>0 ? f.servings : 1; return `Nutrients for ${s!==1?`${r1(s)} × `:''}${esc(f.serv || (s!==1?'servings':'1 serving'))}`; }
+function paintSheetPanel(){
+  const el = $('#nutPanel'); if(!el) return; const vals = sheetPanelVals(); if(!vals) return;
+  el.innerHTML = nutPanelHTML(vals, nutTargets().T); const t = $('#nutPanelTitle'); if(t) t.innerHTML = sheetPanelTitle();
+}
+function sheetPanelWrapHTML(){
+  const st = UI.sheet; if(!(st.mode==='edit' || (st.tab==='detail' && st.food) || st.meta)) return '';
+  const tg = nutTargets();
+  return `<section class="nutwrap" id="nutWrap"><div class="sect" id="nutPanelTitle" style="margin-top:18px"></div>
+    <p class="muted small" style="margin:2px 0 8px">% of your daily targets · ${esc(tg.label || 'no targets')}</p>
+    <div id="nutPanel"></div>${foodInfoHTML(st.meta)}</section>`;
+}
+/* read-only detail for an entry on a past (locked) day */
+function openEntryView(k, id){
+  const e = (S.entries[k]||[]).find(x=>x.id===id); if(!e) return;
+  openSheet({mode:'view', k, id});
+}
+function entryViewHTML(st){
+  const e = (S.entries[st.k]||[]).find(x=>x.id===st.id); if(!e) return '<div class="empty">Entry not found.</div>';
+  const s = e.servings||1, m = metaOf(e);
+  return `<div class="srccard"><div class="nm">${esc(e.name)}</div><div class="meta">${esc(MEAL_LABEL[e.meal]||'')} · ${esc(fmtDate(st.k))} · ${s!==1?`${r1(s)} × `:''}${esc(e.serv||(s!==1?'servings':'1 serving'))}</div>
+    <div class="muted small">🔒 Past days are locked: view only.</div></div>
+    <div class="sect">Nutrients for this entry</div><p class="muted small" style="margin:2px 0 8px">% of your daily targets · ${esc(nutTargets().label||'no targets')}</p>
+    <div id="nutPanel">${nutPanelHTML(nutValues([e]), nutTargets().T)}</div>${foodInfoHTML(m)}`;
+}
+
+/* ---------- Nutrition tab ---------- */
+function dayNavHTML(k){
+  const isToday = k===todayKey(), planned = isPlanned(k), locked = isPast(k);
+  const title = isToday ? 'Today' : planned ? 'Tomorrow' : (k===addDays(todayKey(),-1) ? 'Yesterday' : fmtDate(k,{weekday:'long'}));
+  const showYear = parseKey(k).getFullYear()!==new Date().getFullYear();
+  return `<div class="datenav">
+    <button class="arrow" data-act="day" data-d="-1" aria-label="Previous day">‹</button>
+    <button class="datelabel" data-act="pick-date"><b>${esc(title)}${planned?'<span class="tag planned">Planned</span>':locked?'<span class="tag locked">🔒 Locked</span>':''}</b><span>${esc(fmtDate(k, showYear?{weekday:'short',month:'long',day:'numeric',year:'numeric'}:{weekday:'short',month:'long',day:'numeric'}))}</span>
+      <input type="date" id="datePick" value="${k}" max="${tomorrowKey()}" tabindex="-1" aria-hidden="true"></button>
+    <button class="arrow" data-act="day" data-d="1" aria-label="${isToday?'Tomorrow (plan ahead)':'Next day'}" ${planned?'disabled':''}>›</button>
+  </div>`;
+}
+function dayNutrition(k){
+  const list = S.entries[k]||[], vals = nutValues(list);
+  const limited = list.filter(e=>microCount(e.nut) < MICRO_FULL);
+  return {list, vals, limited};
+}
+function tabRowHTML(r, x, t, color){
+  const has = x!=null, s = nutStatus(x, t);
+  const amt = !has ? '–' : t && t.goal>0 ? `${fmtAmt(x)} / ${fmtTgt(t.goal)} ${r.unit}${t.ul?` <small>· max ${fmtTgt(t.ul)}</small>`:''}` : t && t.ul>0 ? `${fmtAmt(x)} ${r.unit} <small>· max ${fmtTgt(t.ul)}</small>` : `${fmtAmt(x)} ${r.unit}`;
+  const w = s.pct==null ? 0 : Math.min(100, s.pct);
+  return `<div class="tr st-${has?s.st:'miss'}${r.sub?' sub':''}" data-k="${r.key}"><div class="tl"><b>${esc(r.label)}</b><span>${amt}</span><em>${has && s.pct!=null ? Math.round(s.pct)+'%' : has ? '' : 'no data'}</em></div>
+    ${t && (t.goal>0 || t.ul>0) ? `<div class="tb">${has && s.pct!=null ? `<i style="width:${w}%"></i>` : ''}</div>` : ''}</div>`;
+}
+function renderNutrition(){
+  if(UI.date > tomorrowKey()) UI.date = tomorrowKey();
+  const k = UI.date, planned = isPlanned(k);
+  setHeader('Nutrition', '', '');
+  const {list, vals, limited} = dayNutrition(k), tg = nutTargets(k), T = tg.T, v = vals.v;
+  const count = sec => { let met = 0, n = 0, over = []; for(const r of NUT_SECTIONS.find(s=>s.id===sec).rows){ const t = T[r.key]; if(!t || !(t.goal>0)) continue; n++;
+      const x = r.key in v ? v[r.key] : null, s = nutStatus(x, t); if(s.st==='met' || s.st==='over') met++; } return {met, n}; };
+  const overs = []; for(const sec of NUT_SECTIONS) for(const r of sec.rows){ const x = r.key in v ? v[r.key] : null; if(nutStatus(x, T[r.key]).st==='over') overs.push(r.label); }
+  const vit = count('vit'), min = count('min'), calS = nutStatus(v.cal, T.cal), proS = nutStatus(v.p, T.p);
+  let html = dayNavHTML(k);
+  if(planned) html += `<div class="plannote" id="planNote">Preview of tomorrow's planned food. · <button class="linkbtn" data-act="goto-today">Back to today</button></div>`;
+  html += `<section class="card nsum" id="nutSummary">
+    <div class="nsum-g">
+      <div class="st-${calS.st}"><b>${Math.round(calS.pct||0)}%</b><span>Energy</span></div>
+      <div class="st-${proS.st}"><b>${Math.round(proS.pct||0)}%</b><span>Protein</span></div>
+      <div id="vitMet" class="${vit.met===vit.n&&vit.n?'st-met':''}"><b>${vit.met}/${vit.n}</b><span>Vitamins met</span></div>
+      <div id="minMet" class="${min.met===min.n&&min.n?'st-met':''}"><b>${min.met}/${min.n}</b><span>Minerals met</span></div>
+    </div>
+    ${overs.length?`<p class="small nover" id="nutOver">Over the limit: <b>${esc(overs.join(', '))}</b></p>`:''}
+    ${!list.length ? `<p class="muted small" id="nutNote" style="margin:10px 0 0">Nothing logged ${k===todayKey()?'yet today':planned?'for tomorrow yet':'on this day'}.</p>`
+      : limited.length ? `<details class="small nnote" id="nutNote"><summary><b>${limited.length} of ${list.length} food${list.length===1?'':'s'}</b> ${limited.length===1?'has':'have'} limited or no micronutrient data, so vitamin and mineral totals may read low.</summary>
+        <ul>${limited.map(e=>`<li>${esc(e.name)} <span class="muted">· ${!e.nut?'no nutrient data (entered manually or logged before full tracking)':`${microCount(e.nut)} vitamins/minerals listed`}</span></li>`).join('')}</ul></details>`
+      : `<p class="muted small" id="nutNote" style="margin:10px 0 0">All ${list.length} food${list.length===1?'':'s'} have full micronutrient data.</p>`}
+    <div class="legend small"><span class="st-under"><i></i>Under target</span><span class="st-met"><i></i>Met</span><span class="st-over"><i></i>Over limit</span></div>
+  </section>`;
+  for(const sec of NUT_SECTIONS){
+    html += `<section class="card nsecT" id="nsec-${sec.id}"><h3>${sec.title}</h3>`;
+    for(const r of sec.rows) html += tabRowHTML(r, r.key in v ? v[r.key] : null, T[r.key], sec.color);
+    html += `</section>`;
+  }
+  const kg = latestKg(), adult = tg.basis==='dri' && tg.age>=19;
+  html += `<p class="muted small ntarget" id="nutTargets">Targets: ${tg.basis==='dri' ? esc(tg.label) : `${esc(tg.label)} (label values). <button class="linkbtn" data-act="tab" data-tab="goals">Set sex and age in Goals</button> for personal NIH DRIs`}.
+    Calories, protein${G().carbs?', carbs':''}${G().fat?', fat':''}${G().fiber?', fiber':''} from your Goals${S.settings.eatBack!==false && burnedOn(k) ? ' (calories include exercise)' : ''}.
+    ${tg.basis==='dri' ? `Sodium max is the CDRR; other maxes are ULs. Saturated fat and added sugars: under 10% of calories (Dietary Guidelines).${adult ? kg ? ' Amino acids: RDA per kg of your latest weight.' : ' Log a weight to get amino acid targets.' : ''}` : ''}</p>`;
+  $('#view').innerHTML = html;
 }
 
 /* --- camera barcode scanning ---
@@ -2012,8 +2323,8 @@ const SKEY = 'fuel.sync.v1', PROMPT_KEY = 'fuel.syncPrompt.dismissed';
 const TABLE = {p:'profiles', e:'food_entries', f:'saved_foods', w:'weight_entries', x:'exercise_entries'};
 const KINDS = ['p','e','f','w','x'];
 const NULLS = {
-  e:{day:null, meal:null, name:null, servings:null, calories:null, protein:null, carbs:null, fat:null, fiber:null, serving:null, logged_at:null},
-  f:{name:null, servings:null, calories:null, protein:null, carbs:null, fat:null, fiber:null, serving:null},
+  e:{day:null, meal:null, name:null, servings:null, calories:null, protein:null, carbs:null, fat:null, fiber:null, serving:null, logged_at:null, nutrients:null, ingredients:null, source:null, source_id:null},
+  f:{name:null, servings:null, calories:null, protein:null, carbs:null, fat:null, fiber:null, serving:null, nutrients:null, ingredients:null, source:null, source_id:null},
   w:{day:null, kg:null},
   x:{day:null, name:null, code:null, met:null, minutes:null, calories:null, logged_at:null}
 };
@@ -2029,9 +2340,13 @@ const cl = (v, max) => { v = +v; return isFinite(v) && v>=0 ? Math.min(v, max) :
 const goal = (v, max) => { v = +v; return isFinite(v) && v>0 ? Math.min(v, max) : null; };
 const validDay = k => typeof k==='string' && /^\d{4}-\d{2}-\d{2}$/.test(k) && keyOf(parseKey(k))===k;
 const isoMs = ms => { ms = +ms; return isFinite(ms) && Math.abs(ms) < 8e15 ? new Date(ms).toISOString() : null; };
+/* nutrients / ingredients / source columns: only sent when the record has them, so records logged before this feature keep
+   their old fingerprints (no mass re-upload) and older app versions' upserts leave the columns alone */
+const rowMeta = o => { const m = metaOf(o), r = {}; if(m.nut) r.nutrients = m.nut; if(m.ing) r.ingredients = m.ing; if(m.src) r.source = m.src; if(m.fid) r.source_id = m.fid; return r; };
+const metaFromRow = r => metaOf({nut:r.nutrients, ing:r.ingredients, src:r.source, fid:r.source_id});
 const rowE = (k, e) => validDay(k) ? {day:k, meal:fixMeal(e.meal, e.ts), name:String(e.name||'Food').slice(0,200), servings:cl(e.servings,99999), calories:cl(e.cal,999999),
-  protein:cl(e.p,99999), carbs:cl(e.c,99999), fat:cl(e.f,99999), fiber:cl(e.fib,99999), serving:e.serv?String(e.serv).slice(0,120):null, logged_at:isoMs(e.ts)} : null;
-const rowF = f => ({name:String(f.name||'Food').slice(0,200), servings:cl(f.servings,99999), calories:cl(f.cal,999999), protein:cl(f.p,99999), carbs:cl(f.c,99999), fat:cl(f.f,99999), fiber:cl(f.fib,99999), serving:f.serv?String(f.serv).slice(0,120):null});
+  protein:cl(e.p,99999), carbs:cl(e.c,99999), fat:cl(e.f,99999), fiber:cl(e.fib,99999), serving:e.serv?String(e.serv).slice(0,120):null, logged_at:isoMs(e.ts), ...rowMeta(e)} : null;
+const rowF = f => ({name:String(f.name||'Food').slice(0,200), servings:cl(f.servings,99999), calories:cl(f.cal,999999), protein:cl(f.p,99999), carbs:cl(f.c,99999), fat:cl(f.f,99999), fiber:cl(f.fib,99999), serving:f.serv?String(f.serv).slice(0,120):null, ...rowMeta(f)});
 const rowX = (k, x) => validDay(k) ? {day:k, name:String(x.name||'Exercise').slice(0,200), code:x.code||null, met:x.code && x.met>0 && x.met<30 ? +x.met : null,
   minutes:x.min>0 && x.min<=1440 ? +x.min : null, calories:Math.min(cl(x.kcal,19999), 19999), logged_at:isoMs(x.ts)} : null;
 const rowW = w => validDay(w.date) && +w.kg>0 ? {day:w.date, kg:Math.min(+w.kg, 999)} : null;
@@ -2044,8 +2359,8 @@ const isDefaultProfile = () => fp(rowP()) === fp((()=>{ const keep = S; S = defa
 /* server row -> local record */
 function entryFromRow(r){ const ts = Date.parse(r.logged_at)||Date.parse(r.updated_at)||Date.now();
   const e = {id:r.id, name:String(r.name||'Food').slice(0,120), meal:fixMeal(r.meal, ts), servings:nz(r.servings)||1, cal:nz(r.calories), p:nz(r.protein), c:nz(r.carbs), f:nz(r.fat), fib:nz(r.fiber),
-  ts}; if(r.serving) e.serv = String(r.serving).slice(0,80); return e; }
-function foodFromRow(r){ const f = {id:r.id, name:String(r.name||'Food').slice(0,120), cal:nz(r.calories), p:nz(r.protein), c:nz(r.carbs), f:nz(r.fat), fib:nz(r.fiber), servings:nz(r.servings)||1}; if(r.serving) f.serv = String(r.serving).slice(0,80); return f; }
+  ts}; if(r.serving) e.serv = String(r.serving).slice(0,80); return Object.assign(e, metaFromRow(r)); }
+function foodFromRow(r){ const f = {id:r.id, name:String(r.name||'Food').slice(0,120), cal:nz(r.calories), p:nz(r.protein), c:nz(r.carbs), f:nz(r.fat), fib:nz(r.fiber), servings:nz(r.servings)||1}; if(r.serving) f.serv = String(r.serving).slice(0,80); return Object.assign(f, metaFromRow(r)); }
 function profileFromRow(r){ const st = S.settings, d = defaults().settings.goals;
   st.unit = r.unit==='kg'?'kg':'lb'; st.goalsSet = !!r.goals_set;
   st.goals = {calories:nz(r.goal_calories)||d.calories, protein:nz(r.goal_protein)||d.protein, carbs:nz(r.goal_carbs)||null, fat:nz(r.goal_fat)||null, fiber:nz(r.goal_fiber)||null};
@@ -2261,7 +2576,7 @@ async function signOut(){
   clearDevice();
   toast('Signed out · this device’s data was removed');
 }
-window.FuelData = { canFood, canWeight, canExercise, setWeight, deleteWeight, logEntry, removeEntry, updateEntry, restoreEntry, logExercise, updateExercise, removeExercise, restoreExercise };   // data-layer API (used by tests)
+window.FuelData = { NUTS, NDLZ_DRI: window.NDLZ_DRI, fromUSDA, fromOFF, usdaNutrients, offNutrients, metaOf, scaleNut, nutTargets, dayNutrition, nutValues, nutStatus, foodMeta, canFood, canWeight, canExercise, setWeight, deleteWeight, logEntry, removeEntry, updateEntry, restoreEntry, logExercise, updateExercise, removeExercise, restoreExercise };   // data-layer API (used by tests)
 window.FuelSync = { now: ()=>syncNow(), status: ()=>{ const m = loadMeta(); return {configured:!!CFG, ready:ACC.ready, signedIn:!!m.uid && !ACC.expired, username:m.user, state:ACC.state, err:ACC.err, pending:dirtyCount(m), last:m.last}; } };
 
 /* ---- account UI ---- */
@@ -2390,21 +2705,23 @@ document.addEventListener('click', async ev=>{
     case 'pick-date': { const i = $('#datePick'); try{ i.showPicker(); } catch(e){ i.style.pointerEvents='auto'; i.focus(); } break; }
     case 'open-add': openAdd(el.dataset.meal); break;
     case 'edit': openEdit(el.dataset.id); break;
+    case 'view-entry': openEntryView(UI.date, el.dataset.id); break;
+    case 'jump-nutrients': { const w = $('#nutWrap'); if(w) w.scrollIntoView({behavior:'smooth', block:'start'}); break; }
     case 'close-sheet': closeSheet(); break;
     case 'meal': if(UI.sheet){ if($('#foodForm')) UI.sheet.form = readForm(); UI.sheet.meal = el.dataset.meal; renderSheet(); } break;
-    case 'stab': if(UI.sheet){ if($('#foodForm')) UI.sheet.form = readForm(); UI.sheet.tab = el.dataset.tab; UI.sheet.food = null; renderSheet();
+    case 'stab': if(UI.sheet){ if($('#foodForm')) UI.sheet.form = readForm(); UI.sheet.tab = el.dataset.tab; UI.sheet.food = null; UI.sheet.meta = null; renderSheet();
       if(el.dataset.tab==='new' && matchMedia('(pointer:fine)').matches){ const n=$('#foodForm [name=name]'); if(n && !n.value) n.focus(); }
       if(el.dataset.tab==='search' && matchMedia('(pointer:fine)').matches){ const s=$('#dbSearch'); if(s) s.focus(); } } break;
     case 'db-pick': { const f = UI.sheet && UI.sheet.db.results[+el.dataset.i]; if(f) openFoodDetail(f); break; }
-    case 'db-back': if(UI.sheet){ UI.sheet.food = null; UI.sheet.tab = 'search'; renderSheet(); } break;
+    case 'db-back': if(UI.sheet){ UI.sheet.food = null; UI.sheet.meta = null; UI.sheet.tab = 'search'; renderSheet(); } break;
     case 'db-retry': if(UI.sheet){ dbCache.clear(); dbQueue(UI.sheet.db.q, true); } break;
     case 'scan': startScan(); break;
     case 'scan-cancel': if(scanStop) scanStop(); break;
     case 'fill': { const f = findFood(el.dataset.src, el.dataset.key); if(!f) break;
       const inFoods = S.foods.some(x=>x.name.trim().toLowerCase()===f.name.trim().toLowerCase());
-      UI.sheet.form = {name:f.name, serv:f.serv||'', servings:f.servings||1, cal:f.cal, p:f.p, c:f.c, f:f.f, fib:f.fib, saveFood:false, inFoods}; UI.sheet.tab='new'; UI.sheet.food=null; renderSheet(); break; }
+      UI.sheet.form = {name:f.name, serv:f.serv||'', servings:f.servings||1, cal:f.cal, p:f.p, c:f.c, f:f.f, fib:f.fib, saveFood:false, inFoods}; UI.sheet.tab='new'; UI.sheet.food=null; UI.sheet.meta = metaOf(f); renderSheet(); break; }
     case 'quick': { const f = findFood(el.dataset.src, el.dataset.key); if(!f) break;
-      const k = UI.date, entry = logEntry({name:f.name, serv:f.serv||'', servings:f.servings||1, cal:f.cal, p:f.p, c:f.c, f:f.f, fib:f.fib});
+      const k = UI.date, entry = logEntry({name:f.name, serv:f.serv||'', servings:f.servings||1, cal:f.cal, p:f.p, c:f.c, f:f.f, fib:f.fib, ...metaOf(f)});
       if(!entry){ closeSheet(); render(); break; }
       el.classList.add('done'); el.textContent='✓'; setTimeout(()=>{ el.classList.remove('done'); el.textContent='+'; }, 1100);
       render();
