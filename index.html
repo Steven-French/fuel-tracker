@@ -23,8 +23,12 @@ if(/^https?:$/.test(location.protocol)){ var m=document.createElement('link'); m
 <style>
 :root{
   --bg:#f4f5f8;--card:#fff;--card2:#f7f8fb;--text:#14161b;--muted:#6b7280;--line:#e5e7ee;
-  --cal:#ff7a2f;--cal-soft:rgba(255,122,47,.14);
-  --pro:#6d5dfc;--pro-soft:rgba(109,93,252,.14);
+  /* nutrient colors: calories amber-orange, protein red, weight green. *-solid = button fills (white text ≥ 4.5:1) */
+  --cal:#f08a00;--cal-soft:rgba(240,138,0,.14);--cal-over:#b45309;
+  --pro:#d62828;--pro-soft:rgba(214,40,40,.12);--pro-solid:#d62828;
+  --wt:#15803d;--wt-soft:rgba(21,128,61,.13);--wt-solid:#15803d;
+  /* general UI accent (links, primary buttons, active tab, focus) */
+  --accent:#6d5dfc;--accent-soft:rgba(109,93,252,.14);
   --carb:#1b9fe0;--fat:#e9a800;--fib:#1fae6b;
   --good:#16a34a;--bad:#e5484d;--warn:#f59e0b;
   --radius:18px;--shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.06);
@@ -33,7 +37,9 @@ if(/^https?:$/.test(location.protocol)){ var m=document.createElement('link'); m
 }
 @media (prefers-color-scheme:dark){
   :root{--bg:#0e1015;--card:#171a21;--card2:#1e222b;--text:#eef0f4;--muted:#99a0ad;--line:#282c36;
-  --cal-soft:rgba(255,122,47,.18);--pro-soft:rgba(129,115,255,.2);--pro:#8173ff;--shadow:0 1px 2px rgba(0,0,0,.3)}
+  --cal:#ffb020;--cal-soft:rgba(255,176,32,.18);--cal-over:#f97316;
+  --pro:#ff5a5f;--pro-soft:rgba(255,90,95,.18);--wt:#34c77b;--wt-soft:rgba(52,199,123,.18);
+  --accent:#8173ff;--accent-soft:rgba(129,115,255,.2);--shadow:0 1px 2px rgba(0,0,0,.3)}
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
@@ -60,6 +66,13 @@ input,select{font-size:16px}
 .datenav .arrow{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;font-size:22px;color:var(--muted)}
 .datenav .arrow:active{background:var(--card2)}
 .datenav .arrow:disabled{opacity:.25}
+.tag.planned{display:inline-block;vertical-align:2px;margin-left:6px;padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;background:var(--accent-soft);color:var(--accent)}
+.tag.locked{display:inline-block;vertical-align:2px;margin-left:6px;padding:1px 7px;border-radius:99px;font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;background:var(--card2);color:var(--muted);border:1px solid var(--line)}
+.ringbox.ro{cursor:default}
+.plannote{text-align:center;font-size:12.5px;color:var(--muted);margin:-6px 0 12px}
+.ringbox.off{cursor:default}.ringbox.off .ring,.ringbox.off .lbl{opacity:.55}
+.fab:disabled{opacity:.4;filter:grayscale(.6);box-shadow:none;cursor:not-allowed}
+.calover{color:var(--cal-over)}
 .datelabel{text-align:center;position:relative;flex:1}
 .datelabel b{display:block;font-size:16px}
 .datelabel span{font-size:12px;color:var(--muted)}
@@ -86,20 +99,20 @@ button.ringbox:active{background:var(--card2)}
 .remain{margin-top:6px;font-size:12.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .remain.sub{margin-top:1px;font-size:11px;font-weight:500;color:var(--muted)}
 .remain .down{color:var(--good)}.remain .up{color:var(--bad)}
-.remain.over{color:var(--bad)}
+.remain.over{color:var(--cal-over)}
 .remain.hit{color:var(--good)}
 .secondary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 .macro .mh{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px}
 .macro .mh b{color:var(--text);font-weight:650}
 .bar{height:6px;border-radius:9px;background:var(--card2);overflow:hidden}
 .bar i{display:block;height:100%;border-radius:9px;transition:width .5s}
-.banner{display:flex;align-items:center;gap:10px;background:var(--pro-soft);color:var(--text);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:14px;width:100%;text-align:left}
-.banner b{color:var(--pro)}
+.banner{display:flex;align-items:center;gap:10px;background:var(--accent-soft);color:var(--text);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:14px;width:100%;text-align:left}
+.banner b{color:var(--accent)}
 .meal{padding:12px 14px}
 .meal-h{display:flex;align-items:center;gap:8px;padding:2px 0 6px}
 .meal-h h3{margin:0;font-size:16px;font-weight:700}
 .meal-h .tot{font-size:12px;color:var(--muted)}
-.addbtn{width:32px;height:32px;border-radius:10px;background:var(--card2);display:grid;place-items:center;font-size:20px;color:var(--pro);font-weight:500}
+.addbtn{width:32px;height:32px;border-radius:10px;background:var(--card2);display:grid;place-items:center;font-size:20px;color:var(--accent);font-weight:500}
 .entry{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);width:100%;text-align:left}
 .meal-h + .entry{border-top:0}
 .entry .nm{flex:1;min-width:0}
@@ -108,27 +121,28 @@ button.ringbox:active{background:var(--card2)}
 .entry .kc{text-align:right;font-size:14px;font-weight:650;white-space:nowrap}
 .entry .kc span{display:block;font-size:12px;color:var(--pro);font-weight:650}
 .empty{font-size:13px;color:var(--muted);padding:6px 0 4px}
-.linkbtn{color:var(--pro);font-weight:600;font-size:13px;padding:6px 0}
+.linkbtn{color:var(--accent);font-weight:600;font-size:13px;padding:6px 0}
 .fabs{position:fixed;left:0;right:0;bottom:calc(var(--tabh) + env(safe-area-inset-bottom) + 14px);z-index:20;display:flex;justify-content:center;gap:10px;padding:0 12px;pointer-events:none}
-.fab{pointer-events:auto;background:linear-gradient(135deg,var(--cal),var(--pro));color:#fff;font-weight:700;padding:14px 20px;min-height:50px;border-radius:99px;box-shadow:0 8px 24px rgba(109,93,252,.35);display:flex;gap:7px;align-items:center;justify-content:center;font-size:15px;white-space:nowrap}
+.fab{pointer-events:auto;background:var(--pro-solid);color:#fff;font-weight:700;padding:14px 20px;min-height:50px;border-radius:99px;box-shadow:0 8px 22px color-mix(in srgb,var(--pro-solid) 40%,transparent);display:flex;gap:7px;align-items:center;justify-content:center;font-size:15px;white-space:nowrap}
 .fab:active{transform:scale(.97)}
+#fabW{background:var(--wt-solid);box-shadow:0 8px 22px color-mix(in srgb,var(--wt-solid) 40%,transparent)}
 @media (max-width:360px){.fab{padding:13px 15px;font-size:14px;gap:6px}}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:saturate(1.8) blur(18px);-webkit-backdrop-filter:saturate(1.8) blur(18px);
   border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
 .tabbar .in{max-width:600px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);height:var(--tabh)}
 .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:600;color:var(--muted);min-width:0;white-space:nowrap}
 .tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.tab.on{color:var(--pro)}
+.tab.on{color:var(--accent)}
 label.f{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:10px}
 label.f>span{display:block;margin-bottom:5px}
 .inp{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card2);outline:none;transition:border-color .15s;min-height:44px}
-.inp:focus{border-color:var(--pro)}
-.inp.req{border-color:color-mix(in srgb,var(--pro) 35%,var(--line))}
+.inp:focus{border-color:var(--accent)}
+.inp.req{border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}
 .inp.err{border-color:var(--bad)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:0 10px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 16px;border-radius:12px;font-weight:650;background:var(--card2);min-height:44px}
-.btn.primary{background:var(--pro);color:#fff}
+.btn.primary{background:var(--accent);color:#fff}
 .btn.danger{background:rgba(229,72,77,.12);color:var(--bad)}
 .btn.block{width:100%}
 .btn:active{opacity:.85}
@@ -137,11 +151,11 @@ label.f>span{display:block;margin-bottom:5px}
 .seg button.on{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
 .chip{padding:7px 12px;border-radius:99px;background:var(--card2);font-size:13px;font-weight:600;white-space:nowrap;color:var(--muted);border:1px solid transparent}
-.chip.on{background:var(--pro-soft);color:var(--pro);border-color:color-mix(in srgb,var(--pro) 30%,transparent)}
+.chip.on{background:var(--accent-soft);color:var(--accent);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}
 .check{display:flex;align-items:center;gap:8px;font-size:14px;margin:4px 0 12px}
-.check input{width:20px;height:20px;accent-color:var(--pro)}
+.check input{width:20px;height:20px;accent-color:var(--accent)}
 .stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:12px;background:var(--card2);overflow:hidden}
-.stepper button{width:44px;height:44px;font-size:20px;color:var(--pro);font-weight:600}
+.stepper button{width:44px;height:44px;font-size:20px;color:var(--accent);font-weight:600}
 .stepper input{flex:1;min-width:0;text-align:center;border:0;background:transparent;padding:10px 0;outline:none;font-weight:650}
 .preview{display:flex;gap:10px;flex-wrap:wrap;background:var(--card2);border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px}
 .preview b{font-weight:700}
@@ -160,7 +174,7 @@ label.f>span{display:block;margin-bottom:5px}
 .food .fb{flex:1;min-width:0;text-align:left}
 .food .fb > b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .food .fb > span{font-size:12px;color:var(--muted)}
-.qadd{width:38px;height:38px;border-radius:12px;background:var(--pro);color:#fff;font-size:22px;display:grid;place-items:center;flex:none;transition:background .2s}
+.qadd{width:38px;height:38px;border-radius:12px;background:var(--accent);color:#fff;font-size:22px;display:grid;place-items:center;flex:none;transition:background .2s}
 .qadd.done{background:var(--good)}
 .trash{width:34px;height:34px;border-radius:10px;color:var(--muted);display:grid;place-items:center;flex:none}
 .trash svg,.icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -178,6 +192,7 @@ label.f>span{display:block;margin-bottom:5px}
 .legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .list .li{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+.list .wrow{width:100%;text-align:left;min-height:52px}.wrow .chev{color:var(--muted);font-size:20px;margin-left:4px}
 .list .li:first-child{border-top:0}
 .dayrow{width:100%;text-align:left}
 .ok{color:var(--good);font-weight:700}
@@ -199,11 +214,11 @@ details.helper summary{cursor:pointer;font-weight:700;font-size:17px;list-style:
 details.helper summary::-webkit-details-marker{display:none}
 details.helper summary::after{content:"›";margin-left:auto;font-size:22px;color:var(--muted);transition:transform .2s}
 details.helper[open] summary::after{transform:rotate(90deg)}
-.suggest{background:var(--pro-soft);border-radius:12px;padding:12px;margin:4px 0 12px;font-size:14px}
+.suggest{background:var(--accent-soft);border-radius:12px;padding:12px;margin:4px 0 12px;font-size:14px}
 .suggest b{font-size:18px}
 .dbhead{position:sticky;top:0;z-index:2;background:var(--card);padding:2px 0 6px;margin-top:-2px}
 .seg.four button{font-size:12.5px;padding:8px 2px}
-.iconbtn{width:46px;height:46px;flex:none;border-radius:12px;background:var(--pro);color:#fff;display:grid;place-items:center}
+.iconbtn{width:46px;height:46px;flex:none;border-radius:12px;background:var(--accent);color:#fff;display:grid;place-items:center}
 .iconbtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .badge{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.02em;padding:2px 6px;border-radius:6px;margin-right:6px;vertical-align:1px}
 .badge.usda{background:rgba(31,174,107,.14);color:#12844f}
@@ -218,7 +233,7 @@ details.helper[open] summary::after{transform:rotate(90deg)}
 .notice.info{background:var(--card2)}
 .notice.bad{background:rgba(229,72,77,.1)}
 .notice .linkbtn{padding:2px 0}
-.spinner{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--pro-soft);border-top-color:var(--pro);animation:spin .8s linear infinite;flex:none}
+.spinner{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--accent-soft);border-top-color:var(--accent);animation:spin .8s linear infinite;flex:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 .skel{height:52px;border-radius:12px;background:linear-gradient(90deg,var(--card2),var(--line),var(--card2));background-size:200% 100%;animation:sk 1.2s ease-in-out infinite;margin-top:10px}
 @keyframes sk{0%{background-position:100% 0}100%{background-position:-100% 0}}
@@ -251,12 +266,12 @@ details.helper[open] summary::after{transform:rotate(90deg)}
 .small{font-size:12px}
 @media (min-width:700px){ .app{padding-top:24px} .ring .big{font-size:30px} }
 .acct{display:flex;align-items:center;gap:12px}
-.avatar{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;font-size:18px;color:#fff;background:linear-gradient(135deg,var(--cal),var(--pro))}
+.avatar{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;font-size:18px;color:#fff;background:linear-gradient(135deg,var(--cal),var(--accent))}
 .acct-email{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px;background:var(--muted)}
 .dot.good{background:var(--good)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
 details.pwset{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
-details.pwset summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--pro)}
+details.pwset summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--accent)}
 .btn:disabled,.linkbtn:disabled{opacity:.5}
 .banner.syncprompt{padding:8px 8px 8px 14px}
 .banner.syncprompt .grow{flex:1;text-align:left;padding:4px 0}
@@ -391,6 +406,18 @@ function sumEntries(list){
   return t;
 }
 const dayTotals = k => sumEntries(S.entries[k]);
+/* Planning ahead: the day navigator goes exactly one day past today. Tomorrow's entries are "planned": they never count
+   toward streaks, history averages or days hit until that day arrives (all of those only look at days <= today). */
+const tomorrowKey = () => addDays(todayKey(), 1);
+const isPlanned = k => k > todayKey();
+/* Once a day has passed (local time) it is read-only. Food: today + tomorrow (planning). Weight: today only.
+   Every user write goes through the functions below, which enforce this; applying synced changes from other devices,
+   import and reset write S directly and are not affected. */
+const isPast = k => k < todayKey();
+const canFood = k => !!k && k >= todayKey() && k <= tomorrowKey();
+const canWeight = k => k === todayKey();
+function lockedMsg(k, what){ return isPast(k) ? 'Past days are locked' : (what==='weight' ? 'Weight can only be logged for today' : 'You can only plan one day ahead'); }
+function denyFood(k){ if(canFood(k)) return false; toast(lockedMsg(k,'food')); return true; }
 const proteinHit = t => t.n>0 && t.p >= G().protein - 0.5;
 const calHit = t => t.n>0 && t.cal <= G().calories + 0.5;
 function currentProteinStreak(){
@@ -473,7 +500,9 @@ function fitTitle(){
 }
 function render(){
   $$('.tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===UI.view));
-  $('#fabs').classList.toggle('hidden', UI.view!=='today');
+  $('#fabs').classList.toggle('hidden', !((UI.view==='today' && !isPast(UI.date)) || UI.view==='weight'));
+  $('#fab').classList.toggle('hidden', UI.view!=='today');
+  const fw = $('#fabW'), fut = UI.view==='today' && isPlanned(UI.date); fw.disabled = fut; fw.title = fut ? 'Weight can only be logged for today or earlier' : '';
   ({today:renderToday, history:renderHistory, weight:renderWeight, goals:renderGoals, settings:renderSettings})[UI.view]();
 }
 
@@ -484,7 +513,7 @@ function ringHTML({kind, label, value, goal, color}){
   const off = C*(1-Math.min(pct,1));
   let strokeColor = color, remain;
   if(kind==='cal'){
-    if(over){ strokeColor='var(--bad)'; remain = `<div class="remain over">${fmtN(value-goal)} over</div>`; }
+    if(over){ strokeColor='var(--cal-over)'; remain = `<div class="remain over">⚠ ${fmtN(value-goal)} over</div>`; }
     else remain = `<div class="remain">${fmtN(goal-value)} left</div>`;
   } else {
     if(value >= goal-0.5 && value>0) remain = `<div class="remain hit">✓ Hit${over?` · +${fmtG(value-goal)}g`:''}</div>`;
@@ -519,16 +548,21 @@ function sparkSVG(k){
   let lo = Math.min(...vals), hi = Math.max(...vals); const pad = Math.max(0.3,(hi-lo)*0.12); lo-=pad; hi+=pad;
   const X = d => pts.length===1 ? (x0+x1)/2 : x0 + (x1-x0)*(29-diffDays(d,k))/29, Y = v => y1 - (y1-y0)*(v-lo)/(hi-lo);
   const dots = pts.map(p=>`<circle cx="${X(p.date).toFixed(1)}" cy="${Y(p.kg).toFixed(1)}" r="1.6"/>`).join('');
-  const line = pts.length>1 ? `<polyline points="${pts.map(p=>X(p.date).toFixed(1)+','+Y(p.ma).toFixed(1)).join(' ')}" fill="none" stroke="var(--fib)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>` : '';
+  const line = pts.length>1 ? `<polyline points="${pts.map(p=>X(p.date).toFixed(1)+','+Y(p.ma).toFixed(1)).join(' ')}" fill="none" stroke="var(--wt)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>` : '';
   return `<svg class="spark" viewBox="0 0 124 124" aria-hidden="true">${dots}${line}</svg>`;
 }
 function weightTileHTML(k){
-  const cur = weightAt(k), u = unit(), gw = S.settings.goalWeight, R = 52, C = 2*Math.PI*R, color = 'var(--fib)';
+  const cur = weightAt(k), u = unit(), gw = S.settings.goalWeight, R = 52, C = 2*Math.PI*R, color = 'var(--wt)';
   const label = `<div class="lbl" style="color:${color}">Weight</div>`;
-  if(!cur) return `<button class="ringbox" data-ring="wt" data-act="log-weight" aria-label="Log weight">${label}
+  if(isPlanned(k)) return `<div class="ringbox off" data-ring="wt" aria-disabled="true" aria-label="Weight can’t be logged for a future day">${label}
     <div class="ring"><svg viewBox="0 0 124 124"><circle class="track" cx="62" cy="62" r="${R}"/></svg>
       <div class="center"><div class="big" data-val style="color:var(--muted)">—</div><div class="of">${u}</div></div></div>
-    <div class="remain" style="color:var(--pro)">+ Log weight</div></button>`;
+    <div class="remain" style="color:var(--muted);font-weight:500">Log it on the day</div></div>`;
+  const ro = !canWeight(k), open = ro ? `<div class="ringbox ro" data-ring="wt" aria-disabled="true"` : `<button class="ringbox" data-ring="wt" data-act="log-weight"`, close = ro ? '</div>' : '</button>';
+  if(!cur) return `${open} aria-label="${ro?'No weigh-in':'Log weight'}">${label}
+    <div class="ring"><svg viewBox="0 0 124 124"><circle class="track" cx="62" cy="62" r="${R}"/></svg>
+      <div class="center"><div class="big" data-val style="color:var(--muted)">—</div><div class="of">${u}</div></div></div>
+    ${ro?`<div class="remain" style="color:var(--muted);font-weight:500">No weigh-in</div>`:`<div class="remain" style="color:var(--wt)">+ Log weight</div>`}${close}`;
   const ch = weightChangeAt(k, 7), pr = goalProgress(cur);
   const gaining = gw && gw > cur.kg;
   let chTxt = '<span class="muted" style="font-weight:500">no 7-day change yet</span>';
@@ -538,10 +572,10 @@ function weightTileHTML(k){
     : `<svg viewBox="0 0 124 124"><circle class="track" cx="62" cy="62" r="${R}"/><circle class="prog" cx="62" cy="62" r="${R}" stroke="${color}" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${(C*(1-pr)).toFixed(2)}"/></svg>`;
   const sub = pr==null ? u : `goal ${fmtW(gw)}`;
   const when = cur.date===k ? '' : `<div class="remain sub">${esc(cur.date===addDays(k,-1)?'from yesterday':'from '+fmtDate(cur.date,{month:'short',day:'numeric'}))}</div>`;
-  return `<button class="ringbox" data-ring="wt" data-act="log-weight" aria-label="Weight ${fmtW(cur.kg)} ${u}. Tap to log weight">${label}
+  return `${open} aria-label="Weight ${fmtW(cur.kg)} ${u}${ro?'':'. Tap to log weight'}">${label}
     <div class="ring" data-mode="${pr==null?'spark':'goal'}">${ring}
       <div class="center${pr==null?' top':''}"><div class="big" data-val>${fmtW(cur.kg)}</div><div class="of">${esc(sub)}</div></div></div>
-    <div class="remain" data-change>${chTxt}</div>${when}</button>`;
+    <div class="remain" data-change>${chTxt}</div>${when}${close}`;
 }
 function macroHTML(label, val, goal, color){
   const w = goal ? Math.min(100, val/goal*100) : (val>0?100:0);
@@ -549,9 +583,10 @@ function macroHTML(label, val, goal, color){
     <div class="bar"><i style="width:${w}%;background:${color};${goal?'':'opacity:.35'}"></i></div></div>`;
 }
 function renderToday(){
-  const k = UI.date, isToday = k===todayKey();
+  if(UI.date > tomorrowKey()) UI.date = tomorrowKey();
+  const k = UI.date, isToday = k===todayKey(), planned = isPlanned(k), locked = isPast(k);
   const t = dayTotals(k), g = G();
-  const title = isToday ? 'Today' : (k===addDays(todayKey(),-1) ? 'Yesterday' : fmtDate(k,{weekday:'long'}));
+  const title = isToday ? 'Today' : planned ? 'Tomorrow' : (k===addDays(todayKey(),-1) ? 'Yesterday' : fmtDate(k,{weekday:'long'}));
   const streak = currentProteinStreak();
   setHeader('NDLZ_DNT_NDLZ', '', streak>0 ? `<span class="pill" title="Days in a row hitting your protein goal">🔥 ${streak}-day protein streak</span>`:'');
   const list = S.entries[k]||[];
@@ -560,11 +595,12 @@ function renderToday(){
   let html = `
   <div class="datenav">
     <button class="arrow" data-act="day" data-d="-1" aria-label="Previous day">‹</button>
-    <button class="datelabel" data-act="pick-date"><b>${esc(title)}</b><span>${esc(fmtDate(k, showYear?{weekday:'short',month:'long',day:'numeric',year:'numeric'}:{weekday:'short',month:'long',day:'numeric'}))}</span>
-      <input type="date" id="datePick" value="${k}" max="${todayKey()}" tabindex="-1" aria-hidden="true"></button>
-    <button class="arrow" data-act="day" data-d="1" aria-label="Next day" ${isToday?'disabled':''}>›</button>
+    <button class="datelabel" data-act="pick-date"><b>${esc(title)}${planned?'<span class="tag planned">Planned</span>':locked?'<span class="tag locked">🔒 Locked</span>':''}</b><span>${esc(fmtDate(k, showYear?{weekday:'short',month:'long',day:'numeric',year:'numeric'}:{weekday:'short',month:'long',day:'numeric'}))}</span>
+      <input type="date" id="datePick" value="${k}" max="${tomorrowKey()}" tabindex="-1" aria-hidden="true"></button>
+    <button class="arrow" data-act="day" data-d="1" aria-label="${isToday?'Tomorrow (plan ahead)':'Next day'}" ${planned?'disabled':''}>›</button>
   </div>
-  ${!isToday?`<div style="text-align:center;margin:-6px 0 12px"><button class="linkbtn" data-act="goto-today">Jump to today →</button></div>`:''}
+  ${planned?`<div class="plannote" id="planNote">Planning ahead — these count toward your streak and history once tomorrow arrives. · <button class="linkbtn" data-act="goto-today">Back to today</button></div>`
+    : locked?`<div class="plannote" id="lockNote">Past days are locked — view only. · <button class="linkbtn" data-act="goto-today">Jump to today →</button></div>`:''}
   ${!S.settings.goalsSet?`<button class="banner" data-act="tab" data-tab="goals"><span style="font-size:20px">🎯</span><span>Using default goals (2,000 kcal · 150 g protein). <b>Set your goals →</b></span></button>`:syncPromptHTML()}
   <section class="card hero" id="hero">
     <div class="rings">
@@ -578,9 +614,9 @@ function renderToday(){
       ${macroHTML('Fiber',t.fib,g.fiber,'var(--fib)')}
     </div>
   </section>`;
-  if(!list.length && yList.length){
+  if(!locked && !list.length && yList.length){
     const yt = sumEntries(yList);
-    html += `<button class="card row" style="width:100%;text-align:left" data-act="copy-day"><span class="icon" style="color:var(--pro)">${ICON.copy}</span><span><b>Copy all of ${k===todayKey()?'yesterday':'previous day'}</b><br><span class="muted" style="font-size:13px">${yList.length} item${yList.length>1?'s':''} · ${fmtN(yt.cal)} kcal · ${fmtG(yt.p)} g protein</span></span></button>`;
+    html += `<button class="card row" style="width:100%;text-align:left" data-act="copy-day"><span class="icon" style="color:var(--accent)">${ICON.copy}</span><span><b>Copy all of ${k===todayKey()?'yesterday':planned?'today':'previous day'}</b><br><span class="muted" style="font-size:13px">${yList.length} item${yList.length>1?'s':''} · ${fmtN(yt.cal)} kcal · ${fmtG(yt.p)} g protein</span></span></button>`;
   }
   for(const m of MEALS){
     const items = list.filter(e=>e.meal===m.id).sort((a,b)=>a.ts-b.ts);
@@ -588,11 +624,11 @@ function renderToday(){
     const yItems = yList.filter(e=>e.meal===m.id);
     html += `<section class="card meal" data-meal="${m.id}">
       <div class="meal-h"><h3>${m.label}</h3>${items.length?`<span class="tot">${fmtN(mt.cal)} kcal · ${fmtG(mt.p)}g P</span>`:''}<span class="spacer"></span>
-      <button class="addbtn" data-act="open-add" data-meal="${m.id}" aria-label="Add to ${m.label}">+</button></div>
-      ${items.map(e=>{ const x=entryTotals(e); return `<button class="entry" data-act="edit" data-id="${e.id}">
+      ${locked?'':`<button class="addbtn" data-act="open-add" data-meal="${m.id}" aria-label="Add to ${m.label}">+</button>`}</div>
+      ${items.map(e=>{ const x=entryTotals(e), tg = locked?'div':'button'; return `<${tg} class="entry"${locked?'':` data-act="edit" data-id="${e.id}"`}>
         <div class="nm"><b>${esc(e.name)}</b><span>${esc(servText(e))}C ${fmtG(x.c)} · F ${fmtG(x.f)}${x.fib?` · Fiber ${fmtG(x.fib)}`:''}</span></div>
-        <div class="kc">${fmtN(x.cal)} kcal<span>${fmtG(x.p)}g protein</span></div></button>`; }).join('')}
-      ${!items.length?`<div class="empty">Nothing logged${yItems.length&&list.length?` · <button class="linkbtn" data-act="copy-meal" data-meal="${m.id}">Copy previous day's ${m.label.toLowerCase()} (${yItems.length})</button>`:''}</div>`:''}
+        <div class="kc">${fmtN(x.cal)} kcal<span>${fmtG(x.p)}g protein</span></div></${tg}>`; }).join('')}
+      ${!items.length?`<div class="empty">Nothing logged${!locked&&yItems.length&&list.length?` · <button class="linkbtn" data-act="copy-meal" data-meal="${m.id}">Copy previous day's ${m.label.toLowerCase()} (${yItems.length})</button>`:''}</div>`:''}
     </section>`;
   }
   $('#view').innerHTML = html;
@@ -600,12 +636,12 @@ function renderToday(){
 function servText(e){ if(e.serv) return (e.servings!==1?`${r1(e.servings)} × `:'')+e.serv+' · '; return e.servings!==1?`${r1(e.servings)} servings · `:''; }
 function copyEntries(src){
   const k = UI.date; const now = Date.now();
-  if(!src.length) return;
+  if(!src.length || denyFood(k)) return;
   const copies = src.map((e,i)=>({...e, id:uid(), ts:now+i}));
   S.entries[k] = (S.entries[k]||[]).concat(copies);
   save(); render();
   const ids = new Set(copies.map(c=>c.id));
-  toast(`Copied ${copies.length} item${copies.length>1?'s':''}`, ()=>{ S.entries[k]=(S.entries[k]||[]).filter(e=>!ids.has(e.id)); if(!S.entries[k].length) delete S.entries[k]; save(); render(); });
+  toast(`Copied ${copies.length} item${copies.length>1?'s':''}`, ()=>{ if(denyFood(k)) return; S.entries[k]=(S.entries[k]||[]).filter(e=>!ids.has(e.id)); if(!S.entries[k].length) delete S.entries[k]; save(); render(); });
 }
 
 /* ---------- Add / Edit sheet ---------- */
@@ -620,7 +656,17 @@ function closeSheet(){
   UI.sheet=null; $('#scrim').classList.remove('show'); $('#sheet').classList.remove('show'); document.body.style.overflow='';
   if(document.activeElement) document.activeElement.blur();
 }
+function deleteWeight(d){
+  if(!canWeight(d)){ toast(lockedMsg(d,'weight')); return null; }
+  const i = S.weights.findIndex(w=>w.date===d); if(i<0) return null;
+  const [w] = S.weights.splice(i,1); save(); return w;
+}
+function restoreWeight(w){
+  if(!canWeight(w.date)){ toast(lockedMsg(w.date,'weight')); return; }
+  if(!S.weights.some(x=>x.date===w.date)){ S.weights.push(w); S.weights.sort((a,b)=>a.date<b.date?-1:1); save(); }
+}
 function openWeight(k){
+  if(!canWeight(k)){ toast(lockedMsg(k,'weight')); return; }
   openSheet({mode:'weight', date:k});
   setTimeout(()=>{ const i = $('#qWeight'); if(i){ i.focus(); i.select(); } }, 80);
 }
@@ -632,26 +678,28 @@ function quickWeightHTML(st){
     <p class="muted small" style="margin:-2px 0 12px;text-align:center">${prev?`Previous: ${fmtW(prev.kg)} ${u} on ${esc(fmtDate(prev.date,{month:'short',day:'numeric'}))}`:'Your first weigh-in — morning, before breakfast, is most consistent.'}${S.settings.goalWeight?` · Goal ${fmtW(S.settings.goalWeight)} ${u}`:''}</p>
     <button class="btn primary block" type="submit">${ex?'Update weigh-in':'Save weigh-in'}</button>
     ${ex?`<button class="btn danger block" type="button" data-act="q-del-weight" style="margin-top:10px">Delete this weigh-in</button>`:''}
-    <p style="text-align:center;margin:10px 0 0"><button type="button" class="linkbtn" data-act="tab" data-tab="weight">See weight trend →</button></p></form>`;
+    ${UI.view==='weight'?'':`<p style="text-align:center;margin:10px 0 0"><button type="button" class="linkbtn" data-act="tab" data-tab="weight">See weight trend →</button></p>`}</form>`;
 }
 /* one place that validates + stores a weigh-in (Weight tab form and the Today tile's quick sheet) */
 function setWeight(d, raw){
   const w = num(raw), lim = unit()==='lb' ? [50,800] : [20,360];
   if(!(w>=lim[0] && w<=lim[1])) return {err:`Enter a weight between ${lim[0]} and ${lim[1]} ${unit()}`};
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(d) || d>todayKey()) return {err:'Pick a valid date'};
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(d)) return {err:'Pick a valid date'};
+  if(!canWeight(d)) return {err:lockedMsg(d,'weight')};
   const kg = toKg(w), ex = S.weights.find(x=>x.date===d);
   if(ex) ex.kg = kg; else { S.weights.push({date:d, kg}); S.weights.sort((a,b)=>a.date<b.date?-1:1); }
   if(S.settings.goalWeight && !S.settings.goalWeightStart) S.settings.goalWeightStart = kg;
   save(); return {updated:!!ex};
 }
 function openAdd(meal){
+  if(denyFood(UI.date)) return;
   openSheet({mode:'add', meal: meal||defaultMeal(), tab:'search', q:'', db:{q:'',status:'idle',results:[],errs:{}}, form:{name:'',serv:'',servings:1,cal:'',p:'',c:'',f:'',fib:'',saveFood:false}});
   // Search is the default tab. Focus the box right away with a mouse/trackpad; on phones don't pop the keyboard
   // over the sliding sheet — one tap on the box opens it.
   if(matchMedia('(pointer:fine)').matches){ const s = $('#dbSearch'); if(s) s.focus({preventScroll:true}); }
 }
 function openEdit(id){
-  const e = (S.entries[UI.date]||[]).find(x=>x.id===id); if(!e) return;
+  const e = (S.entries[UI.date]||[]).find(x=>x.id===id); if(!e || denyFood(UI.date)) return;
   const inFoods = S.foods.some(f=>f.name.trim().toLowerCase()===e.name.trim().toLowerCase());
   openSheet({mode:'edit', id, meal:e.meal, form:{name:e.name,serv:e.serv||'',servings:e.servings,cal:e.cal,p:e.p,c:e.c,f:e.f,fib:e.fib,saveFood:false,inFoods}});
 }
@@ -680,7 +728,7 @@ function renderSheet(){
     h += searchTabHTML();
   } else if(st.mode==='add' && st.tab!=='new' && st.tab!=='detail'){
     h += `<input class="inp" id="foodSearch" type="search" placeholder="Search foods…" value="${esc(st.q)}" autocomplete="off" style="margin-bottom:6px">
-      <p class="muted" style="font-size:12px;margin:4px 0 0">Tap <b style="color:var(--pro)">+</b> to log instantly, or tap a food to adjust servings first.</p>
+      <p class="muted" style="font-size:12px;margin:4px 0 0">Tap <b style="color:var(--accent)">+</b> to log instantly, or tap a food to adjust servings first.</p>
       <div id="foodList">${foodListHTML()}</div>`;
   } else {
     const f = st.form;
@@ -745,14 +793,18 @@ function upsertFood(e){
   if(ex && !e.serv) delete ex.serv;
   if(ex) Object.assign(ex,data); else S.foods.push({id:uid(), ...data});
 }
-function logEntry(e){
-  const k = UI.date;
+function logEntry(e, k = UI.date){
+  if(denyFood(k)) return null;
   const entry = {id:uid(), name:e.name||'Quick add', meal:UI.sheet?UI.sheet.meal:defaultMeal(), servings:e.servings||1, cal:nz(e.cal), p:nz(e.p), c:nz(e.c), f:nz(e.f), fib:nz(e.fib), ts:Date.now(), ...servOf(e)};
   (S.entries[k] = S.entries[k]||[]).push(entry);
   save();
   return entry;
 }
+function restoreEntry(k,e){ if(denyFood(k)) return; const l = S.entries[k] = S.entries[k]||[]; if(!l.some(x=>x.id===e.id)) l.push(e); save(); }
+function updateEntry(k,id,data,meal){ if(denyFood(k)) return false; const e = (S.entries[k]||[]).find(x=>x.id===id); if(!e) return false;
+  Object.assign(e, data, {meal}); if(!data.serv) delete e.serv; save(); return true; }
 function removeEntry(k,id){
+  if(denyFood(k)) return null;
   const list = S.entries[k]||[]; const i = list.findIndex(e=>e.id===id); if(i<0) return null;
   const [e] = list.splice(i,1); if(!list.length) delete S.entries[k]; save(); return e;
 }
@@ -767,13 +819,13 @@ function submitForm(ev){
   const data = {name:f.name||'Quick add', servings:f.servings, cal:nz(f.cal), p:nz(f.p), c:nz(f.c), f:nz(f.f), fib:nz(f.fib), ...servOf(f)};
   if(f.saveFood && f.name) upsertFood(data);
   if(st.mode==='edit'){
-    const e = (S.entries[UI.date]||[]).find(x=>x.id===st.id);
-    if(e){ Object.assign(e, data, {meal:st.meal}); if(!data.serv) delete e.serv; }
-    save(); closeSheet(); render(); toast('Entry updated');
+    if(!updateEntry(UI.date, st.id, data, st.meal)){ closeSheet(); render(); return; }
+    closeSheet(); render(); toast('Entry updated');
   } else {
-    const entry = logEntry(data);
+    const k = UI.date, entry = logEntry(data);
+    if(!entry){ closeSheet(); render(); return; }
     closeSheet(); render(); flashHero();
-    toast(`Added ${entry.name} to ${MEAL_LABEL[entry.meal]}`, ()=>{ removeEntry(UI.date, entry.id); render(); });
+    toast(`Added ${entry.name} to ${MEAL_LABEL[entry.meal]}`, ()=>{ removeEntry(k, entry.id); render(); });
   }
 }
 function flashHero(){ const h=$('#hero'); if(h&&h.animate) h.animate([{transform:'scale(1)'},{transform:'scale(1.015)'},{transform:'scale(1)'}],{duration:350}); }
@@ -822,15 +874,15 @@ function renderHistory(){
   </div></section>
   <section class="card"><h2>Protein<small>grams per day</small></h2><div class="chart" id="proChart">${barChartHTML(days,k=>tots[k].p,g.protein,{label:'Protein last 14 days',hit:k=>proteinHit(tots[k]),color:hit=>hit?'var(--pro)':faded,goalColor:'var(--pro)',suffix:' g'})}</div>
     <div class="legend"><span><i style="background:var(--pro)"></i>Goal hit</span><span><i style="background:${faded}"></i>Below goal</span></div></section>
-  <section class="card"><h2>Calories<small>kcal per day</small></h2><div class="chart" id="calChart">${barChartHTML(days,k=>tots[k].cal,g.calories,{label:'Calories last 14 days',hit:k=>calHit(tots[k]),color:hit=>hit?'var(--cal)':'var(--bad)',goalColor:'var(--text)'})}</div>
-    <div class="legend"><span><i style="background:var(--cal)"></i>At/under goal</span><span><i style="background:var(--bad)"></i>Over goal</span></div></section>`;
+  <section class="card"><h2>Calories<small>kcal per day</small></h2><div class="chart" id="calChart">${barChartHTML(days,k=>tots[k].cal,g.calories,{label:'Calories last 14 days',hit:k=>calHit(tots[k]),color:hit=>hit?'var(--cal)':'var(--cal-over)',goalColor:'var(--text)'})}</div>
+    <div class="legend"><span><i style="background:var(--cal)"></i>At/under goal</span><span><i style="background:var(--cal-over)"></i>⚠ Over goal</span></div></section>`;
   const allKeys = Object.keys(S.entries).sort().reverse().slice(0,60);
   h += `<section class="card"><h2>Logged days<small>tap to open</small></h2><div class="list">`;
   if(!allKeys.length) h += `<div class="empty">No days logged yet.</div>`;
-  allKeys.forEach(k=>{ const t = dayTotals(k); const ph = proteinHit(t), ch = calHit(t);
-    h += `<button class="li dayrow" data-act="goto-day" data-k="${k}"><div style="flex:1"><b>${esc(fmtDate(k))}</b><div class="muted" style="font-size:12px">${t.n} item${t.n===1?'':'s'}</div></div>
-      <div style="text-align:right;font-size:13px"><div><span class="${ph?'ok':'no'}">${fmtG(t.p)}${ph?' ✓':''}</span><span class="muted"> / ${fmtG(g.protein)} g protein</span></div>
-      <div><span class="${ch?'':'up'}" style="font-weight:600">${fmtN(t.cal)}</span><span class="muted"> / ${fmtN(g.calories)} kcal</span></div></div></button>`; });
+  allKeys.forEach(k=>{ const t = dayTotals(k), fut = isPlanned(k); const ph = !fut && proteinHit(t), ch = fut || calHit(t);
+    h += `<button class="li dayrow${fut?' planned':''}" data-act="goto-day" data-k="${k}"><div style="flex:1"><b>${esc(fut?'Tomorrow':fmtDate(k))}${fut?'<span class="tag planned">Planned</span>':''}</b><div class="muted" style="font-size:12px">${t.n} item${t.n===1?'':'s'}</div></div>
+      <div style="text-align:right;font-size:13px"><div><span class="${fut?'':ph?'ok':'no'}">${fmtG(t.p)}${ph?' ✓':''}</span><span class="muted"> / ${fmtG(g.protein)} g protein</span></div>
+      <div><span class="${ch?'':'calover'}" style="font-weight:600">${ch?'':'⚠ '}${fmtN(t.cal)}</span><span class="muted"> / ${fmtN(g.calories)} kcal</span></div></div></button>`; });
   h += `</div></section>`;
   $('#view').innerHTML = h;
 }
@@ -1336,35 +1388,28 @@ async function startScan(){
 function renderWeight(){
   setHeader('Weight', S.weights.length? `${S.weights.length} weigh-in${S.weights.length===1?'':'s'}`:'Track your trend');
   const u = unit(), ws = withMA(S.weights), last = ws[ws.length-1];
-  const existing = S.weights.find(w=>w.date===todayKey());
   const ch = d => { const c = weightChange(d); if(!c) return `<div class="v">—</div><div class="d">not enough data</div>`;
     const v = r1(toDisp(c.delta)); const cls = v<0?'down':v>0?'up':'';
     return `<div class="v ${cls}">${v>0?'+':''}${v.toFixed(1)}<small>${u}</small></div><div class="d">since ${esc(fmtDate(c.from,{month:'short',day:'numeric'}))}</div>`; };
-  let h = `<section class="card"><h2>Log weight</h2>
-    <form id="weightForm" class="row" style="align-items:flex-end" novalidate>
-      <label class="f" style="flex:1.1;margin:0;min-width:0"><span>Weight (${u})</span><input class="inp" name="w" inputmode="decimal" placeholder="${last?fmtW(last.kg):(u==='lb'?'180.0':'80.0')}" value="${existing?fmtW(existing.kg):''}"></label>
-      <label class="f" style="flex:1.4;margin:0;min-width:0"><span>Date</span><input class="inp" name="d" type="date" value="${todayKey()}" max="${todayKey()}"></label>
-      <button class="btn primary" type="submit">Save</button>
-    </form></section>
-  <section class="card"><div class="stats">
+  let h = `<section class="card"><div class="stats">
     <div class="stat"><div class="k">Latest</div><div class="v">${last?fmtW(last.kg):'—'}<small>${u}</small></div><div class="d">${last?esc(fmtDate(last.date,{month:'short',day:'numeric'})):'no entries'}</div></div>
-    <div class="stat"><div class="k">7-day average</div><div class="v" style="color:var(--pro)">${last?fmtW(last.ma):'—'}<small>${u}</small></div><div class="d">trend weight</div></div>
+    <div class="stat"><div class="k">7-day average</div><div class="v" style="color:var(--wt)">${last?fmtW(last.ma):'—'}<small>${u}</small></div><div class="d">trend weight</div></div>
     <div class="stat"><div class="k">Past week</div>${ch(7)}</div>
     <div class="stat"><div class="k">Past month</div>${ch(30)}</div>
   </div></section>
   <section class="card"><div class="row" style="margin-bottom:10px"><h2 style="margin:0">Trend</h2><span class="spacer"></span>
     <div class="seg" style="width:188px">${['1m','3m','1y','all'].map(r=>`<button class="${UI.wRange===r?'on':''}" data-act="wrange" data-r="${r}">${r.toUpperCase()}</button>`).join('')}</div></div>
     <div class="chart" id="wChart"></div>
-    <div class="legend"><span><i style="background:transparent;border:1.5px solid var(--muted);border-radius:50%"></i>Weigh-in</span><span><i style="background:var(--pro)"></i>7-day moving average</span></div>
+    <div class="legend"><span><i style="background:transparent;border:1.5px solid var(--muted);border-radius:50%"></i>Weigh-in</span><span><i style="background:var(--wt)"></i>7-day moving average</span></div>
   </section>
-  <section class="card"><h2>Entries</h2><div class="list">`;
-  if(!ws.length) h += `<div class="empty">No weigh-ins yet. Log your first one above.</div>`;
+  <section class="card"><h2>Entries<small>today’s can be corrected · past days are locked</small></h2><div class="list">`;
+  if(!ws.length) h += `<div class="empty">No weigh-ins yet. Tap <b style="color:var(--wt)">+ Log weight</b> below to add your first.</div>`;
   const rev = ws.slice().reverse();
   rev.slice(0,120).forEach((w,i)=>{
     const prev = rev[i+1]; const d = prev ? r1(toDisp(w.kg)-toDisp(prev.kg)) : null;
-    h += `<div class="li"><div style="flex:1"><b>${fmtW(w.kg)} ${u}</b><div class="muted" style="font-size:12px">${esc(fmtDate(w.date,{weekday:'short',month:'short',day:'numeric',year:'numeric'}))}</div></div>
-      ${d!==null?`<span class="${d<0?'down':d>0?'up':'muted'}" style="font-size:13px;font-weight:650">${d>0?'+':''}${d.toFixed(1)}</span>`:''}
-      <button class="trash" data-act="del-weight" data-d="${w.date}" aria-label="Delete weigh-in">${ICON.trash}</button></div>`;
+    const ed = canWeight(w.date), tg = ed ? 'button' : 'div';
+    h += `<${tg} class="li wrow${ed?'':' ro'}" data-d="${w.date}"${ed?` data-act="edit-weight" aria-label="Edit today’s weigh-in ${fmtW(w.kg)} ${u}"`:''}><div style="flex:1"><b>${fmtW(w.kg)} ${u}</b><div class="muted" style="font-size:12px">${esc(fmtDate(w.date,{weekday:'short',month:'short',day:'numeric',year:'numeric'}))}</div></div>
+      ${d!==null?`<span class="${d<0?'down':d>0?'up':'muted'}" style="font-size:13px;font-weight:650">${d>0?'+':''}${d.toFixed(1)}</span>`:''}${ed?'<span class="chev" aria-hidden="true">›</span>':''}</${tg}>`;
   });
   h += `</div></section>`;
   $('#view').innerHTML = h;
@@ -1391,12 +1436,12 @@ function drawWeightChart(){
   if(data.length>1){
     s += `<polyline points="${data.map(p=>X(p.date).toFixed(1)+','+Y(toDisp(p.kg)).toFixed(1)).join(' ')}" fill="none" stroke="var(--muted)" stroke-opacity=".3" stroke-width="1.2"/>`;
     const area = `M${X(data[0].date).toFixed(1)},${H-padB} `+data.map(p=>`L${X(p.date).toFixed(1)},${Y(toDisp(p.ma)).toFixed(1)}`).join(' ')+` L${X(lastDate).toFixed(1)},${H-padB} Z`;
-    s += `<defs><linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--pro)" stop-opacity=".22"/><stop offset="1" stop-color="var(--pro)" stop-opacity="0"/></linearGradient></defs><path d="${area}" fill="url(#wg)"/>`;
-    s += `<polyline id="maLine" points="${data.map(p=>X(p.date).toFixed(1)+','+Y(toDisp(p.ma)).toFixed(1)).join(' ')}" fill="none" stroke="var(--pro)" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>`;
+    s += `<defs><linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--wt)" stop-opacity=".22"/><stop offset="1" stop-color="var(--wt)" stop-opacity="0"/></linearGradient></defs><path d="${area}" fill="url(#wg)"/>`;
+    s += `<polyline id="maLine" points="${data.map(p=>X(p.date).toFixed(1)+','+Y(toDisp(p.ma)).toFixed(1)).join(' ')}" fill="none" stroke="var(--wt)" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>`;
   }
   const dotR = data.length>60?1.8:3;
   data.forEach(p=>{ s += `<circle class="wdot" cx="${X(p.date).toFixed(1)}" cy="${Y(toDisp(p.kg)).toFixed(1)}" r="${dotR}" fill="var(--card)" stroke="var(--muted)" stroke-width="1.4"/>`; });
-  s += `<g id="wTip" style="display:none;pointer-events:none"><line id="wTipLine" y1="${padT}" y2="${H-padB}" stroke="var(--pro)" stroke-dasharray="3 3"/><circle id="wTipDot" r="5" fill="var(--pro)" stroke="var(--card)" stroke-width="2"/>
+  s += `<g id="wTip" style="display:none;pointer-events:none"><line id="wTipLine" y1="${padT}" y2="${H-padB}" stroke="var(--wt)" stroke-dasharray="3 3"/><circle id="wTipDot" r="5" fill="var(--wt)" stroke="var(--card)" stroke-width="2"/>
     <rect id="wTipBox" rx="8" height="36" width="136" fill="var(--text)"/><text id="wTipT1" style="fill:var(--card);font-weight:700;font-size:12px"></text><text id="wTipT2" style="fill:var(--card);opacity:.75;font-size:10.5px"></text></g>`;
   s += `<rect x="${padL}" y="0" width="${W-padL-padR}" height="${H}" fill="transparent"/></svg>`;
   el.innerHTML = s;
@@ -1439,7 +1484,7 @@ function renderGoals(){
         <label class="f"><span>Fat (g)</span><input class="inp" name="fat" inputmode="numeric" value="${g.fat?r0(g.fat):''}" placeholder="—"></label>
         <label class="f"><span>Fiber (g)</span><input class="inp" name="fiber" inputmode="numeric" value="${g.fiber?r0(g.fiber):''}" placeholder="—"></label>
       </div>
-      <div class="grid2"><label class="f"><span style="color:var(--fib)">Goal weight (${u})</span><input class="inp" name="goalWeight" inputmode="decimal" value="${S.settings.goalWeight?fmtW(S.settings.goalWeight):''}" placeholder="—"></label>
+      <div class="grid2"><label class="f"><span style="color:var(--wt)">Goal weight (${u})</span><input class="inp" name="goalWeight" inputmode="decimal" value="${S.settings.goalWeight?fmtW(S.settings.goalWeight):''}" placeholder="—"></label>
         <p class="muted small" style="margin:22px 0 0;align-self:start">Optional. Shows progress on Today’s weight ring.</p></div>
       <button class="btn primary block" type="submit">Save goals</button>
     </form></section>
@@ -1467,14 +1512,14 @@ function renderSettings(){
     <p class="muted small" style="margin:-4px 0 12px">Food search uses <b>USDA FoodData Central</b> (generic foods${usdaKey()==='DEMO_KEY'?'':' + branded'}) and <b>Open Food Facts</b> (packaged products &amp; barcodes). Both are free, public databases.</p>
     <form id="keyForm" novalidate><label class="f" style="margin-bottom:8px"><span>USDA API key</span>
       <div class="row" style="gap:8px"><input class="inp" name="key" id="usdaKeyInp" value="${esc(usdaKey())}" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" style="flex:1;font-family:ui-monospace,Menlo,monospace;font-size:15px"><button class="btn primary" type="submit">Save</button></div></label></form>
-    <p class="muted small" style="margin:0">${usdaKey()==='DEMO_KEY'?'<b>You’re using DEMO_KEY</b>, a shared key that is heavily rate-limited (only a handful of searches per hour), so only USDA generic foods are searched with it. ':''}<a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener" style="color:var(--pro);font-weight:600">Get a free personal key</a> (instant, by email) for much higher limits (about 1,000 requests/hour); it also adds USDA branded foods to search.</p>
+    <p class="muted small" style="margin:0">${usdaKey()==='DEMO_KEY'?'<b>You’re using DEMO_KEY</b>, a shared key that is heavily rate-limited (only a handful of searches per hour), so only USDA generic foods are searched with it. ':''}<a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener" style="color:var(--accent);font-weight:600">Get a free personal key</a> (instant, by email) for much higher limits (about 1,000 requests/hour); it also adds USDA branded foods to search.</p>
     <p class="muted small" style="margin:8px 0 0">Barcode camera scanning works in Safari on iPhone (including the Home Screen app) and Chrome on Android. It needs the https site, and the scanner works offline once it has loaded. You can always type the barcode number instead.</p>
   </section>
   <section class="card"><h2>Backup &amp; data</h2>
     <p class="muted" style="font-size:13px;margin:-4px 0 12px" id="backupNote">${backupNoteHTML()}</p>
     <div class="grid2" style="gap:10px"><button class="btn" data-act="export">Export JSON</button><button class="btn" data-act="import">Import JSON</button></div>
     <button class="btn danger block" data-act="reset" style="margin-top:10px">Reset all data…</button>
-    <p class="muted" style="font-size:12px;margin:12px 0 0">${Object.keys(S.entries).length} days logged · ${Object.values(S.entries).reduce((s,l)=>s+l.length,0)} entries · ${S.foods.length} saved foods · ${S.weights.length} weigh-ins</p>
+    <p class="muted" style="font-size:12px;margin:12px 0 0">${Object.keys(S.entries).filter(k=>!isPlanned(k)).length} days logged · ${Object.values(S.entries).reduce((s,l)=>s+l.length,0)} entries · ${S.foods.length} saved foods · ${S.weights.length} weigh-ins</p>
   </section>`;
 }
 function helperCalc(){
@@ -1778,6 +1823,7 @@ async function signOut(){
   clearDevice();
   toast('Signed out · this device’s data was removed');
 }
+window.FuelData = { canFood, canWeight, setWeight, deleteWeight, logEntry, removeEntry, updateEntry, restoreEntry };   // data-layer API (used by tests)
 window.FuelSync = { now: ()=>syncNow(), status: ()=>{ const m = loadMeta(); return {configured:!!CFG, ready:ACC.ready, signedIn:!!m.uid && !ACC.expired, username:m.user, state:ACC.state, err:ACC.err, pending:dirtyCount(m), last:m.last}; } };
 
 /* ---- account UI ---- */
@@ -1902,7 +1948,7 @@ document.addEventListener('click', async ev=>{
   const a = el.dataset.act;
   switch(a){
     case 'tab': if(UI.sheet) closeSheet(); UI.view = el.dataset.tab; render(); window.scrollTo(0,0); break;
-    case 'day': { const n = addDays(UI.date, +el.dataset.d); if(n<=todayKey()){ UI.date = n; render(); } break; }
+    case 'day': { const n = addDays(UI.date, +el.dataset.d); if(n<=tomorrowKey()){ UI.date = n; render(); } break; }
     case 'goto-today': UI.date = todayKey(); render(); break;
     case 'goto-day': UI.date = el.dataset.k; UI.view='today'; render(); window.scrollTo(0,0); break;
     case 'pick-date': { const i = $('#datePick'); try{ i.showPicker(); } catch(e){ i.style.pointerEvents='auto'; i.focus(); } break; }
@@ -1923,10 +1969,11 @@ document.addEventListener('click', async ev=>{
       const inFoods = S.foods.some(x=>x.name.trim().toLowerCase()===f.name.trim().toLowerCase());
       UI.sheet.form = {name:f.name, serv:f.serv||'', servings:f.servings||1, cal:f.cal, p:f.p, c:f.c, f:f.f, fib:f.fib, saveFood:false, inFoods}; UI.sheet.tab='new'; UI.sheet.food=null; renderSheet(); break; }
     case 'quick': { const f = findFood(el.dataset.src, el.dataset.key); if(!f) break;
-      const entry = logEntry({name:f.name, serv:f.serv||'', servings:f.servings||1, cal:f.cal, p:f.p, c:f.c, f:f.f, fib:f.fib});
+      const k = UI.date, entry = logEntry({name:f.name, serv:f.serv||'', servings:f.servings||1, cal:f.cal, p:f.p, c:f.c, f:f.f, fib:f.fib});
+      if(!entry){ closeSheet(); render(); break; }
       el.classList.add('done'); el.textContent='✓'; setTimeout(()=>{ el.classList.remove('done'); el.textContent='+'; }, 1100);
       render();
-      toast(`Logged ${entry.name} · ${MEAL_LABEL[entry.meal]}`, ()=>{ removeEntry(UI.date, entry.id); render(); });
+      toast(`Logged ${entry.name} · ${MEAL_LABEL[entry.meal]}`, ()=>{ removeEntry(k, entry.id); render(); });
       break; }
     case 'del-food': { const i = S.foods.findIndex(f=>f.id===el.dataset.id); if(i<0) break; const [f] = S.foods.splice(i,1); save(); renderSheet();
       toast(`Removed ${f.name} from My foods`, ()=>{ S.foods.splice(i,0,f); save(); if(UI.sheet) renderSheet(); }); break; }
@@ -1934,19 +1981,18 @@ document.addEventListener('click', async ev=>{
       const v = Math.max(0.25, Math.round((cur + (+el.dataset.d))*100)/100);
       inp.value = v; inp.closest('.stepper').style.borderColor=''; updatePreview(); break; }
     case 'delete-entry': { const k = UI.date, st = UI.sheet; const e = removeEntry(k, st.id); closeSheet(); render();
-      if(e) toast(`Deleted ${e.name}`, ()=>{ (S.entries[k]=S.entries[k]||[]).push(e); save(); render(); }); break; }
+      if(e) toast(`Deleted ${e.name}`, ()=>{ restoreEntry(k, e); render(); }); break; }
     case 'copy-day': copyEntries(S.entries[addDays(UI.date,-1)]||[]); break;
     case 'copy-meal': copyEntries((S.entries[addDays(UI.date,-1)]||[]).filter(e=>e.meal===el.dataset.meal)); break;
     case 'wrange': UI.wRange = el.dataset.r; renderWeight(); break;
-    case 'del-weight': { const i = S.weights.findIndex(w=>w.date===el.dataset.d); if(i<0) break; const [w] = S.weights.splice(i,1); save(); renderWeight();
-      toast('Weigh-in deleted', ()=>{ S.weights.push(w); S.weights.sort((a,b)=>a.date<b.date?-1:1); save(); renderWeight(); }); break; }
+    case 'edit-weight': openWeight(el.dataset.d); break;
     case 'unit': if(S.settings.unit!==el.dataset.u){ S.settings.unit = el.dataset.u; save(); renderSettings(); toast(`Weight units: ${el.dataset.u}`); } break;
     case 'apply-helper': { const r = helperCalc(); if(!r){ toast('Enter your body weight first'); break; }
       const fm = $('#goalsForm'); fm.elements.calories.value = r.cal; fm.elements.protein.value = r.protein; saveGoals(); break; }
     case 'export': exportData(); break;
-    case 'log-weight': openWeight(UI.date); break;
-    case 'q-del-weight': { const d = UI.sheet && UI.sheet.date; const i = S.weights.findIndex(w=>w.date===d); if(i<0) break; const [w] = S.weights.splice(i,1); save(); closeSheet(); render();
-      toast('Weigh-in deleted', ()=>{ S.weights.push(w); S.weights.sort((a,b)=>a.date<b.date?-1:1); save(); render(); }); break; }
+    case 'log-weight': openWeight(UI.view==='today' ? UI.date : todayKey()); break;   // Weight tab: always today
+    case 'q-del-weight': { const w = deleteWeight(UI.sheet && UI.sheet.date); if(!w) break; closeSheet(); render();
+      toast('Weigh-in deleted', ()=>{ restoreWeight(w); render(); }); break; }
     case 'auth-open': closeSheet(); openAuth(); break;
     case 'auth-tab': if(UI.sheet && UI.sheet.mode==='auth' && !UI.sheet.busy){ const f = $('#authPwForm'); if(f){ UI.sheet.user = f.elements.username.value.trim(); } UI.sheet.tab = el.dataset.t==='signup' ? 'signup' : 'signin'; UI.sheet.err = ''; UI.sheet.pw = UI.sheet.pw2 = ''; renderSheet(); } break;
     case 'auth-clear': if(await confirmDialog({title:'Remove data from this device?', text:`Changes that were never synced will be lost. Data already backed up stays in ${loadMeta().user||'your account'}.`, ok:'Remove', danger:true})){ clearDevice(); toast('This device’s data was removed'); } break;
@@ -1974,11 +2020,6 @@ document.addEventListener('submit', ev=>{
   else if(ev.target.id==='keyForm'){ ev.preventDefault(); const v = ev.target.elements.key.value.trim();
     if(v && !/^[A-Za-z0-9_\-]{6,100}$/.test(v)){ ev.target.elements.key.classList.add('err'); toast('That doesn’t look like an API key'); return; }
     S.settings.usdaKey = (!v || v==='DEMO_KEY') ? '' : v; save(); dbCache.clear(); renderSettings(); toast(S.settings.usdaKey ? 'USDA API key saved' : 'Using DEMO_KEY'); }
-  else if(ev.target.id==='weightForm'){
-    ev.preventDefault(); const fm = ev.target; const r = setWeight(fm.elements.d.value, fm.elements.w.value);
-    if(r.err){ if(/weight/.test(r.err)) fm.elements.w.classList.add('err'); toast(r.err); return; }
-    renderWeight(); toast(r.updated ? 'Weigh-in updated' : 'Weigh-in saved');
-  }
 });
 document.addEventListener('input', ev=>{
   const t = ev.target;
@@ -1990,7 +2031,7 @@ document.addEventListener('input', ev=>{
   else if(t.classList && t.classList.contains('err')) t.classList.remove('err');
 });
 document.addEventListener('change', ev=>{
-  if(ev.target.id==='datePick' && ev.target.value){ UI.date = ev.target.value > todayKey() ? todayKey() : ev.target.value; render(); }
+  if(ev.target.id==='datePick' && ev.target.value){ UI.date = ev.target.value > tomorrowKey() ? tomorrowKey() : ev.target.value; render(); }
   else if(['hP','hA','hG'].includes(ev.target.id)) updateHelper();
   else if(ev.target.id==='portionSel' && UI.sheet && UI.sheet.food){ if($('#foodForm')) UI.sheet.form = readForm(); UI.sheet.portion = +ev.target.value; applyPortion(); renderSheet();
     if(UI.sheet.portion===-2){ const c=$('#customG'); if(c){ c.focus(); c.select(); } } }
@@ -2004,7 +2045,10 @@ window.addEventListener('offline', ()=>{ if(UI.sheet && UI.sheet.tab==='search')
 let rT; window.addEventListener('resize', ()=>{ clearTimeout(rT); rT = setTimeout(()=>{ fitTitle(); if(UI.view==='weight') drawWeightChart(); else if(UI.view==='history') renderHistory(); }, 150); });
 // Roll over to the new day if the app is left open past midnight
 let lastToday = todayKey();
-document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ const t = todayKey(); if(t!==lastToday){ if(UI.date===lastToday) UI.date = t; lastToday = t; render(); } } });
+/* day rollover: yesterday becomes locked, tomorrow's planned entries become today's */
+function checkRollover(){ const t = todayKey(); if(t===lastToday) return; if(UI.date===lastToday) UI.date = t; lastToday = t; if(UI.sheet && UI.sheet.mode!=='auth') closeSheet(); render(); }
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) checkRollover(); });
+setInterval(checkRollover, 30000);
 // Keep multiple open tabs in sync
 window.addEventListener('storage', e=>{ if(e.key===KEY || e.key===null){ S = load(); render(); } else if(e.key===SKEY) paintAccount(); });
 // Cloud sync triggers (all no-ops when sync isn't configured or nobody is signed in)
