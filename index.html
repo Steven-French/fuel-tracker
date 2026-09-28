@@ -102,6 +102,8 @@ button.ringbox:active{background:var(--card2)}
 .remain.sub{margin-top:1px;font-size:11px;font-weight:500;color:var(--muted)}
 .remain .down{color:var(--good)}.remain .up{color:var(--bad)}
 .remain.over{color:var(--cal-over)}
+.remain.eaten{color:var(--muted);font-weight:600}
+.ring .big.neg,.ring .of.neg{color:var(--bad)}.ring .of.neg{font-weight:650}
 .remain.hit{color:var(--good)}
 .secondary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 .macro .mh{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px}
@@ -920,20 +922,25 @@ function ringHTML({kind, label, value, goal, color, burned=0, eatBack=true}){
   const R=52, C=2*Math.PI*R, pct = goal>0 ? value/goal : 0;
   const over = value > goal + 0.5;
   const off = C*(1-Math.min(pct,1));
-  let strokeColor = color, remain;
+  let strokeColor = color, remain, center;
   if(kind==='cal'){
-    if(over){ strokeColor='var(--cal-over)'; remain = `<div class="remain over">⚠ ${fmtN(value-goal)} over</div>`; }
-    else remain = `<div class="remain">${fmtN(goal-value)} left</div>`;
+    // calories: the big number is what's LEFT of the day's budget (goal − food, + exercise when eat-back is on); negative (red) once over
+    const left = over ? -(value-goal) : Math.max(0, goal-value);
+    if(over) strokeColor = 'var(--bad)';
+    center = `<div class="big${over?' neg':''}" data-val data-left="${Math.round(left)}">${over?'−'+fmtN(value-goal):fmtN(left)}</div><div class="of${over?' neg':''}">${over?'over':'left of'} ${fmtN(goal)}</div>`;
+    remain = `<div class="remain eaten">${fmtN(value)} eaten</div>`;
     if(burned>0) remain += `<div class="remain sub burned" data-burned="${burned}">🔥 ${fmtN(burned)} burned${eatBack?'':' · not added'}</div>`;
   } else {
     if(value >= goal-0.5 && value>0) remain = `<div class="remain hit">✓ Hit${over?` · +${fmtG(value-goal)}g`:''}</div>`;
     else remain = `<div class="remain">${fmtG(goal-value)}g to go</div>`;
   }
-  return `<div class="ringbox" data-ring="${kind}">
+  if(!center) center = `<div class="big" data-val>${fmtG(value)}<span class="u">g</span></div><div class="of">of ${fmtG(goal)} g</div>`;
+  const aria = kind==='cal' ? ` role="group" aria-label="Calories: ${over?`${fmtN(value-goal)} over`:`${fmtN(Math.max(0,goal-value))} left`} of ${fmtN(goal)} (${fmtN(value)} eaten)"` : '';
+  return `<div class="ringbox" data-ring="${kind}"${kind==='cal'?` data-eaten="${Math.round(value)}"`:''}${aria}>
     <div class="lbl" style="color:${color}">${label}</div>
     <div class="ring"><svg viewBox="0 0 124 124"><circle class="track" cx="62" cy="62" r="${R}"/>
       <circle class="prog" cx="62" cy="62" r="${R}" stroke="${strokeColor}" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}"/></svg>
-      <div class="center"><div class="big" data-val>${kind==='cal'?fmtN(value):fmtG(value)+'<span class="u">g</span>'}</div><div class="of">of ${kind==='cal'?fmtN(goal):fmtG(goal)+' g'}</div></div>
+      <div class="center">${center}</div>
     </div>${remain}</div>`;
 }
 /* Weight tile: latest weigh-in on or before the viewed day, 7-day change, and either progress toward the
