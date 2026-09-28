@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Fuel — Nutrition &amp; Weight</title>
+<title>NDLZ_DNT_NDLZ</title>
 <meta name="description" content="Calorie, protein, nutrition and weight tracker">
 <meta name="theme-color" content="#f4f5f8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0e1015" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Fuel">
-<meta name="application-name" content="Fuel">
+<meta name="apple-mobile-web-app-title" content="NDLZ">
+<meta name="application-name" content="NDLZ">
 <meta name="format-detection" content="telephone=no">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -44,8 +44,10 @@ button{cursor:pointer;border:0;background:none;padding:0}
 input,select{font-size:16px}
 .hidden{display:none!important}
 .app{max-width:600px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 8px) 16px calc(var(--tabh) + env(safe-area-inset-bottom) + 90px)}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 2px 12px;gap:8px}
-.topbar h1{font-size:28px;letter-spacing:-.02em;margin:0;font-weight:750}
+.topbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:8px 2px 12px;gap:4px 8px}
+.topbar>div:first-child{min-width:0;max-width:100%}
+.topbar h1{font-size:28px;letter-spacing:-.02em;margin:0;font-weight:750;white-space:nowrap}
+.topbar h1.long{font-size:clamp(19px,7.2vw,28px);letter-spacing:-.01em}
 .topbar .sub{color:var(--muted);font-size:13px}
 .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
 .card h2{font-size:17px;margin:0 0 12px;font-weight:700;letter-spacing:-.01em}
@@ -106,13 +108,14 @@ button.ringbox:active{background:var(--card2)}
 .entry .kc span{display:block;font-size:12px;color:var(--pro);font-weight:650}
 .empty{font-size:13px;color:var(--muted);padding:6px 0 4px}
 .linkbtn{color:var(--pro);font-weight:600;font-size:13px;padding:6px 0}
-.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tabh) + env(safe-area-inset-bottom) + 14px);z-index:20;
-  background:linear-gradient(135deg,var(--cal),var(--pro));color:#fff;font-weight:700;padding:14px 22px;border-radius:99px;box-shadow:0 8px 24px rgba(109,93,252,.35);display:flex;gap:8px;align-items:center;font-size:15px}
-.fab:active{transform:translateX(-50%) scale(.97)}
+.fabs{position:fixed;left:0;right:0;bottom:calc(var(--tabh) + env(safe-area-inset-bottom) + 14px);z-index:20;display:flex;justify-content:center;gap:10px;padding:0 12px;pointer-events:none}
+.fab{pointer-events:auto;background:linear-gradient(135deg,var(--cal),var(--pro));color:#fff;font-weight:700;padding:14px 20px;min-height:50px;border-radius:99px;box-shadow:0 8px 24px rgba(109,93,252,.35);display:flex;gap:7px;align-items:center;justify-content:center;font-size:15px;white-space:nowrap}
+.fab:active{transform:scale(.97)}
+@media (max-width:360px){.fab{padding:13px 15px;font-size:14px;gap:6px}}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:saturate(1.8) blur(18px);-webkit-backdrop-filter:saturate(1.8) blur(18px);
   border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-.tabbar .in{max-width:600px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);height:var(--tabh)}
-.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:600;color:var(--muted)}
+.tabbar .in{max-width:600px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);height:var(--tabh)}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:600;color:var(--muted);min-width:0;white-space:nowrap}
 .tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tab.on{color:var(--pro)}
 label.f{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:10px}
@@ -264,12 +267,13 @@ details.pwset summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--
   <header class="topbar"><div><h1 id="title">Today</h1><div class="sub" id="subtitle"></div></div><div id="topRight"></div></header>
   <main id="view"></main>
 </div>
-<button class="fab hidden" id="fab" data-act="open-add"><span style="font-size:20px;line-height:1">+</span> Log food</button>
+<div class="fabs hidden" id="fabs"><button class="fab" id="fab" data-act="open-add"><span style="font-size:20px;line-height:1">+</span> Log food</button><button class="fab" id="fabW" data-act="log-weight"><span style="font-size:20px;line-height:1">+</span> Log weight</button></div>
 <nav class="tabbar"><div class="in">
   <button class="tab" data-tab="today"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Today</button>
   <button class="tab" data-tab="history"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>History</button>
   <button class="tab" data-tab="weight"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M8 10a5 5 0 0 1 8 0l-3 3"/></svg>Weight</button>
-  <button class="tab" data-tab="settings"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Goals</button>
+  <button class="tab" data-tab="goals"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg>Goals</button>
+  <button class="tab" data-tab="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</button>
 </div></nav>
 <div class="scrim" id="scrim" data-act="close-sheet"></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="grab"></div><div class="sh"><h3 id="sheetTitle"></h3><button class="x" data-act="close-sheet" aria-label="Close">✕</button></div><div class="sb" id="sheetBody"></div></div>
@@ -457,12 +461,19 @@ function confirmDialog({title, text, ok='Confirm', cancel='Cancel', danger=false
   });
 }
 function setHeader(title, sub, right){
-  $('#title').textContent = title; $('#subtitle').textContent = sub||''; $('#topRight').innerHTML = right||'';
+  const h = $('#title'); h.textContent = title; h.classList.toggle('long', title.length > 10); h.style.fontSize = '';
+  $('#subtitle').textContent = sub||''; $('#subtitle').hidden = !sub; $('#topRight').innerHTML = right||'';
+  fitTitle();
+}
+/* the title never wraps or truncates: shrink it until it fits its row (the CSS clamp normally already does) */
+function fitTitle(){
+  const h = $('#title'); h.style.fontSize = '';
+  for(let px = parseFloat(getComputedStyle(h).fontSize), i = 0; i < 20 && h.scrollWidth > h.parentElement.parentElement.clientWidth - 4 && px > 14; i++){ px -= 1; h.style.fontSize = px + 'px'; }
 }
 function render(){
   $$('.tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===UI.view));
-  $('#fab').classList.toggle('hidden', UI.view!=='today');
-  ({today:renderToday, history:renderHistory, weight:renderWeight, settings:renderSettings})[UI.view]();
+  $('#fabs').classList.toggle('hidden', UI.view!=='today');
+  ({today:renderToday, history:renderHistory, weight:renderWeight, goals:renderGoals, settings:renderSettings})[UI.view]();
 }
 
 /* ---------- Today ---------- */
@@ -541,7 +552,7 @@ function renderToday(){
   const t = dayTotals(k), g = G();
   const title = isToday ? 'Today' : (k===addDays(todayKey(),-1) ? 'Yesterday' : fmtDate(k,{weekday:'long'}));
   const streak = currentProteinStreak();
-  setHeader('Fuel', 'Calories · Protein · Weight', streak>0 ? `<span class="pill" title="Days in a row hitting your protein goal">🔥 ${streak}-day protein streak</span>`:'');
+  setHeader('NDLZ_DNT_NDLZ', '', streak>0 ? `<span class="pill" title="Days in a row hitting your protein goal">🔥 ${streak}-day protein streak</span>`:'');
   const list = S.entries[k]||[];
   const yk = addDays(k,-1), yList = S.entries[yk]||[];
   const showYear = parseKey(k).getFullYear()!==new Date().getFullYear();
@@ -553,7 +564,7 @@ function renderToday(){
     <button class="arrow" data-act="day" data-d="1" aria-label="Next day" ${isToday?'disabled':''}>›</button>
   </div>
   ${!isToday?`<div style="text-align:center;margin:-6px 0 12px"><button class="linkbtn" data-act="goto-today">Jump to today →</button></div>`:''}
-  ${!S.settings.goalsSet?`<button class="banner" data-act="tab" data-tab="settings"><span style="font-size:20px">🎯</span><span>Using default goals (2,000 kcal · 150 g protein). <b>Set your goals →</b></span></button>`:syncPromptHTML()}
+  ${!S.settings.goalsSet?`<button class="banner" data-act="tab" data-tab="goals"><span style="font-size:20px">🎯</span><span>Using default goals (2,000 kcal · 150 g protein). <b>Set your goals →</b></span></button>`:syncPromptHTML()}
   <section class="card hero" id="hero">
     <div class="rings">
       ${ringHTML({kind:'cal',label:'Calories',value:t.cal,goal:g.calories,color:'var(--cal)'})}
@@ -633,8 +644,10 @@ function setWeight(d, raw){
   save(); return {updated:!!ex};
 }
 function openAdd(meal){
-  const hasHistory = Object.keys(S.entries).length>0 || S.foods.length>0;
-  openSheet({mode:'add', meal: meal||defaultMeal(), tab: hasHistory?'recent':'new', q:'', db:{q:'',status:'idle',results:[],errs:{}}, form:{name:'',serv:'',servings:1,cal:'',p:'',c:'',f:'',fib:'',saveFood:false}});
+  openSheet({mode:'add', meal: meal||defaultMeal(), tab:'search', q:'', db:{q:'',status:'idle',results:[],errs:{}}, form:{name:'',serv:'',servings:1,cal:'',p:'',c:'',f:'',fib:'',saveFood:false}});
+  // Search is the default tab. Focus the box right away with a mouse/trackpad; on phones don't pop the keyboard
+  // over the sliding sheet — one tap on the box opens it.
+  if(matchMedia('(pointer:fine)').matches){ const s = $('#dbSearch'); if(s) s.focus({preventScroll:true}); }
 }
 function openEdit(id){
   const e = (S.entries[UI.date]||[]).find(x=>x.id===id); if(!e) return;
@@ -1405,14 +1418,14 @@ function drawWeightChart(){
 }
 
 /* ---------- Settings ---------- */
-function renderSettings(){
-  setHeader('Goals','Daily targets & settings');
+function renderGoals(){
+  setHeader('Goals','Daily targets');
   const g = G(), u = unit();
   const lastW = S.weights.length ? r1(toDisp(S.weights[S.weights.length-1].kg)) : '';
   const opt = (v,l,sel)=>`<option value="${v}" ${String(v)===String(sel)?'selected':''}>${l}</option>`;
   const perOpts = u==='lb' ? [[0.7,'0.7 g / lb'],[0.8,'0.8 g / lb'],[1,'1.0 g / lb'],[1.2,'1.2 g / lb']]
                            : [[1.6,'1.6 g / kg'],[1.8,'1.8 g / kg'],[2.2,'2.2 g / kg'],[2.6,'2.6 g / kg']];
-  $('#view').innerHTML = accountCardHTML() + `
+  $('#view').innerHTML = `
   <section class="card"><h2>Daily goals</h2>
     <form id="goalsForm" novalidate>
       <div class="grid2">
@@ -1439,7 +1452,16 @@ function renderSettings(){
     </div>
     <div class="suggest" id="hOut"></div>
     <button class="btn block" type="button" data-act="apply-helper">Use as my goals</button>
-  </details></section>
+  </details></section>`;
+  updateHelper();
+}
+function renderSettings(){
+  setHeader('Settings','Account, units, food database & data');
+  const u = unit();
+  $('#view').innerHTML = accountCardHTML() + `
+  <section class="card"><h2>Weight units</h2>
+    <div class="seg"><button class="${u==='lb'?'on':''}" data-act="unit" data-u="lb">Pounds (lb)</button><button class="${u==='kg'?'on':''}" data-act="unit" data-u="kg">Kilograms (kg)</button></div>
+  </section>
   <section class="card" id="dbCard"><h2>Food database</h2>
     <p class="muted small" style="margin:-4px 0 12px">Food search uses <b>USDA FoodData Central</b> (generic foods${usdaKey()==='DEMO_KEY'?'':' + branded'}) and <b>Open Food Facts</b> (packaged products &amp; barcodes). Both are free, public databases.</p>
     <form id="keyForm" novalidate><label class="f" style="margin-bottom:8px"><span>USDA API key</span>
@@ -1447,16 +1469,12 @@ function renderSettings(){
     <p class="muted small" style="margin:0">${usdaKey()==='DEMO_KEY'?'<b>You’re using DEMO_KEY</b>, a shared key that is heavily rate-limited (only a handful of searches per hour), so only USDA generic foods are searched with it. ':''}<a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener" style="color:var(--pro);font-weight:600">Get a free personal key</a> (instant, by email) for much higher limits (about 1,000 requests/hour); it also adds USDA branded foods to search.</p>
     <p class="muted small" style="margin:8px 0 0">Barcode camera scanning works in Safari on iPhone (including the Home Screen app) and Chrome on Android. It needs the https site, and the scanner works offline once it has loaded. You can always type the barcode number instead.</p>
   </section>
-  <section class="card"><h2>Weight units</h2>
-    <div class="seg"><button class="${u==='lb'?'on':''}" data-act="unit" data-u="lb">Pounds (lb)</button><button class="${u==='kg'?'on':''}" data-act="unit" data-u="kg">Kilograms (kg)</button></div>
-  </section>
   <section class="card"><h2>Backup &amp; data</h2>
     <p class="muted" style="font-size:13px;margin:-4px 0 12px" id="backupNote">${backupNoteHTML()}</p>
     <div class="grid2" style="gap:10px"><button class="btn" data-act="export">Export JSON</button><button class="btn" data-act="import">Import JSON</button></div>
     <button class="btn danger block" data-act="reset" style="margin-top:10px">Reset all data…</button>
     <p class="muted" style="font-size:12px;margin:12px 0 0">${Object.keys(S.entries).length} days logged · ${Object.values(S.entries).reduce((s,l)=>s+l.length,0)} entries · ${S.foods.length} saved foods · ${S.weights.length} weigh-ins</p>
   </section>`;
-  updateHelper();
 }
 function helperCalc(){
   const w = num($('#hW').value); if(!(w>0)) return null;
@@ -1982,7 +2000,7 @@ document.addEventListener('keydown', ev=>{
 });
 window.addEventListener('online', ()=>{ if(UI.sheet && UI.sheet.tab==='search'){ if(UI.sheet.db.status==='offline') UI.sheet.db.status='idle'; paintDb(); } });
 window.addEventListener('offline', ()=>{ if(UI.sheet && UI.sheet.tab==='search') paintDb(); });
-let rT; window.addEventListener('resize', ()=>{ clearTimeout(rT); rT = setTimeout(()=>{ if(UI.view==='weight') drawWeightChart(); else if(UI.view==='history') renderHistory(); }, 150); });
+let rT; window.addEventListener('resize', ()=>{ clearTimeout(rT); rT = setTimeout(()=>{ fitTitle(); if(UI.view==='weight') drawWeightChart(); else if(UI.view==='history') renderHistory(); }, 150); });
 // Roll over to the new day if the app is left open past midnight
 let lastToday = todayKey();
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ const t = todayKey(); if(t!==lastToday){ if(UI.date===lastToday) UI.date = t; lastToday = t; render(); } } });
