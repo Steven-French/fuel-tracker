@@ -33,6 +33,8 @@ if(/^https?:$/.test(location.protocol)){ var m=document.createElement('link'); m
   --good:#16a34a;--bad:#e5484d;--warn:#f59e0b;
   --radius:18px;--shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.06);
   --tabh:64px;
+  /* safe-area insets (iPhone notch / home indicator in the standalone Home Screen app) */
+  --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px);
   color-scheme:light dark;
 }
 @media (prefers-color-scheme:dark){
@@ -49,7 +51,7 @@ button,input,select{font:inherit;color:inherit}
 button{cursor:pointer;border:0;background:none;padding:0}
 input,select{font-size:16px}
 .hidden{display:none!important}
-.app{max-width:600px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 8px) 16px calc(var(--tabh) + env(safe-area-inset-bottom) + 90px)}
+.app{max-width:600px;margin:0 auto;padding:calc(var(--sat) + 8px) 16px calc(var(--tabh) + var(--sab) + 90px)}
 .topbar{display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 2px 12px;gap:6px}
 .topbar>div:first-child{min-width:0;max-width:100%}
 #topRight:empty{display:none}
@@ -122,7 +124,7 @@ button.ringbox:active{background:var(--card2)}
 .entry .kc span{display:block;font-size:12px;color:var(--pro);font-weight:650}
 .empty{font-size:13px;color:var(--muted);padding:6px 0 4px}
 .linkbtn{color:var(--accent);font-weight:600;font-size:13px;padding:6px 0}
-.fabs{position:fixed;left:0;right:0;bottom:calc(var(--tabh) + env(safe-area-inset-bottom) + 14px);z-index:20;display:flex;justify-content:center;gap:10px;padding:0 12px;pointer-events:none}
+.fabs{position:fixed;left:0;right:0;bottom:calc(var(--tabh) + var(--sab) + 14px);z-index:20;display:flex;justify-content:center;gap:10px;padding:0 12px;pointer-events:none}
 .fab{pointer-events:auto;background:var(--food-solid);color:#fff;font-weight:700;padding:14px 20px;min-height:50px;border-radius:99px;box-shadow:0 8px 22px color-mix(in srgb,var(--food-solid) 40%,transparent);display:flex;gap:7px;align-items:center;justify-content:center;font-size:15px;white-space:nowrap}
 .fab:active{transform:scale(.97)}
 #fabW{background:var(--wt-solid);box-shadow:0 8px 22px color-mix(in srgb,var(--wt-solid) 40%,transparent)}
@@ -132,9 +134,10 @@ button.ringbox:active{background:var(--card2)}
 @media (prefers-color-scheme:dark){#fabX{border:1px solid rgba(255,255,255,.4);box-shadow:none}}
 @media (max-width:360px){.fab{padding:13px 14px;font-size:14px;gap:5px}}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:saturate(1.8) blur(18px);-webkit-backdrop-filter:saturate(1.8) blur(18px);
-  border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-.tabbar .in{max-width:600px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);height:var(--tabh)}
-.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:600;color:var(--muted);min-width:0;white-space:nowrap}
+  border-top:1px solid var(--line);padding:0 var(--sar) var(--sab) var(--sal)}
+/* 4 tabs, each an equal share of the full bar width (inside the left/right safe areas) */
+.tabbar .in{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));height:var(--tabh)}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:100%;height:100%;padding:0;margin:0;text-align:center;font-size:11px;font-weight:600;color:var(--muted);min-width:0;white-space:nowrap}
 .tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tab.on{color:var(--accent)}
 label.f{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:10px}
@@ -172,7 +175,7 @@ label.f>span{display:block;margin-bottom:5px}
 .sheet .sh{display:flex;align-items:center;padding:8px 16px 10px}
 .sheet .sh h3{margin:0;font-size:18px;flex:1}
 .sheet .x{width:34px;height:34px;border-radius:50%;background:var(--card2);display:grid;place-items:center;font-size:16px;color:var(--muted)}
-.sheet .sb{overflow-y:auto;padding:0 16px calc(18px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
+.sheet .sb{overflow-y:auto;padding:0 16px calc(18px + var(--sab));-webkit-overflow-scrolling:touch}
 .food{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
 .sect + .food,.food:first-child{border-top:0}
 .food .fb{flex:1;min-width:0;text-align:left}
@@ -233,7 +236,7 @@ details.wlist summary small{display:block;font-weight:500;color:var(--muted);fon
 .card.subtle{box-shadow:none;background:color-mix(in srgb,var(--card) 70%,transparent)}
 .card.subtle h2{font-size:15px;color:var(--muted)}
 .big-streak .n{font-size:44px;font-weight:850;letter-spacing:-.04em;color:var(--pro);line-height:1}
-.toast{position:fixed;left:50%;bottom:calc(var(--tabh) + env(safe-area-inset-bottom) + 76px);transform:translate(-50%,20px);opacity:0;z-index:100;
+.toast{position:fixed;left:50%;bottom:calc(var(--tabh) + var(--sab) + 76px);transform:translate(-50%,20px);opacity:0;z-index:100;
   background:#1b1e25;color:#fff;border-radius:14px;padding:11px 14px;font-size:14px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 30px rgba(0,0,0,.3);
   transition:all .25s;pointer-events:none;max-width:calc(100% - 32px);width:max-content}
 .toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
@@ -292,8 +295,8 @@ details.helper[open] summary::after{transform:rotate(90deg)}
 @keyframes scanline{from{top:18%}to{top:82%}}
 @media (prefers-reduced-motion:reduce){.scanner .laser{animation:none}}
 .scanner .status{position:relative;margin-top:20px;padding:0 24px;color:#fff;font-weight:600;font-size:16px;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.7)}
-.scanner .sbar{position:absolute;top:0;left:0;right:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:calc(12px + env(safe-area-inset-top)) 14px 12px}
-.scanner .sbottom{position:absolute;left:0;right:0;z-index:2;bottom:calc(28px + env(safe-area-inset-bottom));display:flex;justify-content:center}
+.scanner .sbar{position:absolute;top:0;left:0;right:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:calc(12px + var(--sat)) 14px 12px}
+.scanner .sbottom{position:absolute;left:0;right:0;z-index:2;bottom:calc(28px + var(--sab));display:flex;justify-content:center}
 .scanner .sbtn{display:inline-flex;align-items:center;gap:6px;height:44px;min-width:44px;padding:0 16px;border:0;border-radius:999px;background:rgba(28,28,30,.72);color:#fff;font:600 16px/1 inherit;font-family:inherit;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);cursor:pointer}
 .scanner .sbtn[hidden]{display:none}
 .scanner .sbtn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -330,7 +333,6 @@ details.pwset summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="grab"></div><div class="sh"><h3 id="sheetTitle"></h3><button class="x" data-act="close-sheet" aria-label="Close">✕</button></div><div class="sb" id="sheetBody"></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastUndo" class="hidden">Undo</button></div>
 <div id="dialogRoot"></div>
-<input type="file" id="importFile" accept="application/json,.json" class="hidden">
 <script src="config.js"></script>
 <script>
 (function(){
@@ -389,12 +391,12 @@ const diffDays = (a,b) => Math.round((parseKey(b)-parseKey(a))/86400000);
 const fmtDate = (k,opts) => parseKey(k).toLocaleDateString(undefined, opts||{weekday:'short',month:'short',day:'numeric'});
 const ICON = {
   trash:'<svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>',
-  copy:'<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>'
+
 };
 
 /* ---------- state ---------- */
 function defaults(){
-  return {version:1, settings:{unit:'lb', goals:{calories:2000, protein:150, carbs:null, fat:null, fiber:null}, goalsSet:false, usdaKey:'', goalWeight:null, goalWeightStart:null, profile:normProfile(), eatBack:true}, entries:{}, foods:[], weights:[], exercise:{}};
+  return {version:1, settings:{unit:'lb', goals:{calories:2000, protein:150, carbs:null, fat:null, fiber:null}, goalsSet:false, goalWeight:null, goalWeightStart:null, profile:normProfile(), eatBack:true}, entries:{}, foods:[], weights:[], exercise:{}};
 }
 function normalize(d){
   const s = defaults();
@@ -402,7 +404,6 @@ function normalize(d){
   if(d.settings && typeof d.settings==='object'){
     s.settings.unit = d.settings.unit==='kg' ? 'kg' : 'lb';
     s.settings.goalsSet = !!d.settings.goalsSet;
-    s.settings.usdaKey = typeof d.settings.usdaKey==='string' ? d.settings.usdaKey.trim().slice(0,100) : '';
     const g = d.settings.goals||{};
     s.settings.goals.calories = nz(g.calories) || s.settings.goals.calories;
     s.settings.goals.protein = nz(g.protein) || s.settings.goals.protein;
@@ -665,7 +666,8 @@ const proteinHit = t => t.n>0 && t.p >= G().protein - 0.5;
 const calHit = (t, k) => t.n>0 && t.cal <= (k ? calBudget(k) : G().calories) + 0.5;
 /* Streak = logging: consecutive days with at least one food entry. Today doesn't break it while it's in progress,
    and planned (tomorrow) entries never count. */
-const loggedOn = k => !isPlanned(k) && (S.entries[k]||[]).length > 0;
+/* streak day = a real (not planned) day with at least one food entry, weigh-in, or exercise entry */
+const loggedOn = k => !isPlanned(k) && ((S.entries[k]||[]).length > 0 || (S.exercise[k]||[]).length > 0 || S.weights.some(w=>w.date===k));
 function currentStreak(){
   let k = todayKey(), n = 0;
   if(!loggedOn(k)) k = addDays(k,-1);
@@ -673,7 +675,7 @@ function currentStreak(){
   return n;
 }
 function bestStreak(){
-  const keys = Object.keys(S.entries).filter(loggedOn).sort(); let best = 0, run = 0, prev = null;
+  const keys = [...new Set([...Object.keys(S.entries), ...Object.keys(S.exercise), ...S.weights.map(w=>w.date)])].filter(loggedOn).sort(); let best = 0, run = 0, prev = null;
   for(const k of keys){ run = prev && diffDays(prev,k)===1 ? run+1 : 1; best = Math.max(best, run); prev = k; }
   return Math.max(best, currentStreak());
 }
@@ -833,9 +835,8 @@ function renderToday(){
   const t = dayTotals(k), g = G();
   const title = isToday ? 'Today' : planned ? 'Tomorrow' : (k===addDays(todayKey(),-1) ? 'Yesterday' : fmtDate(k,{weekday:'long'}));
   const streak = currentStreak();
-  setHeader('NDLZ_DNT_NDLZ', '', streak>0 ? `<span class="pill" id="streakPill" title="Days in a row with food logged">🔥 ${streak}-day streak</span>`:'');
+  setHeader('NDLZ_DNT_NDLZ', '', streak>0 ? `<span class="pill" id="streakPill" title="Days in a row with food, weight, or exercise logged">🔥 ${streak}-day streak</span>`:'');
   const list = S.entries[k]||[];
-  const yk = addDays(k,-1), yList = S.entries[yk]||[];
   const showYear = parseKey(k).getFullYear()!==new Date().getFullYear();
   let html = `
   <div class="datenav">
@@ -859,21 +860,16 @@ function renderToday(){
       ${macroHTML('Fiber',t.fib,g.fiber,'var(--fib)')}
     </div>
   </section>`;
-  if(!locked && !list.length && yList.length){
-    const yt = sumEntries(yList);
-    html += `<button class="card row" style="width:100%;text-align:left" data-act="copy-day"><span class="icon" style="color:var(--accent)">${ICON.copy}</span><span><b>Copy all of ${k===todayKey()?'yesterday':planned?'today':'previous day'}</b><br><span class="muted" style="font-size:13px">${yList.length} item${yList.length>1?'s':''} · ${fmtN(yt.cal)} kcal · ${fmtG(yt.p)} g protein</span></span></button>`;
-  }
   for(const m of MEALS){
     const items = list.filter(e=>e.meal===m.id).sort((a,b)=>a.ts-b.ts);
     const mt = sumEntries(items);
-    const yItems = yList.filter(e=>e.meal===m.id);
     html += `<section class="card meal" data-meal="${m.id}">
       <div class="meal-h"><h3>${m.label}</h3>${items.length?`<span class="tot">${fmtN(mt.cal)} kcal · ${fmtG(mt.p)}g P</span>`:''}<span class="spacer"></span>
       ${locked?'':`<button class="addbtn" data-act="open-add" data-meal="${m.id}" aria-label="Add to ${m.label}">+</button>`}</div>
       ${items.map(e=>{ const x=entryTotals(e), tg = locked?'div':'button'; return `<${tg} class="entry"${locked?'':` data-act="edit" data-id="${e.id}"`}>
         <div class="nm"><b>${esc(e.name)}</b><span>${esc(servText(e))}C ${fmtG(x.c)} · F ${fmtG(x.f)}${x.fib?` · Fiber ${fmtG(x.fib)}`:''}</span></div>
         <div class="kc">${fmtN(x.cal)} kcal<span>${fmtG(x.p)}g protein</span></div></${tg}>`; }).join('')}
-      ${!items.length?`<div class="empty">Nothing logged${!locked&&yItems.length&&list.length?` · <button class="linkbtn" data-act="copy-meal" data-meal="${m.id}">Copy previous day's ${m.label.toLowerCase()} (${yItems.length})</button>`:''}</div>`:''}
+      ${!items.length?`<div class="empty">Nothing logged</div>`:''}
     </section>`;
   }
   html += exerciseSectionHTML(k);
@@ -891,15 +887,6 @@ function exerciseSectionHTML(k){
   </section>`;
 }
 function servText(e){ if(e.serv) return (e.servings!==1?`${r1(e.servings)} × `:'')+e.serv+' · '; return e.servings!==1?`${r1(e.servings)} servings · `:''; }
-function copyEntries(src){
-  const k = UI.date; const now = Date.now();
-  if(!src.length || denyFood(k)) return;
-  const copies = src.map((e,i)=>({...e, id:uid(), ts:now+i}));
-  S.entries[k] = (S.entries[k]||[]).concat(copies);
-  save(); render();
-  const ids = new Set(copies.map(c=>c.id));
-  toast(`Copied ${copies.length} item${copies.length>1?'s':''}`, ()=>{ if(denyFood(k)) return; S.entries[k]=(S.entries[k]||[]).filter(e=>!ids.has(e.id)); if(!S.entries[k].length) delete S.entries[k]; save(); render(); });
-}
 
 /* ---------- Exercise logger ---------- */
 function exWeight(){ const w = weightAt(todayKey()); return w ? w : null; }   // latest weigh-in on or before today
@@ -1211,12 +1198,12 @@ function streakCardHTML(){
   const cur = currentStreak(), best = bestStreak(), today = todayKey(), pct = best ? Math.min(1, cur/best) : 0;
   const dots = rangeDays(14).map(k=>{ const on = loggedOn(k), isT = k===today;
     return `<div class="sk-d${on?' on':''}${isT?' today':''}" title="${esc(fmtDate(k))}${on?' · logged':''}"><i></i><span>${esc(fmtDate(k,{weekday:'narrow'}))}</span></div>`; }).join('');
-  const msg = cur===0 ? (best ? `Log a food today to start a new streak. Your best is ${best} day${best===1?'':'s'}.` : 'Log a food today to start your streak.')
+  const msg = cur===0 ? (best ? `Log food, weight, or exercise today to start a new streak. Your best is ${best} day${best===1?'':'s'}.` : 'Log food, weight, or exercise today to start your streak.')
     : cur>=best ? (best>1 ? 'Your best streak yet — keep it going! 🎉' : 'Nice start — log again tomorrow to keep it going.')
     : `${best-cur+1} more day${best-cur+1===1?'':'s'} to beat your best.`;
   return `<section class="card streakcard" id="streakCard">
     <div class="sk-top"><div class="sk-ring" style="--pct:${(pct*100).toFixed(1)}%"><div class="sk-in"><span class="sk-fl" aria-hidden="true">🔥</span><b class="sk-n">${cur}</b></div></div>
-      <div class="sk-txt"><b class="sk-h">${cur===1?'day':'days'} in a row</b><div class="muted small">Current streak · days with at least one food logged</div>
+      <div class="sk-txt"><b class="sk-h">${cur===1?'day':'days'} in a row</b><div class="muted small">Current streak · days with food, weight, or exercise logged</div>
         <div class="sk-best">🏆 Best streak <b>${best}</b> day${best===1?'':'s'}</div></div></div>
     <div class="sk-days" aria-label="Last 14 days">${dots}</div>
     <div class="sk-msg">${esc(msg)}</div></section>`;
@@ -1329,10 +1316,9 @@ const OFF_PRODUCT = 'https://world.openfoodfacts.org/api/v2/product/';
 const OFF_FIELDS = 'code,product_name,product_name_en,generic_name,brands,nutriments,serving_size,serving_quantity,serving_quantity_unit,product_quantity,product_quantity_unit,quantity,countries_tags';
 const USDA_GENERIC = ['Foundation','SR Legacy','Survey (FNDDS)'];
 const CAN_SCAN = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && (location.protocol==='https:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)); // native BarcodeDetector or bundled ZXing
-/* USDA key: the user's own key (Settings) > the app's shared default key from config.js (usdaKey) > DEMO_KEY */
+/* USDA key: the app's shared key from config.js (usdaKey); DEMO_KEY only if config.js has none */
 const APP_USDA_KEY = (()=>{ const k = String((window.FUEL_CONFIG||{}).usdaKey||'').trim(); return /^[A-Za-z0-9_\-]{6,100}$/.test(k) && k!=='DEMO_KEY' ? k : ''; })();
-const usdaKey = () => (S.settings.usdaKey||'').trim() || APP_USDA_KEY || 'DEMO_KEY';
-const usdaKeyKind = () => (S.settings.usdaKey||'').trim() ? 'own' : APP_USDA_KEY ? 'app' : 'demo';
+const usdaKey = () => APP_USDA_KEY || 'DEMO_KEY';
 const dbCache = new Map();
 ICON.close = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 ICON.scan = '<svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg>';
@@ -1550,8 +1536,8 @@ async function barcodeLookup(raw, format){
   paintDb();
 }
 function usdaErrMsg(e){
-  if(e.status===429) return usdaKeyKind()==='demo' ? 'USDA: the shared DEMO_KEY has hit its rate limit. Add your free USDA API key in Settings → Food database.' : usdaKeyKind()==='app' ? 'USDA: the app’s shared key hit its hourly limit. Try again later, or add your own free key in Settings → Food database.' : 'USDA: your API key hit its rate limit. Try again later.';
-  if(e.status===401 || e.status===403) return usdaKeyKind()==='app' ? 'USDA: the app’s shared key was rejected. You can add your own free key in Settings → Food database.' : 'USDA: the API key was rejected (invalid key). Check it in Settings → Food database.';
+  if(e.status===429) return 'USDA is busy right now (hourly search limit reached). Try again later — Open Food Facts results still work.';
+  if(e.status===401 || e.status===403) return 'USDA search is unavailable right now (the key was refused). Open Food Facts results still work.';
   if(e.timeout) return 'USDA: the request timed out.';
   if(e.network) return 'USDA: couldn’t connect.';
   return `USDA: error (HTTP ${e.status}).`;
@@ -1585,7 +1571,7 @@ function dbListHTML(){
   if(d.status==='cam-error') return camErrHTML(d.camErr);
   if(d.status==='barcode-miss') return `<div class="notice">${esc(d.msg)} <button class="linkbtn" data-act="stab" data-tab="new">Enter it manually →</button></div>`;
   let h = '';
-  if(d.errs.usda) h += `<div class="notice ${d.errs.usda.status===429||d.errs.usda.status===403?'':'bad'}" data-err="usda">${esc(usdaErrMsg(d.errs.usda))}${(d.errs.usda.status===429||d.errs.usda.status===403||d.errs.usda.status===401)?` <button class="linkbtn" data-act="goto-key">Open settings</button>`:''}</div>`;
+  if(d.errs.usda) h += `<div class="notice ${d.errs.usda.status===429||d.errs.usda.status===403?'':'bad'}" data-err="usda">${esc(usdaErrMsg(d.errs.usda))}</div>`;
   if(d.errs.off) h += `<div class="notice" data-err="off">${esc(offErrMsg(d.errs.off))} <button class="linkbtn" data-act="db-retry">Retry</button></div>`;
   if(!d.results.length){
     h += (d.errs.usda && d.errs.off) ? `<div class="notice info">No results could be loaded. <button class="linkbtn" data-act="stab" data-tab="new">Enter a food manually →</button></div>`
@@ -1922,7 +1908,7 @@ function renderGoals(){
   updateHelper();
 }
 function renderSettings(){
-  setHeader('Settings','Account, units, food database & data');
+  setHeader('Settings','Account, units & exercise');
   const u = unit();
   $('#view').innerHTML = accountCardHTML() + `
   <section class="card"><h2>Weight units</h2>
@@ -1933,21 +1919,7 @@ function renderSettings(){
     <div class="seg"><button class="${S.settings.eatBack!==false?'on':''}" data-act="eatback" data-v="1">Eat back exercise</button><button class="${S.settings.eatBack===false?'on':''}" data-act="eatback" data-v="0">Don’t add it</button></div>
     <p class="muted small" style="margin:10px 0 0">Burned calories are estimated as MET × weight (kg) × hours with gross METs from the 2024 Adult Compendium of Physical Activities, using your latest weigh-in. Custom exercises use the calories you enter.</p>
   </section>
-  <section class="card" id="dbCard"><h2>Food database</h2>
-    <p class="muted small" style="margin:-4px 0 12px">Food search uses <b>USDA FoodData Central</b> (generic foods${usdaKeyKind()==='demo'?'':' + branded'}) and <b>Open Food Facts</b> (packaged products &amp; barcodes). Both are free, public databases.</p>
-    <form id="keyForm" novalidate><label class="f" style="margin-bottom:8px"><span>USDA API key</span>
-      <div class="row" style="gap:8px"><input class="inp" name="key" id="usdaKeyInp" value="${esc(usdaKeyKind()==='app' ? '' : usdaKey())}" placeholder="${usdaKeyKind()==='app'?'Built-in shared key':'DEMO_KEY'}" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" style="flex:1;font-family:ui-monospace,Menlo,monospace;font-size:15px"><button class="btn primary" type="submit">Save</button></div></label></form>
-    <p class="muted small" id="usdaKeyNote" style="margin:0">${usdaKeyKind()==='app' ? '<b>Using NDLZ’s built-in USDA key</b> (generic + branded foods). It’s shared by everyone using the app (about 1,000 searches an hour in total). Optional: <a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener" style="color:var(--accent);font-weight:600">get your own free key</a> and paste it here for your own limit; leave the box empty to use the built-in key.'
-      : usdaKeyKind()==='own' ? `<b>Using your own USDA key</b> (generic + branded foods, about 1,000 searches an hour).${APP_USDA_KEY?' Clear the box and save to go back to the built-in key.':''}`
-      : '<b>You’re using DEMO_KEY</b>, a shared key that is heavily rate-limited (only a handful of searches per hour), so only USDA generic foods are searched with it. <a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener" style="color:var(--accent);font-weight:600">Get a free personal key</a> (instant, by email) for much higher limits (about 1,000 requests/hour); it also adds USDA branded foods to search.'}</p>
-    <p class="muted small" style="margin:8px 0 0">Barcode camera scanning works in Safari on iPhone (including the Home Screen app) and Chrome on Android. It needs the https site, and the scanner works offline once it has loaded. You can always type the barcode number instead.</p>
-  </section>
-  <section class="card"><h2>Backup &amp; data</h2>
-    <p class="muted" style="font-size:13px;margin:-4px 0 12px" id="backupNote">${backupNoteHTML()}</p>
-    <div class="grid2" style="gap:10px"><button class="btn" data-act="export">Export JSON</button><button class="btn" data-act="import">Import JSON</button></div>
-    <button class="btn danger block" data-act="reset" style="margin-top:10px">Reset all data…</button>
-    <p class="muted" style="font-size:12px;margin:12px 0 0">${Object.keys(S.entries).filter(k=>!isPlanned(k)).length} days logged · ${Object.values(S.entries).reduce((s,l)=>s+l.length,0)} entries · ${S.foods.length} saved foods · ${S.weights.length} weigh-ins · ${Object.values(S.exercise).reduce((s,l)=>s+l.length,0)} exercise entries</p>
-  </section>`;
+`;
 }
 const aimLabel = v => ({'-500': unit()==='lb' ? 'Lose ~1 lb a week' : 'Lose ~0.45 kg a week', '-250': unit()==='lb' ? 'Lose ~½ lb a week' : 'Lose ~0.25 kg a week', '0':'Maintain weight', '250':'Gain slowly'})[String(v)];
 /* the remembered goal, else lose/gain/maintain depending on goal weight vs. the latest weigh-in */
@@ -2009,30 +1981,10 @@ function saveGoals(){
   return true;
 }
 
-/* ---------- export / import / reset ---------- */
-function exportData(){
-  const blob = new Blob([JSON.stringify({app:'fuel-nutrition', exportedAt:new Date().toISOString(), ...S},null,2)],{type:'application/json'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `NDLZ-backup-${todayKey()}.json`;
-  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
-  toast('Backup exported');
-}
-$('#importFile').addEventListener('change', async ev=>{
-  const file = ev.target.files[0]; ev.target.value=''; if(!file) return;
-  let next;
-  try{
-    const data = JSON.parse(await file.text());
-    if(!data || typeof data!=='object' || !('entries' in data || 'weights' in data || 'foods' in data)) throw new Error('bad');
-    next = normalize(data);
-  } catch(e){ toast('That file isn’t a valid backup'); return; }
-  const ok = await confirmDialog({title:'Replace current data?', text:`Import ${Object.keys(next.entries).length} days of food logs, ${next.foods.length} saved foods, ${next.weights.length} weigh-ins and ${Object.values(next.exercise).reduce((s,l)=>s+l.length,0)} exercise entries. This replaces everything currently stored on this device${CFG && loadMeta().uid ? ' and in your account on all your devices' : ''}.`, ok:'Import'});
-  if(!ok) return;
-  S = next; save(); render(); toast('Backup imported');
-});
-
 /* ---------- cloud account & sync (Supabase) ----------
    Local-first: localStorage (S) stays the working copy and the app works fully without an account.
    * trackChanges() runs after every save(): it compares each record with a fingerprint of its last known state,
-     so edits, deletes, imports and resets are all caught in one place. Changed records are marked dirty with a
+     so edits, deletes and system migrations are all caught in one place. Changed records are marked dirty with a
      change time; deleted ones become tombstones.
    * sync = pull (rows changed on the server since our cursor) then push (dirty rows, upserted with their change time).
      The server keeps the newest change per record (last write wins) and stores deletes as tombstones.
@@ -2076,7 +2028,7 @@ const rowX = (k, x) => validDay(k) ? {day:k, name:String(x.name||'Exercise').sli
 const rowW = w => validDay(w.date) && +w.kg>0 ? {day:w.date, kg:Math.min(+w.kg, 999)} : null;
 function rowP(){ const st = S.settings, g = st.goals;
   return {unit:st.unit==='kg'?'kg':'lb', goal_calories:goal(g.calories,99999), goal_protein:goal(g.protein,9999), goal_carbs:goal(g.carbs,9999), goal_fat:goal(g.fat,9999), goal_fiber:goal(g.fiber,9999),
-    goals_set:!!st.goalsSet, eat_back:st.eatBack!==false, usda_key:(st.usdaKey||'').slice(0,100)||null, helper:normProfile(st.profile),
+    goals_set:!!st.goalsSet, eat_back:st.eatBack!==false, helper:normProfile(st.profile),
     goal_weight_kg:st.goalWeight>0 && st.goalWeight<1000 ? st.goalWeight : null, goal_weight_start_kg:st.goalWeight && st.goalWeightStart>0 && st.goalWeightStart<1000 ? st.goalWeightStart : null}; }
 const isDefaultProfile = () => fp(rowP()) === fp((()=>{ const keep = S; S = defaults(); const r = rowP(); S = keep; return r; })());
 
@@ -2086,7 +2038,7 @@ function entryFromRow(r){ const ts = Date.parse(r.logged_at)||Date.parse(r.updat
   ts}; if(r.serving) e.serv = String(r.serving).slice(0,80); return e; }
 function foodFromRow(r){ const f = {id:r.id, name:String(r.name||'Food').slice(0,120), cal:nz(r.calories), p:nz(r.protein), c:nz(r.carbs), f:nz(r.fat), fib:nz(r.fiber), servings:nz(r.servings)||1}; if(r.serving) f.serv = String(r.serving).slice(0,80); return f; }
 function profileFromRow(r){ const st = S.settings, d = defaults().settings.goals;
-  st.unit = r.unit==='kg'?'kg':'lb'; st.goalsSet = !!r.goals_set; st.usdaKey = typeof r.usda_key==='string' ? r.usda_key.slice(0,100) : '';
+  st.unit = r.unit==='kg'?'kg':'lb'; st.goalsSet = !!r.goals_set;
   st.goals = {calories:nz(r.goal_calories)||d.calories, protein:nz(r.goal_protein)||d.protein, carbs:nz(r.goal_carbs)||null, fat:nz(r.goal_fat)||null, fiber:nz(r.goal_fiber)||null};
   st.goalWeight = nz(r.goal_weight_kg)||null; st.goalWeightStart = st.goalWeight ? (nz(r.goal_weight_start_kg)||null) : null;
   if(r.helper && typeof r.helper==='object') st.profile = normProfile(r.helper);
@@ -2338,9 +2290,7 @@ function accountCardHTML(){
 }
 function paintAccount(){
   const c = $('#acctCard'); if(c) c.outerHTML = accountCardHTML();
-  const b = $('#backupNote'); if(b) b.innerHTML = backupNoteHTML();
 }
-const backupNoteHTML = () => (CFG && loadMeta().uid) ? 'Your data is saved on this device and backed up to your account, which keeps your devices in sync. You can still export a JSON copy.' : 'Your data is stored only in this browser on this device. Export a backup now and then.';
 function syncPromptHTML(){
   if(!CFG || loadMeta().uid) return '';
   try { if(localStorage.getItem(PROMPT_KEY)) return ''; } catch(e){ return ''; }
@@ -2439,7 +2389,6 @@ document.addEventListener('click', async ev=>{
     case 'db-pick': { const f = UI.sheet && UI.sheet.db.results[+el.dataset.i]; if(f) openFoodDetail(f); break; }
     case 'db-back': if(UI.sheet){ UI.sheet.food = null; UI.sheet.tab = 'search'; renderSheet(); } break;
     case 'db-retry': if(UI.sheet){ dbCache.clear(); dbQueue(UI.sheet.db.q, true); } break;
-    case 'goto-key': closeSheet(); UI.view='settings'; render(); setTimeout(()=>{ const c=$('#dbCard'); if(c) c.scrollIntoView({block:'center'}); const i=$('#usdaKeyInp'); if(i){ i.focus(); i.select(); } }, 50); break;
     case 'scan': startScan(); break;
     case 'scan-cancel': if(scanStop) scanStop(); break;
     case 'fill': { const f = findFood(el.dataset.src, el.dataset.key); if(!f) break;
@@ -2459,8 +2408,6 @@ document.addEventListener('click', async ev=>{
       inp.value = v; inp.closest('.stepper').style.borderColor=''; updatePreview(); break; }
     case 'delete-entry': { const k = UI.date, st = UI.sheet; const e = removeEntry(k, st.id); closeSheet(); render();
       if(e) toast(`Deleted ${e.name}`, ()=>{ restoreEntry(k, e); render(); }); break; }
-    case 'copy-day': copyEntries(S.entries[addDays(UI.date,-1)]||[]); break;
-    case 'copy-meal': copyEntries((S.entries[addDays(UI.date,-1)]||[]).filter(e=>e.meal===el.dataset.meal)); break;
     case 'wrange': UI.wRange = el.dataset.r; $$('#wRangeSeg button').forEach(b=>b.classList.toggle('on', b.dataset.r===UI.wRange)); drawWeightChart(); break;
     case 'mrange': UI.mRange = +el.dataset.r; UI.mDay = null; paintRangeCards(); break;
     case 'mday': UI.mDay = el.dataset.k; paintRangeCards(); break;
@@ -2469,7 +2416,6 @@ document.addEventListener('click', async ev=>{
     case 'apply-helper': { const r = helperCalc(); if(r.missing){ toast(`Enter your ${r.missing.join(', ')} first`); break; }
       saveProfile(); const fm = $('#goalsForm'); fm.elements.calories.value = r.cal; fm.elements.protein.value = r.protein; fm.elements.fat.value = r.fat; fm.elements.carbs.value = r.carbs;
       if(r.hasT) fm.elements.goalWeight.value = r1(r.t); saveGoals(); break; }
-    case 'export': exportData(); break;
     case 'log-weight': openWeight(UI.view==='today' ? UI.date : todayKey()); break;   // Progress tab: always today
     case 'log-exercise': openExercise(UI.view==='today' ? UI.date : todayKey()); break;
     case 'edit-ex': openExerciseEdit(el.dataset.id); break;
@@ -2490,9 +2436,6 @@ document.addEventListener('click', async ev=>{
     case 'sync-now': syncNow(); break;
     case 'sign-out': signOut(); break;
     case 'sync-prompt-x': try { localStorage.setItem(PROMPT_KEY, '1'); } catch(e){} render(); toast('You can sign in any time from Settings'); break;
-    case 'import': $('#importFile').click(); break;
-    case 'reset': { const ok = await confirmDialog({title:'Reset all data?', text:`This permanently deletes all food logs, saved foods, weigh-ins, exercise and goals ${CFG && loadMeta().uid ? 'on this device and in your account, on all your devices' : 'on this device'}. Consider exporting a backup first.`, ok:'Delete everything', danger:true});
-      if(ok){ S = defaults(); save(); UI.date = todayKey(); UI.view='today'; render(); toast('All data reset'); } break; }
   }
 });
 document.addEventListener('submit', ev=>{
@@ -2509,9 +2452,6 @@ document.addEventListener('submit', ev=>{
   if(ev.target.id==='foodForm') submitForm(ev);
   else if(ev.target.id==='goalsForm'){ ev.preventDefault(); saveGoals(); }
   else if(ev.target.id==='barcodeForm'){ ev.preventDefault(); const v = $('#barcodeInp').value; barcodeLookup(v); }
-  else if(ev.target.id==='keyForm'){ ev.preventDefault(); const v = ev.target.elements.key.value.trim();
-    if(v && !/^[A-Za-z0-9_\-]{6,100}$/.test(v)){ ev.target.elements.key.classList.add('err'); toast('That doesn’t look like an API key'); return; }
-    S.settings.usdaKey = (!v || v==='DEMO_KEY' || v===APP_USDA_KEY) ? '' : v; save(); dbCache.clear(); renderSettings(); toast(S.settings.usdaKey ? 'USDA API key saved' : APP_USDA_KEY ? 'Using the built-in USDA key' : 'Using DEMO_KEY'); }
 });
 document.addEventListener('input', ev=>{
   const t = ev.target;
