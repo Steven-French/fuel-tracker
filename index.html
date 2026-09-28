@@ -1842,6 +1842,8 @@ function authErr(e){
   if(netErr(e)) return 'You’re offline. Connect to the internet to sign in.';
   if(e && (e.code==='over_email_send_rate_limit' || /email rate limit/i.test(msg))) return 'Too many sign-in emails were sent recently. Please try again in a little while (or use your password if you set one).';
   if(/security purposes|after \d+ seconds/i.test(msg)) return 'Please wait a moment before requesting another code.';
+  if((e && e.code==='email_address_not_authorized') || /not authorized/i.test(msg)) return 'Fuel can’t send sign-in emails to this address yet (email sending is still being set up). Please try again later.';
+  if((e && e.code==='email_address_invalid') || /email address .* is invalid/i.test(msg)) return 'That email address can’t receive sign-in codes. Check it for typos.';
   if(e && e.status===429) return 'Too many attempts. Please wait a few minutes and try again.';
   if(/expired|invalid.*(otp|token|code)|token.*(invalid|not found)/i.test(msg) || (e && e.code==='otp_expired')) return 'That code is wrong or has expired. Check the newest email, or send a new code.';
   if(/invalid login credentials/i.test(msg)) return 'Wrong email or password.';
