@@ -25,11 +25,12 @@ if(/^https?:$/.test(location.protocol)){ var m=document.createElement('link'); m
   --bg:#f4f5f8;--card:#fff;--card2:#f7f8fb;--text:#14161b;--muted:#6b7280;--line:#e5e7ee;
   /* nutrient colors: calories amber-orange, protein red, weight green. *-solid = button fills (white text ≥ 4.5:1) */
   --cal:#f08a00;--cal-soft:rgba(240,138,0,.14);--cal-over:#b45309;
-  --pro:#d62828;--pro-soft:rgba(214,40,40,.12);--pro-solid:#d62828;--food-solid:#1877F2;
+  --pro:#1e40af;--pro-soft:rgba(30,64,175,.12);--pro-solid:#1e40af;--food-solid:#1877F2;   /* protein: deep blue (distinct from the #1877F2 + Food button and teal carbs) */
+  --streak:#d62828;--streak-soft:rgba(214,40,40,.12);
   --wt:#15803d;--wt-soft:rgba(21,128,61,.13);--wt-solid:#15803d;
   /* general UI accent (links, primary buttons, active tab, focus) */
   --accent:#6d5dfc;--accent-soft:rgba(109,93,252,.14);
-  --carb:#1b9fe0;--fat:#e9a800;--fib:#1fae6b;
+  --carb:#0e9aa7;--fat:#e9a800;--fib:#1fae6b;   /* carbs: teal (was sky blue) so it never reads like protein */
   --good:#16a34a;--bad:#e5484d;--warn:#f59e0b;
   --radius:18px;--shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.06);
   --tabh:64px;
@@ -40,7 +41,7 @@ if(/^https?:$/.test(location.protocol)){ var m=document.createElement('link'); m
 @media (prefers-color-scheme:dark){
   :root{--bg:#0e1015;--card:#171a21;--card2:#1e222b;--text:#eef0f4;--muted:#99a0ad;--line:#282c36;
   --cal:#ffb020;--cal-soft:rgba(255,176,32,.18);--cal-over:#f97316;
-  --pro:#ff5a5f;--pro-soft:rgba(255,90,95,.18);--wt:#34c77b;--wt-soft:rgba(52,199,123,.18);
+  --pro:#93b4ff;--pro-soft:rgba(147,180,255,.18);--carb:#2cc0d0;--streak:#ff5a5f;--streak-soft:rgba(255,90,95,.18);--wt:#34c77b;--wt-soft:rgba(52,199,123,.18);
   --accent:#8173ff;--accent-soft:rgba(129,115,255,.2);--shadow:0 1px 2px rgba(0,0,0,.3)}
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -79,7 +80,7 @@ input,select{font-size:16px}
 .datelabel b{display:block;font-size:16px}
 .datelabel span{font-size:12px;color:var(--muted)}
 .datelabel input{position:absolute;inset:0;opacity:0;width:100%;height:100%;pointer-events:none}
-.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--pro-soft);color:var(--pro);white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--streak-soft);color:var(--streak);white-space:nowrap}
 .hero{padding:16px 10px 14px}
 .rings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .ringbox{text-align:center;min-width:0;display:block;width:100%;color:inherit;border-radius:14px}
@@ -105,6 +106,7 @@ button.ringbox:active{background:var(--card2)}
 .remain.eaten{color:var(--muted);font-weight:600}
 .ring .big.neg,.ring .of.neg{color:var(--bad)}.ring .of.neg{font-weight:650}
 .remain.hit{color:var(--good)}
+.ringbox[data-ring=pro] .big,.ringbox[data-ring=pro] .remain:not(.hit){color:var(--pro)}.ringbox[data-ring=pro] .of{color:var(--pro);opacity:.8}
 .secondary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 .macro .mh{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px}
 .macro .mh b{color:var(--text);font-weight:650}
@@ -241,7 +243,7 @@ details.wlist summary small{display:block;font-weight:500;color:var(--muted);fon
 .remain.burned{color:var(--cal);font-weight:650}
 .card.subtle{box-shadow:none;background:color-mix(in srgb,var(--card) 70%,transparent)}
 .card.subtle h2{font-size:15px;color:var(--muted)}
-.big-streak .n{font-size:44px;font-weight:850;letter-spacing:-.04em;color:var(--pro);line-height:1}
+.big-streak .n{font-size:44px;font-weight:850;letter-spacing:-.04em;color:var(--streak);line-height:1}
 .toast{position:fixed;left:50%;bottom:calc(var(--tabh) + var(--sab) + 76px);transform:translate(-50%,20px);opacity:0;z-index:100;
   background:#1b1e25;color:#fff;border-radius:14px;padding:11px 14px;font-size:14px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 30px rgba(0,0,0,.3);
   transition:all .25s;pointer-events:none;max-width:calc(100% - 32px);width:max-content}
