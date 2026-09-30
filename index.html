@@ -244,10 +244,11 @@ details.wlist summary small{display:block;font-weight:500;color:var(--muted);fon
 .card.subtle{box-shadow:none;background:color-mix(in srgb,var(--card) 70%,transparent)}
 .card.subtle h2{font-size:15px;color:var(--muted)}
 .big-streak .n{font-size:44px;font-weight:850;letter-spacing:-.04em;color:var(--streak);line-height:1}
-.toast{position:fixed;left:50%;bottom:calc(var(--tabh) + var(--sab) + 76px);transform:translate(-50%,20px);opacity:0;z-index:100;
+.toast{position:fixed;left:50%;bottom:calc(var(--tabh) + var(--sab) + 76px);transform:translate(-50%,12px);opacity:0;z-index:100;
   background:#1b1e25;color:#fff;border-radius:14px;padding:11px 14px;font-size:14px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 30px rgba(0,0,0,.3);
   transition:all .25s;pointer-events:none;max-width:calc(100% - 32px);width:max-content}
 .toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast.top{bottom:auto !important;top:calc(var(--sat) + 12px);transform:translate(-50%,-12px)}.toast.top.show{transform:translate(-50%,0)}
 .toast button{color:#a99fff;font-weight:700}
 .dialog{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:24px;background:rgba(10,12,16,.5)}
 .dialog .box{background:var(--card);border-radius:20px;padding:20px;max-width:360px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3)}
@@ -881,7 +882,22 @@ function weightChange(days){
 
 /* ---------- toast & dialog ---------- */
 let toastTimer=null, toastUndoFn=null;
+/* Toasts are only for errors, sync/account and settings messages, plus Undo after a delete (adds show no pop-up:
+   the new row in the list is the confirmation). They always sit ABOVE the + Food / + Weight / + Exercise buttons and
+   the tab bar (measured, so larger text or safe areas can't make them overlap), or at the top while a sheet is open,
+   and only the toast itself takes taps. */
+function placeToast(){
+  const t = $('#toast'); if(!t) return;
+  if(UI.sheet){ t.classList.add('top'); t.style.bottom = ''; return; }
+  t.classList.remove('top');
+  let limit = window.innerHeight;
+  const tb = $('.tabbar'); if(tb){ const r = tb.getBoundingClientRect(); if(r.height) limit = Math.min(limit, r.top); }
+  const fb = $('#fabs'); if(fb && !fb.classList.contains('hidden')) for(const b of fb.querySelectorAll('.fab')){ const r = b.getBoundingClientRect(); if(r.height) limit = Math.min(limit, r.top); }
+  t.style.bottom = Math.round(window.innerHeight - limit + 12) + 'px';
+}
+addEventListener('resize', ()=>{ if($('#toast').classList.contains('show')) placeToast(); });
 function toast(msg, undo){
+  placeToast();
   $('#toastMsg').textContent = msg;
   toastUndoFn = undo||null;
   $('#toastUndo').classList.toggle('hidden', !undo);
@@ -1142,10 +1158,9 @@ function submitExercise(form){
   }
 }
 function finishExercise(st, k, data){
-  if(st.editId){ if(updateExercise(k, st.editId, data)){ closeSheet(); render(); toast('Exercise updated'); } return; }
+  if(st.editId){ if(updateExercise(k, st.editId, data)){ closeSheet(); render(); } return; }
   const x = logExercise(k, data); if(!x) return;
   closeSheet(); render(); flashHero();
-  toast(`Added ${x.name} · ${fmtN(x.kcal)} kcal`, ()=>{ removeExercise(k, x.id); render(); });
 }
 
 /* ---------- Add / Edit sheet ---------- */
@@ -1348,12 +1363,11 @@ function submitForm(ev){
   if(f.saveFood && f.name) upsertFood(data);
   if(st.mode==='edit'){
     if(!updateEntry(UI.date, st.id, data, st.meal)){ closeSheet(); render(); return; }
-    closeSheet(); render(); toast('Entry updated');
+    closeSheet(); render();
   } else {
-    const k = UI.date, entry = logEntry(data);
+    const entry = logEntry(data);
     if(!entry){ closeSheet(); render(); return; }
     closeSheet(); render(); flashHero();
-    toast(`Added ${entry.name} to ${MEAL_LABEL[entry.meal]}`, ()=>{ removeEntry(k, entry.id); render(); });
   }
 }
 function flashHero(){ const h=$('#hero'); if(h&&h.animate) h.animate([{transform:'scale(1)'},{transform:'scale(1.015)'},{transform:'scale(1)'}],{duration:350}); }
@@ -2769,11 +2783,10 @@ document.addEventListener('click', async ev=>{
       UI.sheet.form = {name:f.name, serv:f.serv||'', servings:f.servings||1, cal:f.cal, p:f.p, c:f.c, f:f.f, fib:f.fib, saveFood:false, inFoods}; UI.sheet.from = UI.sheet.tab==='mine' ? 'mine' : 'recent'; UI.sheet.tab='pick'; UI.sheet.food=null; UI.sheet.meta = metaOf(f); renderSheet();
       { const sb = $('#sheet .sb'); if(sb) sb.scrollTop = 0; } break; }
     case 'quick': { const f = findFood(el.dataset.src, el.dataset.key); if(!f) break;
-      const k = UI.date, entry = logEntry({name:f.name, serv:f.serv||'', servings:f.servings||1, cal:f.cal, p:f.p, c:f.c, f:f.f, fib:f.fib, ...metaOf(f)});
+      const entry = logEntry({name:f.name, serv:f.serv||'', servings:f.servings||1, cal:f.cal, p:f.p, c:f.c, f:f.f, fib:f.fib, ...metaOf(f)});
       if(!entry){ closeSheet(); render(); break; }
       el.classList.add('done'); el.textContent='✓'; setTimeout(()=>{ el.classList.remove('done'); el.textContent='+'; }, 1100);
       render();
-      toast(`Logged ${entry.name} · ${MEAL_LABEL[entry.meal]}`, ()=>{ removeEntry(k, entry.id); render(); });
       break; }
     case 'del-food': { const i = S.foods.findIndex(f=>f.id===el.dataset.id); if(i<0) break; const [f] = S.foods.splice(i,1); save(); renderSheet();
       toast(`Removed ${f.name} from My foods`, ()=>{ S.foods.splice(i,0,f); save(); if(UI.sheet) renderSheet(); }); break; }
@@ -2821,7 +2834,7 @@ document.addEventListener('submit', ev=>{
     ACC.client.auth.updateUser({password:pw}).then(({error})=>{ if(error) toast(authErr(error)); else { ev.target.reset(); toast('Password saved'); } }); return; }
   if(ev.target.id==='qWeightForm'){ ev.preventDefault(); const d = UI.sheet && UI.sheet.date; const r = setWeight(d, ev.target.elements.w.value);
     if(r.err){ ev.target.elements.w.classList.add('err'); toast(r.err); return; }
-    closeSheet(); render(); toast(r.updated ? 'Weigh-in updated' : 'Weigh-in saved'); return; }
+    closeSheet(); render(); return; }
   if(ev.target.id==='exForm' || ev.target.id==='exCustomForm'){ ev.preventDefault(); submitExercise(ev.target); return; }
   if(ev.target.id==='foodForm') submitForm(ev);
   else if(ev.target.id==='goalsForm'){ ev.preventDefault(); saveGoals(); }
