@@ -2370,6 +2370,8 @@ function saveGoals(){
    * sync = pull (rows changed on the server since our cursor) then push (dirty rows, upserted with their change time).
      The server keeps the newest change per record (last write wins) and stores deletes as tombstones.
    * Triggers: app open, returning to the app, coming back online, ~2 s after an edit, and every 90 s while visible.
+   * Server data reset: an admin can wipe one account's data (profiles.data_reset_at). Every device of that account
+     then wipes its local copy and re-pulls; the server drops any pre-reset copy a device still tries to upload.
    * The feature is hidden unless config.js has a project URL + public key. The Supabase API is never cached by sw.js. */
 var SYNC_ON = false;
 const CFG = (()=>{
@@ -2514,8 +2516,8 @@ async function syncOnce(){
   if(!meta0.uid || meta0.uid!==session.user.id){ setSync('idle'); return; }
   setSync('syncing');
   try {
+    let changed = await checkReset(session.user.id);   // admin reset of this account → wipe the local copy first
     S = load(); trackChanges();              // pick up edits made in other tabs before merging
-    let changed = false;
     for(const k of KINDS) if(await pull(k, session.user.id)) changed = true;
     trackChanges();                            // queue system migrations of pulled rows (old snack entries → a meal)
     await push(session.user.id);
@@ -2523,6 +2525,28 @@ async function syncOnce(){
     setSync('ok');
     if(changed) onRemoteChange();
   } catch(e){ setSync(netErr(e) ? 'offline' : 'error', (e && e.message) || String(e)); }
+}
+/* Server data reset (admin "start over" for one account; migration 20261008000000_data_reset.sql). meta.reset is the
+   marker this device last applied: missing = never (devices from before this feature), 'join' = just signed in here
+   (record the current marker; this device's data is merged as usual), else an ISO time. A newer server marker wipes this
+   account's local data (entries, weigh-ins, exercise, My foods, goals, helper) and re-pulls everything from the server.
+   Returns true when it wiped. A server without the column (older schema) is simply ignored. */
+async function checkReset(userId){
+  const {data, error} = await ACC.client.from('profiles').select('data_reset_at').eq('user_id', userId).maybeSingle();
+  if(error){ if(error.code==='42703' || /data_reset_at/.test(error.message||'')) return false; throw error; }
+  const srv = data && data.data_reset_at || null, m = loadMeta();
+  if(m.uid!==userId) return false;
+  if(m.reset==='join'){ m.reset = srv; saveMeta(m); return false; }
+  const loc = typeof m.reset==='string' ? Date.parse(m.reset)||0 : 0;
+  if(!srv || !(Date.parse(srv) > loc)) return false;
+  if(UI.sheet && UI.sheet.mode!=='auth') closeSheet();
+  S = defaults(); writeLocal();
+  const n = blankMeta(); n.uid = m.uid; n.user = m.user; n.reset = srv; saveMeta(n);   // forget every record + cursor: full re-pull
+  trackChanges();
+  const n2 = loadMeta(); if(n2.recs.p.me) n2.recs.p.me[1] = 0; saveMeta(n2);            // the account's profile on the server wins
+  UI.date = todayKey();
+  toast('This account’s data was reset · starting fresh');
+  return true;
 }
 async function pull(k, userId){
   let m = loadMeta();
@@ -2613,7 +2637,7 @@ async function adoptUser(user){
     m = loadMeta();
   }
   if(!m.uid){
-    m.uid = user.id; m.user = userName(user); m.cur = {}; m.last = 0;
+    m.uid = user.id; m.user = userName(user); m.cur = {}; m.last = 0; m.reset = 'join';
     const plainProfile = isDefaultProfile();
     for(const k of KINDS) for(const id in m.recs[k]){ if(m.recs[k][id][0]===null) delete m.recs[k][id]; else if(!(k==='p' && plainProfile)) m.dirty[k][id] = 1; }
     if(plainProfile && m.recs.p.me) m.recs.p.me[1] = 0;   // a fresh device's default goals never overwrite the account's goals
@@ -2638,7 +2662,7 @@ async function signOut(){
   toast('Signed out · this device’s data was removed');
 }
 window.FuelData = { NUTS, NDLZ_DRI: window.NDLZ_DRI, fromUSDA, fromOFF, usdaNutrients, offNutrients, metaOf, scaleNut, nutTargets, dayNutrition, nutValues, nutStatus, foodMeta, canFood, canWeight, canExercise, setWeight, deleteWeight, logEntry, removeEntry, updateEntry, restoreEntry, logExercise, updateExercise, removeExercise, restoreExercise };   // data-layer API (used by tests)
-window.FuelSync = { now: ()=>syncNow(), status: ()=>{ const m = loadMeta(); return {configured:!!CFG, ready:ACC.ready, signedIn:!!m.uid && !ACC.expired, username:m.user, state:ACC.state, err:ACC.err, pending:dirtyCount(m), last:m.last}; } };
+window.FuelSync = { now: ()=>syncNow(), status: ()=>{ const m = loadMeta(); return {configured:!!CFG, ready:ACC.ready, signedIn:!!m.uid && !ACC.expired, username:m.user, state:ACC.state, err:ACC.err, pending:dirtyCount(m), last:m.last, reset:m.reset===undefined?null:m.reset}; } };
 
 /* ---- account UI ---- */
 function ago(ms){ const s = (Date.now()-ms)/1000; if(s<45) return 'just now'; if(s<3600) return Math.round(s/60)+' min ago'; if(s<86400) return Math.round(s/3600)+' h ago'; return fmtDate(keyOf(new Date(ms)),{month:'short',day:'numeric'}); }
