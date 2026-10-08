@@ -2530,10 +2530,11 @@ async function syncOnce(){
    marker this device last applied: missing = never (devices from before this feature), 'join' = just signed in here
    (record the current marker; this device's data is merged as usual), else an ISO time. A newer server marker wipes this
    account's local data (entries, weigh-ins, exercise, My foods, goals, helper) and re-pulls everything from the server.
-   Returns true when it wiped. A server without the column (older schema) is simply ignored. */
+   Returns true when it wiped. A server without the column (older schema) is simply ignored — safe, because the server
+   itself drops pre-reset uploads once the migration is in. */
 async function checkReset(userId){
   const {data, error} = await ACC.client.from('profiles').select('data_reset_at').eq('user_id', userId).maybeSingle();
-  if(error){ if(error.code==='42703' || /data_reset_at/.test(error.message||'')) return false; throw error; }
+  if(error){ if(netErr(error)) throw error; return false; }   // older schema (no column) or any server-side oddity: never block sync over this check
   const srv = data && data.data_reset_at || null, m = loadMeta();
   if(m.uid!==userId) return false;
   if(m.reset==='join'){ m.reset = srv; saveMeta(m); return false; }
