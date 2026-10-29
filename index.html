@@ -108,7 +108,9 @@ button.ringbox:active{background:var(--card2)}
 .ringbox[data-ring=pro] .big,.ringbox[data-ring=pro] .remain:not(.hit){color:var(--pro)}.ringbox[data-ring=pro] .of{color:var(--pro);opacity:.8}
 .secondary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 .macro .mh{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px}
-.macro .mh b{color:var(--text);font-weight:650}
+.macro .mh b{color:var(--text);font-weight:650;white-space:nowrap}
+.macro .mh .pct{color:var(--muted);font-weight:500;font-size:11px}
+.ringbox .remain.pct{color:var(--muted)!important;font-weight:500}
 .bar{height:6px;border-radius:9px;background:var(--card2);overflow:hidden}
 .bar i{display:block;height:100%;border-radius:9px;transition:width .5s}
 .banner{display:flex;align-items:center;gap:10px;background:var(--accent-soft);color:var(--text);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:14px;width:100%;text-align:left}
@@ -973,7 +975,7 @@ function render(){
 }
 
 /* ---------- Today ---------- */
-function ringHTML({kind, label, value, goal, color, burned=0, eatBack=true}){
+function ringHTML({kind, label, value, goal, color, burned=0, eatBack=true, calShare=null}){
   if(kind==='cal' && eatBack) goal += burned;          // exercise calories are added back to the day's budget
   const R=52, C=2*Math.PI*R, pct = goal>0 ? value/goal : 0;
   const over = value > goal + 0.5;
@@ -989,6 +991,7 @@ function ringHTML({kind, label, value, goal, color, burned=0, eatBack=true}){
   } else {
     if(value >= goal-0.5 && value>0) remain = `<div class="remain hit">✓ Hit${over?` · +${fmtG(value-goal)}g`:''}</div>`;
     else remain = `<div class="remain">${fmtG(goal-value)}g to go</div>`;
+    if(calShare!=null) remain += `<div class="remain sub pct" data-pct="${calShare}">${calShare}% of calories</div>`;
   }
   if(!center) center = `<div class="big" data-val>${fmtG(value)}<span class="u">g</span></div><div class="of">of ${fmtG(goal)} g</div>`;
   const aria = kind==='cal' ? ` role="group" aria-label="Calories: ${over?`${fmtN(value-goal)} over`:`${fmtN(Math.max(0,goal-value))} left`} of ${fmtN(goal)} (${fmtN(value)} eaten)"` : '';
@@ -1050,9 +1053,10 @@ function weightTileHTML(k){
       <div class="center${pr==null?' top':''}"><div class="big" data-val>${fmtW(cur.kg)}</div><div class="of">${esc(sub)}</div></div></div>
     <div class="remain" data-change>${chTxt}</div>${when}${close}`;
 }
-function macroHTML(label, val, goal, color){
+const calPct = (g, perG, kcal) => kcal>0 ? Math.round(g*perG/kcal*100) : null;   // share of the day's eaten calories (not net of exercise)
+function macroHTML(label, val, goal, color, pct = null){
   const w = goal ? Math.min(100, val/goal*100) : (val>0?100:0);
-  return `<div class="macro"><div class="mh"><span>${label}</span><b>${fmtG(val)}${goal?`<span class="muted" style="font-weight:500">/${fmtG(goal)}</span>`:''}g</b></div>
+  return `<div class="macro"><div class="mh"><span>${label}</span><b>${fmtG(val)}${goal?`<span class="muted" style="font-weight:500">/${fmtG(goal)}</span>`:''}g${pct==null?'':`<span class="pct" data-pct="${pct}"> (${pct}%)</span>`}</b></div>
     <div class="bar"><i style="width:${w}%;background:${color};${goal?'':'opacity:.35'}"></i></div></div>`;
 }
 function renderToday(){
@@ -1072,12 +1076,12 @@ function renderToday(){
   <section class="card hero" id="hero">
     <div class="rings">
       ${ringHTML({kind:'cal',label:'Calories',value:t.cal,goal:g.calories,color:'var(--cal)',burned:burnedOn(k),eatBack:S.settings.eatBack!==false})}
-      ${ringHTML({kind:'pro',label:'Protein',value:t.p,goal:g.protein,color:'var(--pro)'})}
+      ${ringHTML({kind:'pro',label:'Protein',value:t.p,goal:g.protein,color:'var(--pro)',calShare:calPct(t.p,4,t.cal)})}
       ${weightTileHTML(k)}
     </div>
     <div class="secondary">
-      ${macroHTML('Carbs',t.c,g.carbs,'var(--carb)')}
-      ${macroHTML('Fat',t.f,g.fat,'var(--fat)')}
+      ${macroHTML('Carbs',t.c,g.carbs,'var(--carb)',calPct(t.c,4,t.cal))}
+      ${macroHTML('Fat',t.f,g.fat,'var(--fat)',calPct(t.f,9,t.cal))}
       ${macroHTML('Fiber',t.fib,g.fiber,'var(--fib)')}
     </div>
   </section>`;
