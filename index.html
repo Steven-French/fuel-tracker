@@ -1248,9 +1248,10 @@ function setWeight(d, raw){
   if(S.settings.goalWeight && !S.settings.goalWeightStart) S.settings.goalWeightStart = kg;
   save(); return {updated:!!ex};
 }
+const blankForm = sv => ({name:'',serv:'',servings:1,cal:'',p:'',c:'',f:'',fib:'',saveFood:!!sv});   // sv: “Save to My foods” starts ticked
 function openAdd(meal){
   if(denyFood(UI.date)) return;
-  openSheet({mode:'add', meal: meal||defaultMeal(), tab:'search', q:'', db:{q:'',status:'idle',results:[],errs:{}}, form:{name:'',serv:'',servings:1,cal:'',p:'',c:'',f:'',fib:'',saveFood:false}});
+  openSheet({mode:'add', meal: meal||defaultMeal(), tab:'search', q:'', db:{q:'',status:'idle',results:[],errs:{}}, form:blankForm(true)});
   // Search is the default tab. Focus the box right away with a mouse/trackpad; on phones don't pop the keyboard
   // over the sliding sheet — one tap on the box opens it.
   if(matchMedia('(pointer:fine)').matches){ const s = $('#dbSearch'); if(s) s.focus({preventScroll:true}); }
@@ -1275,7 +1276,7 @@ function renderSheet(){
   if(st.mode==='view'){ const e = (S.entries[st.k]||[]).find(x=>x.id===st.id); $('#sheetTitle').textContent = e ? e.name : 'Entry'; $('#sheetBody').innerHTML = entryViewHTML(st); return; }
   if(st.mode==='auth'){ $('#sheetTitle').textContent = st.tab==='signup' ? 'Create your NDLZ account' : 'Sign in to NDLZ'; $('#sheetBody').innerHTML = authSheetHTML(st); return; }
   if(st.mode==='recipe'){ $('#sheetTitle').textContent = st.draft.id ? 'Edit recipe' : 'New recipe'; $('#sheetBody').innerHTML = recipeBuilderHTML(st); return; }
-  $('#sheetTitle').textContent = st.mode==='edit' ? 'Edit entry' : st.draft ? 'Add ingredient' : `Add to ${MEAL_LABEL[st.meal]}`;
+  $('#sheetTitle').textContent = st.mode==='edit' ? 'Edit entry' : st.draft ? 'Add ingredient' : st.mode==='add' && st.tab==='new' ? 'Create a food' : `Add to ${MEAL_LABEL[st.meal]}`;
   let h = st.draft ? `<button type="button" class="linkbtn" data-act="rback" style="padding:0 0 8px">‹ Back to recipe</button>`
     : `<div class="chips" style="margin-bottom:12px">${MEALS.map(m=>`<button class="chip ${st.meal===m.id?'on':''}" data-act="meal" data-meal="${m.id}">${m.label}</button>`).join('')}</div>`;
   if(st.mode==='add'){
@@ -1284,7 +1285,7 @@ function renderSheet(){
       <button class="${st.tab==='recent'||(st.tab==='pick'&&st.from!=='mine')?'on':''}" data-act="stab" data-tab="recent">Recent</button>
       <button class="${st.tab==='mine'||(st.tab==='pick'&&st.from==='mine')?'on':''}" data-act="stab" data-tab="mine">My foods</button>
       ${st.draft?'':`<button class="${st.tab==='recipes'||st.tab==='rpick'?'on':''}" data-act="stab" data-tab="recipes">Recipes</button>`}
-      <button class="${st.tab==='new'?'on':''}" data-act="stab" data-tab="new">New</button></div>`;
+      <button class="${st.tab==='new'?'on':''}" data-act="stab" data-tab="new">Create</button></div>`;
   }
   if(st.mode==='add' && st.tab==='search'){
     h += searchTabHTML();
@@ -1293,6 +1294,7 @@ function renderSheet(){
   } else if(st.mode==='add' && st.tab==='rpick' && !st.draft){
     h += rlogHTML();
   } else if(st.mode==='add' && st.tab!=='new' && st.tab!=='detail' && st.tab!=='pick'){
+    if(st.tab==='mine') h += `<button class="btn primary block" type="button" data-act="stab" data-tab="new" id="fNewBtn" style="margin-bottom:10px">+ Create food</button>`;
     h += `<input class="inp" id="foodSearch" type="search" placeholder="Search foods…" value="${esc(st.q)}" autocomplete="off" style="margin-bottom:6px">
       <p class="muted" style="font-size:12px;margin:4px 0 0">Tap <b style="color:var(--accent)">+</b> to log instantly, or tap a food to adjust servings first.</p>
       <div id="foodList">${foodListHTML()}</div>`;
@@ -1301,7 +1303,7 @@ function renderSheet(){
     const stepper = `<div class="stepper"><button type="button" data-act="step" data-d="-0.5" aria-label="Fewer servings">−</button>
         <input name="servings" inputmode="decimal" value="${esc(r1(+f.servings||1))}" aria-label="Number of servings"><button type="button" data-act="step" data-d="0.5" aria-label="More servings">+</button></div>`;
     const nameF = `<label class="f"><span>Food name</span><input class="inp" name="name" value="${esc(f.name)}" placeholder="e.g. Greek yogurt" maxlength="120" enterkeyhint="next"></label>
-      <label class="f"><span>Serving size <span style="font-weight:500">(optional label)</span></span><input class="inp" name="serv" value="${esc(f.serv||'')}" placeholder="e.g. 1 cup (140 g)" maxlength="80"></label>`;
+      <label class="f"><span>Serving size <span style="font-weight:500">(optional)</span></span><input class="inp" name="serv" value="${esc(f.serv||'')}" placeholder="e.g. 1 cup (140 g)" maxlength="80"></label>`;
     const macroF = `<div class="sect" style="margin-top:4px">Nutrition per serving</div>
       <div class="grid2" style="margin-top:8px">
         <label class="f"><span style="color:var(--cal)">Calories (kcal) *</span><input class="inp req" name="cal" inputmode="decimal" value="${esc(f.cal)}" placeholder="0"></label>
@@ -1327,13 +1329,16 @@ function renderSheet(){
       ${nameF}${macroF}
     </form>${sheetPanelWrapHTML()}`;
     } else {
+      const creating = st.mode==='add';   // Create tab: name · serving size · calories · protein · carbs · fat · fiber, then how many servings to log
       h += `<form id="foodForm" autocomplete="off" novalidate>
       ${nameF}
+      ${creating?macroF:''}
       <label class="f"><span>Number of servings</span>${stepper}</label>
-      ${macroF}
+      ${creating?'':macroF}
       <div class="preview" id="preview"></div>
       ${saveF}
       <button class="btn primary block" type="submit">${esc(addLabel)}</button>
+      ${creating && !st.draft?`<button class="btn block" type="button" data-act="fsave" id="saveOnlyBtn" style="margin-top:10px">Save to My foods only</button>`:''}
       ${st.mode==='edit'?`<button class="btn danger block" type="button" data-act="delete-entry" style="margin-top:10px">Delete entry</button>`:''}
     </form>${sheetPanelWrapHTML()}`;
     }
@@ -1351,11 +1356,11 @@ function foodListHTML(){
   }
   if(st.tab==='mine'){
     const foods = S.foods.filter(match).sort((a,b)=>a.name.localeCompare(b.name));
-    if(!foods.length) return `<div class="empty" style="padding:18px 0;text-align:center">${S.foods.length?'No matches.':'No saved foods yet.<br>Tick “Save to My foods” when adding a new food.'}</div>`;
+    if(!foods.length) return `<div class="empty" style="padding:18px 0;text-align:center">${S.foods.length?'No matches.':'No saved foods yet.<br>Tap “Create food” to add one with its calories and macros.'}</div>`;
     return `<div class="sect">Saved</div>` + foods.map(f=>foodRow(f,'mine')).join('');
   }
   const rec = recentFoods().filter(match);
-  if(!rec.length) return `<div class="empty" style="padding:18px 0;text-align:center">${q?'No matches.':'Foods you log will show up here for one-tap logging.'}<br><button class="linkbtn" data-act="stab" data-tab="new">Add a new food →</button></div>`;
+  if(!rec.length) return `<div class="empty" style="padding:18px 0;text-align:center">${q?'No matches.':'Foods you log will show up here for one-tap logging.'}<br><button class="linkbtn" data-act="stab" data-tab="new">Create a food →</button></div>`;
   const frequent = rec.filter(f=>f.count>=2).sort((a,b)=>b.count-a.count||b.ts-a.ts).slice(0,6);
   const fk = new Set(frequent.map(f=>f.key));
   const recent = rec.filter(f=>!fk.has(f.key)).sort((a,b)=>b.ts-a.ts).slice(0,20);
@@ -1421,10 +1426,21 @@ function submitForm(ev){
     closeSheet(); render(); flashHero();
   }
 }
+function saveFoodOnly(){
+  const st = UI.sheet, fm = $('#foodForm'); if(!st || !fm) return;
+  const f = readForm(), cal = num(f.cal); let bad = '';
+  if(!f.name){ fm.elements.name.classList.add('err'); bad = 'Enter a food name'; }
+  if(!isFinite(cal) || cal<0){ fm.elements.cal.classList.add('err'); bad = bad || 'Enter calories (0 is OK)'; }
+  if(bad){ toast(bad); return; }
+  upsertFood({name:f.name, cal:nz(f.cal), p:nz(f.p), c:nz(f.c), f:nz(f.f), fib:nz(f.fib), ...servOf(f)});
+  save();
+  st.form = blankForm(true); st.tab = 'mine'; st.q = ''; st.food = null; st.meta = null; renderSheet();
+  toast(`Saved “${f.name}” to My foods`);
+}
 /* ---------- Recipes (Log food → Recipes tab; builder; logging) ---------- */
 const fmtS = x => String(R2(x));
 const recipeById = id => S.recipes.find(r=>r.id===id);
-const addState = (meal, tab, draft) => ({mode:'add', meal, tab, q:'', db:{q:'',status:'idle',results:[],errs:{}}, form:{name:'',serv:'',servings:1,cal:'',p:'',c:'',f:'',fib:'',saveFood:false}, ...(draft ? {draft} : {})});
+const addState = (meal, tab, draft) => ({mode:'add', meal, tab, q:'', db:{q:'',status:'idle',results:[],errs:{}}, form:blankForm(!draft), ...(draft ? {draft} : {})});
 function swapSheet(st){   // replace the sheet's content in place (same sheet, no close/open); also cancels any in-flight search / scan
   if(typeof dbCtrl!=='undefined' && dbCtrl) dbCtrl.abort(); if(typeof scanStop!=='undefined' && scanStop) scanStop();
   UI.sheet = st; renderSheet(); const sb = $('#sheet .sb'); if(sb) sb.scrollTop = 0;
@@ -2985,8 +3001,10 @@ document.addEventListener('click', async ev=>{
     case 'view-entry': openEntryView(UI.date, el.dataset.id); break;
     case 'jump-nutrients': { const w = $('#nutWrap'); if(w) w.scrollIntoView({behavior:'smooth', block:'start'}); break; }
     case 'close-sheet': await tryClose(); break;
+    case 'fsave': saveFoodOnly(); break;
     case 'meal': if(UI.sheet){ if($('#foodForm')) UI.sheet.form = readForm(); if($('#rlogForm')) UI.sheet.rs = $('#rlogForm [name=servings]').value; UI.sheet.meal = el.dataset.meal; renderSheet(); } break;
-    case 'stab': if(UI.sheet){ if($('#foodForm')) UI.sheet.form = readForm(); UI.sheet.tab = el.dataset.tab; UI.sheet.food = null; UI.sheet.meta = null; renderSheet();
+    case 'stab': if(UI.sheet){ if($('#foodForm')) UI.sheet.form = readForm(); if(el.dataset.tab==='new' && UI.sheet.tab!=='new') UI.sheet.form = blankForm(!UI.sheet.draft);   // a clean Create form (never a picked food's values)
+      UI.sheet.tab = el.dataset.tab; UI.sheet.food = null; UI.sheet.meta = null; renderSheet();
       if(el.dataset.tab==='new' && matchMedia('(pointer:fine)').matches){ const n=$('#foodForm [name=name]'); if(n && !n.value) n.focus(); }
       if(el.dataset.tab==='search' && matchMedia('(pointer:fine)').matches){ const s=$('#dbSearch'); if(s) s.focus(); } } break;
     case 'db-pick': { const f = UI.sheet && UI.sheet.db.results[+el.dataset.i]; if(f) openFoodDetail(f); break; }
