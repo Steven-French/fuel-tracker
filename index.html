@@ -27,6 +27,7 @@ if(/^https?:$/.test(location.protocol)){ var m=document.createElement('link'); m
   --pro:#1e40af;--pro-soft:rgba(30,64,175,.12);--pro-solid:#1e40af;--food-solid:#1877F2;   /* protein: deep blue (distinct from the #1877F2 + Food button and teal carbs) */
   --streak:#d62828;--streak-soft:rgba(214,40,40,.12);
   --wt:#15803d;--wt-soft:rgba(21,128,61,.13);--wt-solid:#15803d;
+  --wt-gold:#C9A227;--wt-gold-soft:rgba(201,162,39,.18);
   /* general UI accent (links, primary buttons, active tab, focus) */
   --accent:#6d5dfc;--accent-soft:rgba(109,93,252,.14);
   --carb:#0e9aa7;--fat:#e9a800;--fib:#1fae6b;   /* carbs: teal (was sky blue) so it never reads like protein */
@@ -41,6 +42,7 @@ if(/^https?:$/.test(location.protocol)){ var m=document.createElement('link'); m
   :root{--bg:#0e1015;--card:#171a21;--card2:#1e222b;--text:#eef0f4;--muted:#99a0ad;--line:#282c36;
   --cal:#ffb020;--cal-soft:rgba(255,176,32,.18);--cal-over:#f97316;
   --pro:#93b4ff;--pro-soft:rgba(147,180,255,.18);--carb:#2cc0d0;--streak:#ff5a5f;--streak-soft:rgba(255,90,95,.18);--wt:#34c77b;--wt-soft:rgba(52,199,123,.18);
+  --wt-gold:#E0C35A;--wt-gold-soft:rgba(224,195,90,.22);
   --accent:#8173ff;--accent-soft:rgba(129,115,255,.2);--shadow:0 1px 2px rgba(0,0,0,.3)}
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -53,7 +55,12 @@ input,select{font-size:16px}
 .hidden{display:none!important}
 .app{max-width:600px;margin:0 auto;padding:calc(var(--sat) + 8px) 16px calc(var(--tabh) + var(--sab) + 90px)}
 .topbar{display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 2px 12px;gap:6px}
+.topbar.empty{display:none}
 .topbar>div:first-child{min-width:0;max-width:100%}
+.streakcycle{padding:10px 14px}
+.streakcycle .sc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.streakcycle .gs{font-size:12.5px;color:var(--muted);font-weight:500;white-space:nowrap}
+.streakcycle .gs b{color:var(--text);font-weight:650}
 #topRight:empty{display:none}
 .topbar h1{font-size:28px;letter-spacing:-.02em;margin:0;font-weight:750;white-space:nowrap}
 .topbar h1.long{font-size:clamp(19px,7.2vw,28px);letter-spacing:-.01em}
@@ -409,6 +416,7 @@ const MEAL_LABEL = Object.fromEntries(MEALS.map(m=>[m.id,m.label]));
 const mealFor = ts => { const d = new Date(+ts || Date.now()), h = d.getHours() + d.getMinutes()/60; return h<11 ? 'breakfast' : h<16 ? 'lunch' : 'dinner'; };
 const fixMeal = (meal, ts) => MEAL_LABEL[meal] ? meal : mealFor(ts);
 let mealFixes = 0;   // entries re-mapped by normalize() (a snack migration is pending a save)
+let goalStartedFix = 0;  // goalsSet but missing goalStarted → backfilled once, then saved
 const $ = (s,r=document)=>r.querySelector(s);
 const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -454,7 +462,7 @@ const ICON = {
 
 /* ---------- state ---------- */
 function defaults(){
-  return {version:1, settings:{unit:'lb', goals:{calories:2000, protein:150, carbs:null, fat:null, fiber:null}, goalsSet:false, goalWeight:null, goalWeightStart:null, profile:normProfile(), eatBack:true}, entries:{}, foods:[], recipes:[], weights:[], exercise:{}};
+  return {version:1, settings:{unit:'lb', goals:{calories:2000, protein:150, carbs:null, fat:null, fiber:null}, goalsSet:false, goalWeight:null, goalWeightStart:null, goalStarted:null, weightDirection:null, profile:normProfile(), eatBack:true}, entries:{}, foods:[], recipes:[], weights:[], exercise:{}};
 }
 function normalize(d){
   const s = defaults();
@@ -468,6 +476,8 @@ function normalize(d){
     ['carbs','fat','fiber'].forEach(k=>{ s.settings.goals[k] = nz(g[k]) || null; });
     const kgOk = v => { v = nz(v); return v>0 && v<1000 ? v : null; };
     s.settings.goalWeight = kgOk(d.settings.goalWeight); s.settings.goalWeightStart = s.settings.goalWeight ? kgOk(d.settings.goalWeightStart) : null;
+    s.settings.goalStarted = (typeof d.settings.goalStarted==='string' && /^\d{4}-\d{2}-\d{2}$/.test(d.settings.goalStarted)) ? d.settings.goalStarted : null;
+    s.settings.weightDirection = d.settings.weightDirection==='gaining' ? 'gaining' : d.settings.weightDirection==='losing' ? 'losing' : null;
     s.settings.profile = normProfile(d.settings.profile);
     s.settings.eatBack = d.settings.eatBack !== false;
   }
@@ -887,6 +897,39 @@ function bestStreak(){
   for(const k of keys){ run = prev && diffDays(prev,k)===1 ? run+1 : 1; best = Math.max(best, run); prev = k; }
   return Math.max(best, currentStreak());
 }
+/* Losing = gold on a new all-time low; Gaining = gold on a new all-time high. null = auto from goal vs latest weight. */
+function weightDirection(){
+  const d = S.settings.weightDirection;
+  if(d==='losing' || d==='gaining') return d;
+  const gw = S.settings.goalWeight, last = S.weights.length ? S.weights[S.weights.length-1] : null;
+  if(gw && last && gw > last.kg + 0.05) return 'gaining';
+  return 'losing';
+}
+/* true when day k has its own weigh-in that is a new all-time low/high vs every earlier weigh-in (first-ever never counts) */
+function isRecordWeight(k){
+  const w = S.weights.find(x=>x.date===k); if(!w) return false;
+  const prev = S.weights.filter(x=>x.date<k); if(!prev.length) return false;
+  return weightDirection()==='gaining' ? prev.every(x=>w.kg>x.kg) : prev.every(x=>w.kg<x.kg);
+}
+/* earliest food / weigh-in / exercise day (not planned). Used only to backfill goalStarted for existing users. */
+function earliestLogDate(){
+  const keys = [...Object.keys(S.entries||{}), ...Object.keys(S.exercise||{}), ...(S.weights||[]).map(w=>w.date)]
+    .filter(k => typeof k==='string' && /^\d{4}-\d{2}-\d{2}$/.test(k) && k <= todayKey()).sort();
+  return keys[0] || null;
+}
+function fmtGoalStarted(k){
+  if(!k) return '';
+  const y = parseKey(k).getFullYear(), cy = new Date().getFullYear();
+  return fmtDate(k, y!==cy ? {month:'short',day:'numeric',year:'numeric'} : {month:'short',day:'numeric'});
+}
+/* backfill once for accounts that already had goals before goalStarted existed.
+   Prior versions never stored a "goals last saved" date, so we use the earliest log day (else today). */
+function ensureGoalStarted(){
+  if(S.settings.goalStarted || !S.settings.goalsSet) return false;
+  S.settings.goalStarted = earliestLogDate() || todayKey();
+  goalStartedFix++;
+  return true;
+}
 function recentFoods(){
   const map = new Map();
   for(const k of Object.keys(S.entries)){
@@ -957,6 +1000,7 @@ function confirmDialog({title, text, ok='Confirm', cancel='Cancel', danger=false
 function setHeader(title, sub, right){
   const h = $('#title'); h.textContent = title; h.classList.toggle('long', title.length > 10); h.style.fontSize = '';
   $('#subtitle').textContent = sub||''; $('#subtitle').hidden = !sub; $('#topRight').innerHTML = right||'';
+  $('.topbar').classList.toggle('empty', !title && !sub && !right);
   fitTitle();
 }
 /* the title never wraps or truncates: shrink it until it fits its row (the CSS clamp normally already does) */
@@ -1028,7 +1072,8 @@ function sparkSVG(k){
   return `<svg class="spark" viewBox="0 0 124 124" aria-hidden="true">${dots}${line}</svg>`;
 }
 function weightTileHTML(k){
-  const cur = weightAt(k), u = unit(), gw = S.settings.goalWeight, R = 52, C = 2*Math.PI*R, color = 'var(--wt)';
+  const cur = weightAt(k), u = unit(), gw = S.settings.goalWeight, R = 52, C = 2*Math.PI*R;
+  const record = !!(cur && cur.date===k && isRecordWeight(k)), color = record ? 'var(--wt-gold)' : 'var(--wt)';
   const label = `<div class="lbl" style="color:${color}">Weight</div>`;
   if(isPlanned(k)) return `<div class="ringbox off" data-ring="wt" aria-disabled="true" aria-label="Weight can’t be logged for a future day">${label}
     <div class="ring"><svg viewBox="0 0 124 124"><circle class="track" cx="62" cy="62" r="${R}"/></svg>
@@ -1040,7 +1085,7 @@ function weightTileHTML(k){
       <div class="center"><div class="big" data-val style="color:var(--muted)">—</div><div class="of">${u}</div></div></div>
     ${ro?`<div class="remain" style="color:var(--muted);font-weight:500">No weigh-in</div>`:`<div class="remain" style="color:var(--wt)">+ Log weight</div>`}${close}`;
   const ch = weightChangeAt(k, 7), pr = goalProgress(cur);
-  const gaining = gw && gw > cur.kg;
+  const gaining = weightDirection()==='gaining' || (gw && gw > cur.kg);
   let chTxt = '<span class="muted" style="font-weight:500">no 7-day change yet</span>';
   if(ch){ const v = r1(toDisp(ch.delta)); const good = gaining ? v>0 : v<0; chTxt = `<span class="${v===0?'':good?'down':'up'}">${v>0?'+':v<0?'−':'±'}${Math.abs(v).toFixed(1)} ${u}</span> <span class="muted" style="font-weight:500">7d</span>`; }
   const ring = pr==null
@@ -1048,9 +1093,9 @@ function weightTileHTML(k){
     : `<svg viewBox="0 0 124 124"><circle class="track" cx="62" cy="62" r="${R}"/><circle class="prog" cx="62" cy="62" r="${R}" stroke="${color}" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${(C*(1-pr)).toFixed(2)}"/></svg>`;
   const sub = pr==null ? u : `goal ${fmtW(gw)}`;
   const when = cur.date===k ? '' : `<div class="remain sub">${esc(cur.date===addDays(k,-1)?'from yesterday':'from '+fmtDate(cur.date,{month:'short',day:'numeric'}))}</div>`;
-  return `${open} aria-label="Weight ${fmtW(cur.kg)} ${u}${ro?'':'. Tap to log weight'}">${label}
-    <div class="ring" data-mode="${pr==null?'spark':'goal'}">${ring}
-      <div class="center${pr==null?' top':''}"><div class="big" data-val>${fmtW(cur.kg)}</div><div class="of">${esc(sub)}</div></div></div>
+  return `${open} aria-label="Weight ${fmtW(cur.kg)} ${u}${record?(weightDirection()==='gaining'?' · new high':' · new low'):''}${ro?'':'. Tap to log weight'}"${record?' data-record="1"':''}>${label}
+    <div class="ring" data-mode="${pr==null?'spark':'goal'}"${record?' data-gold="1"':''}>${ring}
+      <div class="center${pr==null?' top':''}"><div class="big" data-val${record?` style="color:${color}"`:''}>${fmtW(cur.kg)}</div><div class="of"${record?` style="color:${color}"`:''}>${esc(sub)}</div></div></div>
     <div class="remain" data-change>${chTxt}</div>${when}${close}`;
 }
 const calPct = (g, perG, kcal) => kcal>0 ? Math.round(g*perG/kcal*100) : null;   // share of the day's eaten calories (not net of exercise)
@@ -1061,15 +1106,19 @@ function macroHTML(label, val, goal, color, pct = null){
 }
 function renderToday(){
   if(UI.date > tomorrowKey()) UI.date = tomorrowKey();
+  ensureGoalStarted();
   const k = UI.date, isToday = k===todayKey(), planned = isPlanned(k), locked = isPast(k);
   const t = dayTotals(k), g = G();
-  const title = isToday ? 'Today' : planned ? 'Tomorrow' : (k===addDays(todayKey(),-1) ? 'Yesterday' : fmtDate(k,{weekday:'long'}));
-  const streak = currentStreak();
-  setHeader('NDLZ_DNT_NDLZ', '', streak>0 ? `<span class="pill" id="streakPill" title="Days in a row with food, weight, or exercise logged">🔥 ${streak}-day streak</span>`:'');
+  const streak = currentStreak(), gs = S.settings.goalsSet ? S.settings.goalStarted : null;
+  setHeader('', '', '');   // Today: no app-name header — date nav sits at the top
   const list = S.entries[k]||[];
-  const showYear = parseKey(k).getFullYear()!==new Date().getFullYear();
+  const streakCycle = (streak>0 || gs) ? `<section class="card streakcycle" id="streakCycleCard"><div class="sc-row">
+    ${streak>0?`<span class="pill" id="streakPill" title="Days in a row with food, weight, or exercise logged">🔥 ${streak}-day streak</span>`:`<span class="muted small" id="streakPillEmpty">No streak yet</span>`}
+    ${gs?`<span class="gs" id="goalStartedLbl">Goal started <b>${esc(fmtGoalStarted(gs))}</b></span>`:''}
+  </div></section>` : '';
   let html = `
   ${dayNavHTML(k)}
+  ${streakCycle}
   ${planned?`<div class="plannote" id="planNote">Planning ahead — these count toward your streak and progress once tomorrow arrives. · <button class="linkbtn" data-act="goto-today">Back to today</button></div>`
     : locked?`<div class="plannote" id="lockNote">Past days are locked — view only. · <button class="linkbtn" data-act="goto-today">Jump to today →</button></div>`:''}
   ${!S.settings.goalsSet?`<button class="banner" data-act="tab" data-tab="goals"><span style="font-size:20px">🎯</span><span>Using default goals (2,000 kcal · 150 g protein). <b>Set your goals →</b></span></button>`:syncPromptHTML()}
@@ -2463,6 +2512,18 @@ function renderGoals(){
       </div>
       <div class="grid2"><label class="f"><span style="color:var(--wt)">Goal weight (${u})</span><input class="inp" name="goalWeight" inputmode="decimal" value="${S.settings.goalWeight?fmtW(S.settings.goalWeight):''}" placeholder="—"></label>
         <p class="muted small" style="margin:22px 0 0;align-self:start">Optional. Shows progress on Today’s weight ring.</p></div>
+      <div id="wDirBlock" style="margin:4px 0 14px">
+        <div class="sect" style="margin:0 0 8px">Weight direction</div>
+        <p class="muted small" style="margin:0 0 10px">Your weight ring turns gold on days you hit a new low (Losing) or a new high (Gaining).</p>
+        <div class="seg"><button type="button" class="${weightDirection()==='losing'?'on':''}" data-act="wdir" data-v="losing">Losing</button><button type="button" class="${weightDirection()==='gaining'?'on':''}" data-act="wdir" data-v="gaining">Gaining</button></div>
+        <p class="muted small" style="margin:8px 0 0">${S.settings.weightDirection?`Saved as ${S.settings.weightDirection==='gaining'?'Gaining':'Losing'}.`:`Auto from your goal weight (${weightDirection()==='gaining'?'Gaining':'Losing'}). Tap to lock it in.`}</p>
+      </div>
+      <div id="goalCycleBlock" style="margin:4px 0 14px">
+        <div class="sect" style="margin:0 0 8px">Goal cycle</div>
+        <p class="muted small" style="margin:0 0 10px">Shown on Today as “Goal started …”. Saving goals the first time starts a cycle; editing goals later doesn’t change it.</p>
+        <label class="f"><span>Cycle start date</span><input class="inp" name="goalStarted" type="date" value="${S.settings.goalStarted||''}" max="${todayKey()}"></label>
+        <button class="btn block" type="button" data-act="new-cycle" style="margin-top:10px">Start new cycle</button>
+      </div>
       <button class="btn primary block" type="submit">Save goals</button>
     </form></section>
   <section class="card"><details class="helper" id="helper"${UI.helperOpen?' open':''}><summary>Goal helper</summary>
@@ -2559,6 +2620,13 @@ function saveGoals(){
   const st = S.settings, gwKg = gwRaw ? toKg(v('goalWeight')) : null;
   if(!gwKg){ st.goalWeight = null; st.goalWeightStart = null; }
   else if(!st.goalWeight || Math.abs(gwKg-st.goalWeight) > 0.02){ st.goalWeight = gwKg; const last = S.weights[S.weights.length-1]; st.goalWeightStart = last ? last.kg : null; } // progress is measured from your weight when the goal was set
+  const gsRaw = fm.elements.goalStarted ? fm.elements.goalStarted.value.trim() : '';
+  if(gsRaw){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(gsRaw) || gsRaw > todayKey()){ fm.elements.goalStarted.classList.add('err'); toast('Cycle start must be today or earlier'); return false; }
+    st.goalStarted = gsRaw;
+  } else if(!st.goalStarted){
+    st.goalStarted = todayKey();   // first time goals are saved → start the cycle today
+  }
   S.settings.goalsSet = true; save(); toast('Goals saved');
   return true;
 }
@@ -2619,7 +2687,9 @@ const rowW = w => validDay(w.date) && +w.kg>0 ? {day:w.date, kg:Math.min(+w.kg, 
 function rowP(){ const st = S.settings, g = st.goals;
   return {unit:st.unit==='kg'?'kg':'lb', goal_calories:goal(g.calories,99999), goal_protein:goal(g.protein,9999), goal_carbs:goal(g.carbs,9999), goal_fat:goal(g.fat,9999), goal_fiber:goal(g.fiber,9999),
     goals_set:!!st.goalsSet, eat_back:st.eatBack!==false, helper:normProfile(st.profile),
-    goal_weight_kg:st.goalWeight>0 && st.goalWeight<1000 ? st.goalWeight : null, goal_weight_start_kg:st.goalWeight && st.goalWeightStart>0 && st.goalWeightStart<1000 ? st.goalWeightStart : null}; }
+    goal_weight_kg:st.goalWeight>0 && st.goalWeight<1000 ? st.goalWeight : null, goal_weight_start_kg:st.goalWeight && st.goalWeightStart>0 && st.goalWeightStart<1000 ? st.goalWeightStart : null,
+    goal_started_at:st.goalStarted && /^\d{4}-\d{2}-\d{2}$/.test(st.goalStarted) ? st.goalStarted : null,
+    weight_direction:st.weightDirection==='gaining'||st.weightDirection==='losing'?st.weightDirection:null}; }
 const isDefaultProfile = () => fp(rowP()) === fp((()=>{ const keep = S; S = defaults(); const r = rowP(); S = keep; return r; })());
 
 /* server row -> local record */
@@ -2631,6 +2701,9 @@ function profileFromRow(r){ const st = S.settings, d = defaults().settings.goals
   st.unit = r.unit==='kg'?'kg':'lb'; st.goalsSet = !!r.goals_set;
   st.goals = {calories:nz(r.goal_calories)||d.calories, protein:nz(r.goal_protein)||d.protein, carbs:nz(r.goal_carbs)||null, fat:nz(r.goal_fat)||null, fiber:nz(r.goal_fiber)||null};
   st.goalWeight = nz(r.goal_weight_kg)||null; st.goalWeightStart = st.goalWeight ? (nz(r.goal_weight_start_kg)||null) : null;
+  { const gs = r.goal_started_at==null ? null : String(r.goal_started_at).slice(0,10);
+    st.goalStarted = gs && /^\d{4}-\d{2}-\d{2}$/.test(gs) ? gs : null; }
+  st.weightDirection = r.weight_direction==='gaining'||r.weight_direction==='losing' ? r.weight_direction : null;
   if(r.helper && typeof r.helper==='object') st.profile = normProfile(r.helper);
   if(typeof r.eat_back==='boolean') st.eatBack = r.eat_back; }
 const recipeFromRow = r => normRecipe({name:r.name, made:r.servings, ings:Array.isArray(r.items) ? r.items : []}, r.id);
@@ -2873,7 +2946,7 @@ async function signOut(){
   clearDevice();
   toast('Signed out · this device’s data was removed');
 }
-window.FuelData = { recipeSums, recipePerServing, recipeEntry, NUTS, NDLZ_DRI: window.NDLZ_DRI, fromUSDA, fromOFF, usdaNutrients, offNutrients, metaOf, scaleNut, nutTargets, dayNutrition, nutValues, nutStatus, foodMeta, canFood, canWeight, canExercise, setWeight, deleteWeight, logEntry, removeEntry, updateEntry, restoreEntry, logExercise, updateExercise, removeExercise, restoreExercise };   // data-layer API (used by tests)
+window.FuelData = { recipeSums, recipePerServing, recipeEntry, NUTS, NDLZ_DRI: window.NDLZ_DRI, fromUSDA, fromOFF, usdaNutrients, offNutrients, metaOf, scaleNut, nutTargets, dayNutrition, nutValues, nutStatus, foodMeta, canFood, canWeight, canExercise, setWeight, deleteWeight, logEntry, removeEntry, updateEntry, restoreEntry, logExercise, updateExercise, removeExercise, restoreExercise, currentStreak, weightDirection, isRecordWeight, earliestLogDate, fmtGoalStarted, ensureGoalStarted };   // data-layer API (used by tests)
 window.FuelSync = { now: ()=>syncNow(), status: ()=>{ const m = loadMeta(); return {configured:!!CFG, ready:ACC.ready, signedIn:!!m.uid && !ACC.expired, username:m.user, state:ACC.state, err:ACC.err, pending:dirtyCount(m), last:m.last, reset:m.reset===undefined?null:m.reset}; } };
 
 /* ---- account UI ---- */
@@ -3074,6 +3147,9 @@ document.addEventListener('click', async ev=>{
     case 'x-min': { const i = $('#exMin'); if(i){ i.value = el.dataset.m; UI.sheet.min = +el.dataset.m; $$('[data-act=x-min]').forEach(c=>c.classList.toggle('on', c===el)); i.classList.remove('err'); updateExOut(); } break; }
     case 'x-del': { const k = todayKey(), x = removeExercise(k, UI.sheet.editId); closeSheet(); render(); if(x) toast(`Deleted ${x.name}`, ()=>{ restoreExercise(k, x); render(); }); break; }
     case 'eatback': { const v = el.dataset.v==='1'; if(S.settings.eatBack!==v){ S.settings.eatBack = v; save(); renderSettings(); toast(v ? 'Exercise calories are added to your budget' : 'Exercise calories are no longer added'); } break; }
+    case 'wdir': { const v = el.dataset.v==='gaining'?'gaining':'losing'; if(S.settings.weightDirection!==v){ S.settings.weightDirection = v; save(); renderGoals(); toast(v==='gaining' ? 'Gold on new highs' : 'Gold on new lows'); } break; }
+    case 'new-cycle': { if(!(await confirmDialog({title:'Start a new goal cycle?', text:'This sets “Goal started” to today. Your calorie and macro goals stay the same.', ok:'Start new cycle'}))) break;
+      S.settings.goalStarted = todayKey(); S.settings.goalsSet = true; save(); renderGoals(); toast('New cycle started today'); break; }
     case 'q-del-weight': { const w = deleteWeight(UI.sheet && UI.sheet.date); if(!w) break; closeSheet(); render();
       toast('Weigh-in deleted', ()=>{ restoreWeight(w); render(); }); break; }
     case 'auth-open': closeSheet(); openAuth(); break;
@@ -3151,6 +3227,8 @@ if('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && (locat
 render();
 initAccount();
 if(mealFixes){ mealFixes = 0; save(); }   // snack → meal migration: saved (and queued for sync) like any other change
+ensureGoalStarted();
+if(goalStartedFix){ goalStartedFix = 0; save(); }   // backfill goalStarted for existing goalsSet users
 })();
 </script>
 </body>
