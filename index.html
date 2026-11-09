@@ -46,14 +46,17 @@ if(/^https?:$/.test(location.protocol)){ var m=document.createElement('link'); m
   --accent:#8173ff;--accent-soft:rgba(129,115,255,.2);--shadow:0 1px 2px rgba(0,0,0,.3)}
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0}
+html,body{margin:0;padding:0;height:100%;height:100dvh;max-height:100dvh;overflow:hidden}
+/* App shell: body never scrolls — only .app does. Pins the tab bar on iOS Safari / Home Screen PWAs,
+   where position:fixed + document scroll (esp. with backdrop-filter) can detach the bar mid-page. */
 body{background:var(--bg);color:var(--text);font:15px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  -webkit-font-smoothing:antialiased;min-height:100vh;overscroll-behavior-y:none}
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;overscroll-behavior:none;position:relative}
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer;border:0;background:none;padding:0}
 input,select{font-size:16px}
 .hidden{display:none!important}
-.app{max-width:600px;margin:0 auto;padding:calc(var(--sat) + 8px) 16px calc(var(--tabh) + var(--sab) + 90px)}
+.app{flex:1 1 auto;min-height:0;width:100%;max-width:600px;margin:0 auto;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
+  padding:calc(var(--sat) + 8px) 16px 100px;box-sizing:border-box}
 .topbar{display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 2px 12px;gap:6px}
 .topbar.empty{display:none}
 .topbar>div:first-child{min-width:0;max-width:100%}
@@ -61,6 +64,9 @@ input,select{font-size:16px}
 .streakcycle .sc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .streakcycle .gs{font-size:12.5px;color:var(--muted);font-weight:500;white-space:nowrap}
 .streakcycle .gs b{color:var(--text);font-weight:650}
+.streakcycle .sc-delta{width:100%;font-size:12.5px;font-weight:500;color:var(--muted);margin-top:2px}
+.streakcycle .sc-delta .down{color:var(--good);font-weight:650}
+.streakcycle .sc-delta .up{color:var(--bad);font-weight:650}
 #topRight:empty{display:none}
 .topbar h1{font-size:28px;letter-spacing:-.02em;margin:0;font-weight:750;white-space:nowrap}
 .topbar h1.long{font-size:clamp(19px,7.2vw,28px);letter-spacing:-.01em}
@@ -145,7 +151,7 @@ button.ringbox:active{background:var(--card2)}
 @media (max-width:419px){.fab .lg{display:none}.fab .sm{display:inline}.fabs{gap:8px}}
 @media (prefers-color-scheme:dark){#fabX{border:1px solid rgba(255,255,255,.4);box-shadow:none}}
 @media (max-width:360px){.fab{padding:13px 14px;font-size:14px;gap:5px}}
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:saturate(1.8) blur(18px);-webkit-backdrop-filter:saturate(1.8) blur(18px);
+.tabbar{flex:0 0 auto;position:relative;z-index:30;width:100%;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:saturate(1.8) blur(18px);-webkit-backdrop-filter:saturate(1.8) blur(18px);
   border-top:1px solid var(--line);padding:0 var(--sar) var(--sab) var(--sal)}
 /* 4 tabs, each an equal share of the full bar width (inside the left/right safe areas) */
 .tabbar .in{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));height:var(--tabh)}
@@ -1008,6 +1014,7 @@ function fitTitle(){
   const h = $('#title'); h.style.fontSize = '';
   for(let px = parseFloat(getComputedStyle(h).fontSize), i = 0; i < 20 && h.scrollWidth > h.parentElement.parentElement.clientWidth - 4 && px > 14; i++){ px -= 1; h.style.fontSize = px + 'px'; }
 }
+const scrollMain = (y=0) => { const app = $('.app'); if(app) app.scrollTop = y; else window.scrollTo(0, y); };
 function render(){
   if(UI.view==='history' || UI.view==='weight') UI.view = 'progress';   // the old History and Weight tabs are now Progress
   $$('.tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===UI.view));
@@ -1112,9 +1119,11 @@ function renderToday(){
   const streak = currentStreak(), gs = S.settings.goalsSet ? S.settings.goalStarted : null;
   setHeader('', '', '');   // Today: no app-name header — date nav sits at the top
   const list = S.entries[k]||[];
+  const cycleChg = gs ? cycleWeightChange() : null;
   const streakCycle = (streak>0 || gs) ? `<section class="card streakcycle" id="streakCycleCard"><div class="sc-row">
     ${streak>0?`<span class="pill" id="streakPill" title="Days in a row with food, weight, or exercise logged">🔥 ${streak}-day streak</span>`:`<span class="muted small" id="streakPillEmpty">No streak yet</span>`}
     ${gs?`<span class="gs" id="goalStartedLbl">Goal started <b>${esc(fmtGoalStarted(gs))}</b></span>`:''}
+    ${cycleChg?`<div class="sc-delta" id="cycleDelta">${cycleChg.html} since start</div>`:''}
   </div></section>` : '';
   let html = `
   ${dayNavHTML(k)}
@@ -1260,10 +1269,12 @@ function openSheet(state){
   renderSheet();
   $('#scrim').classList.add('show'); $('#sheet').classList.add('show');
   document.body.style.overflow='hidden';
+  const app = $('.app'); if(app) app.style.overflow='hidden';
 }
 function closeSheet(){
   if(typeof dbCtrl!=='undefined' && dbCtrl) dbCtrl.abort(); if(typeof scanStop!=='undefined' && scanStop) scanStop();
   UI.sheet=null; $('#scrim').classList.remove('show'); $('#sheet').classList.remove('show'); document.body.style.overflow='';
+  const app = $('.app'); if(app) app.style.overflow='';
   if(document.activeElement) document.activeElement.blur();
 }
 function deleteWeight(d){
@@ -1661,14 +1672,49 @@ function streakCardHTML(){
     <div class="sk-days" aria-label="Last 14 days">${dots}</div>
     <div class="sk-msg">${esc(msg)}</div></section>`;
 }
+/* first weigh-in on or after the current goal-cycle start (goalStarted); null if none yet */
+function cycleStartWeight(){
+  const gs = S.settings.goalStarted; if(!gs) return S.weights[0] || null;
+  for(const w of S.weights){ if(w.date >= gs) return w; }
+  return null;
+}
+/* latest weigh-in in the current cycle (on/after goalStarted); null if none */
+function cycleLatestWeight(){
+  const gs = S.settings.goalStarted || (S.weights[0] && S.weights[0].date);
+  if(!gs) return null;
+  let last = null; for(const w of S.weights){ if(w.date >= gs) last = w; } return last;
+}
+/* {start, last, deltaDisp, cls, sign, html} when ≥2 weigh-ins in cycle; null otherwise.
+   html is a colored "−4.4 lb" / "+1.2 lb" span (good direction = .down green). */
+function cycleWeightChange(){
+  const start = cycleStartWeight(), last = cycleLatestWeight();
+  if(!start || !last || last.date === start.date) return null;
+  const delta = r1(toDisp(last.kg - start.kg));
+  const dir = weightDirection();
+  const good = dir==='gaining' ? delta>0 : delta<0;
+  const cls = delta===0 ? '' : good ? 'down' : 'up';
+  const sign = delta>0 ? '+' : delta<0 ? '−' : '±';
+  const u = unit();
+  return {start, last, delta, cls, sign, u,
+    html: `<span class="${cls}">${sign}${Math.abs(delta).toFixed(1)} ${u}</span>`};
+}
 function weightCardHTML(){
-  const u = unit(), ws = withMA(S.weights), last = ws[ws.length-1];
+  const u = unit(), ws = withMA(S.weights), last = ws[ws.length-1], start = cycleStartWeight(), chg = cycleWeightChange();
   const ch = d => { const c = weightChange(d); if(!c) return `<div class="v">—</div><div class="d">not enough data</div>`;
     const v = r1(toDisp(c.delta)); const cls = v<0?'down':v>0?'up':'';
     return `<div class="v ${cls}">${v>0?'+':''}${v.toFixed(1)}<small>${u}</small></div><div class="d">since ${esc(fmtDate(c.from,{month:'short',day:'numeric'}))}</div>`; };
+  /* Starting weight = first weigh-in in the current goal cycle; sub-line shows change to latest (colored by weight direction). */
+  let startStat;
+  if(!start){
+    startStat = `<div class="stat" id="startWeightStat"><div class="k">Starting weight</div><div class="v">—</div><div class="d">no weigh-in yet</div></div>`;
+  } else {
+    const since = esc(fmtGoalStarted(start.date));
+    const sub = chg ? `${chg.html} since ${since}` : `since ${since}`;
+    startStat = `<div class="stat" id="startWeightStat"><div class="k">Starting weight</div><div class="v">${fmtW(start.kg)}<small>${u}</small></div><div class="d">${sub}</div></div>`;
+  }
   let h = `<section class="card" id="weightCard"><h2>Weight trend<small>${S.weights.length?`${S.weights.length} weigh-in${S.weights.length===1?'':'s'}`:'no weigh-ins yet'}</small></h2>
     <div class="stats">
-    <div class="stat"><div class="k">Latest</div><div class="v">${last?fmtW(last.kg):'—'}<small>${u}</small></div><div class="d">${last?esc(fmtDate(last.date,{month:'short',day:'numeric'})):'no entries'}</div></div>
+    ${startStat}
     <div class="stat"><div class="k">7-day average</div><div class="v" style="color:var(--wt)">${last?fmtW(last.ma):'—'}<small>${u}</small></div><div class="d">trend weight</div></div>
     <div class="stat"><div class="k">Past week</div>${ch(7)}</div>
     <div class="stat"><div class="k">Past month</div>${ch(30)}</div></div>
@@ -2946,7 +2992,7 @@ async function signOut(){
   clearDevice();
   toast('Signed out · this device’s data was removed');
 }
-window.FuelData = { recipeSums, recipePerServing, recipeEntry, NUTS, NDLZ_DRI: window.NDLZ_DRI, fromUSDA, fromOFF, usdaNutrients, offNutrients, metaOf, scaleNut, nutTargets, dayNutrition, nutValues, nutStatus, foodMeta, canFood, canWeight, canExercise, setWeight, deleteWeight, logEntry, removeEntry, updateEntry, restoreEntry, logExercise, updateExercise, removeExercise, restoreExercise, currentStreak, weightDirection, isRecordWeight, earliestLogDate, fmtGoalStarted, ensureGoalStarted };   // data-layer API (used by tests)
+window.FuelData = { recipeSums, recipePerServing, recipeEntry, NUTS, NDLZ_DRI: window.NDLZ_DRI, fromUSDA, fromOFF, usdaNutrients, offNutrients, metaOf, scaleNut, nutTargets, dayNutrition, nutValues, nutStatus, foodMeta, canFood, canWeight, canExercise, setWeight, deleteWeight, logEntry, removeEntry, updateEntry, restoreEntry, logExercise, updateExercise, removeExercise, restoreExercise, currentStreak, weightDirection, isRecordWeight, earliestLogDate, fmtGoalStarted, ensureGoalStarted, cycleStartWeight, cycleWeightChange, scrollMain };   // data-layer API (used by tests)
 window.FuelSync = { now: ()=>syncNow(), status: ()=>{ const m = loadMeta(); return {configured:!!CFG, ready:ACC.ready, signedIn:!!m.uid && !ACC.expired, username:m.user, state:ACC.state, err:ACC.err, pending:dirtyCount(m), last:m.last, reset:m.reset===undefined?null:m.reset}; } };
 
 /* ---- account UI ---- */
@@ -3064,14 +3110,14 @@ function authSubmit(form){
 /* ---------- events ---------- */
 document.addEventListener('click', async ev=>{
   const tabBtn = ev.target.closest('.tab');
-  if(tabBtn){ UI.view = tabBtn.dataset.tab; render(); window.scrollTo(0,0); return; }
+  if(tabBtn){ UI.view = tabBtn.dataset.tab; render(); scrollMain(0); return; }
   const el = ev.target.closest('[data-act]'); if(!el) return;
   const a = el.dataset.act;
   switch(a){
-    case 'tab': if(UI.sheet) closeSheet(); UI.view = el.dataset.tab; render(); window.scrollTo(0,0); break;
+    case 'tab': if(UI.sheet) closeSheet(); UI.view = el.dataset.tab; render(); scrollMain(0); break;
     case 'day': { const n = addDays(UI.date, +el.dataset.d); if(n<=tomorrowKey()){ UI.date = n; render(); } break; }
     case 'goto-today': UI.date = todayKey(); render(); break;
-    case 'goto-day': UI.date = el.dataset.k; UI.view='today'; render(); window.scrollTo(0,0); break;
+    case 'goto-day': UI.date = el.dataset.k; UI.view='today'; render(); scrollMain(0); break;
     case 'pick-date': { const i = $('#datePick'); try{ i.showPicker(); } catch(e){ i.style.pointerEvents='auto'; i.focus(); } break; }
     case 'open-add': openAdd(el.dataset.meal); break;
     case 'edit': openEdit(el.dataset.id); break;
