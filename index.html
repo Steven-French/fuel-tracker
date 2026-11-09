@@ -64,9 +64,12 @@ input,select{font-size:16px}
 .streakcycle .sc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .streakcycle .gs{font-size:12.5px;color:var(--muted);font-weight:500;white-space:nowrap}
 .streakcycle .gs b{color:var(--text);font-weight:650}
-.streakcycle .sc-delta{width:100%;font-size:12.5px;font-weight:500;color:var(--muted);margin-top:2px}
+.streakcycle .sc-delta{width:100%;display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:12.5px;font-weight:500;color:var(--muted);margin-top:2px}
 .streakcycle .sc-delta .down{color:var(--good);font-weight:650}
 .streakcycle .sc-delta .up{color:var(--bad);font-weight:650}
+.streakcycle .sc-avg{white-space:nowrap;text-align:right}
+.streakcycle .sc-avg b{color:var(--text);font-weight:700}
+.streakcycle .sc-avg small{font-weight:500;color:var(--muted);margin-left:4px}
 #topRight:empty{display:none}
 .topbar h1{font-size:28px;letter-spacing:-.02em;margin:0;font-weight:750;white-space:nowrap}
 .topbar h1.long{font-size:clamp(19px,7.2vw,28px);letter-spacing:-.01em}
@@ -1119,11 +1122,11 @@ function renderToday(){
   const streak = currentStreak(), gs = S.settings.goalsSet ? S.settings.goalStarted : null;
   setHeader('', '', '');   // Today: no app-name header — date nav sits at the top
   const list = S.entries[k]||[];
-  const cycleChg = gs ? cycleWeightChange() : null;
+  const cycleChg = gs ? cycleWeightChange() : null, cycleAvg = cycleChg ? cycleAvgKcal() : null;
   const streakCycle = (streak>0 || gs) ? `<section class="card streakcycle" id="streakCycleCard"><div class="sc-row">
     ${streak>0?`<span class="pill" id="streakPill" title="Days in a row with food, weight, or exercise logged">🔥 ${streak}-day streak</span>`:`<span class="muted small" id="streakPillEmpty">No streak yet</span>`}
     ${gs?`<span class="gs" id="goalStartedLbl">Goal started <b>${esc(fmtGoalStarted(gs))}</b></span>`:''}
-    ${cycleChg?`<div class="sc-delta" id="cycleDelta">${cycleChg.html} since start</div>`:''}
+    ${cycleChg?`<div class="sc-delta" id="cycleDelta"><span>${cycleChg.html} since start</span>${cycleAvg?cycleAvg.html:''}</div>`:''}
   </div></section>` : '';
   let html = `
   ${dayNavHTML(k)}
@@ -1697,6 +1700,18 @@ function cycleWeightChange(){
   const u = unit();
   return {start, last, delta, cls, sign, u,
     html: `<span class="${cls}">${sign}${Math.abs(delta).toFixed(1)} ${u}</span>`};
+}
+/* avg daily kcal from cycle weight change: round(|Δlb| × 3500 / days), days = goalStarted→today inclusive.
+   Label "avg deficit" when weight fell, "avg surplus" when it rose. Null if no change / <2 weigh-ins. */
+function cycleAvgKcal(){
+  const chg = cycleWeightChange(); if(!chg || chg.delta===0) return null;
+  const gs = S.settings.goalStarted || chg.start.date;
+  const days = diffDays(gs, todayKey()) + 1; if(days < 1) return null;
+  const changeLb = Math.abs(chg.last.kg - chg.start.kg) * LB_PER_KG;
+  const avg = Math.round(changeLb * 3500 / days);
+  const label = chg.last.kg < chg.start.kg ? 'avg deficit' : 'avg surplus';
+  return {avg, days, changeLb, label, gs,
+    html: `<span class="sc-avg" id="cycleAvg"><b>${fmtN(avg)}</b><small>${esc(label)}</small></span>`};
 }
 function weightCardHTML(){
   const u = unit(), ws = withMA(S.weights), last = ws[ws.length-1], start = cycleStartWeight(), chg = cycleWeightChange();
@@ -2992,7 +3007,7 @@ async function signOut(){
   clearDevice();
   toast('Signed out · this device’s data was removed');
 }
-window.FuelData = { recipeSums, recipePerServing, recipeEntry, NUTS, NDLZ_DRI: window.NDLZ_DRI, fromUSDA, fromOFF, usdaNutrients, offNutrients, metaOf, scaleNut, nutTargets, dayNutrition, nutValues, nutStatus, foodMeta, canFood, canWeight, canExercise, setWeight, deleteWeight, logEntry, removeEntry, updateEntry, restoreEntry, logExercise, updateExercise, removeExercise, restoreExercise, currentStreak, weightDirection, isRecordWeight, earliestLogDate, fmtGoalStarted, ensureGoalStarted, cycleStartWeight, cycleWeightChange, scrollMain };   // data-layer API (used by tests)
+window.FuelData = { recipeSums, recipePerServing, recipeEntry, NUTS, NDLZ_DRI: window.NDLZ_DRI, fromUSDA, fromOFF, usdaNutrients, offNutrients, metaOf, scaleNut, nutTargets, dayNutrition, nutValues, nutStatus, foodMeta, canFood, canWeight, canExercise, setWeight, deleteWeight, logEntry, removeEntry, updateEntry, restoreEntry, logExercise, updateExercise, removeExercise, restoreExercise, currentStreak, weightDirection, isRecordWeight, earliestLogDate, fmtGoalStarted, ensureGoalStarted, cycleStartWeight, cycleWeightChange, cycleAvgKcal, scrollMain };   // data-layer API (used by tests)
 window.FuelSync = { now: ()=>syncNow(), status: ()=>{ const m = loadMeta(); return {configured:!!CFG, ready:ACC.ready, signedIn:!!m.uid && !ACC.expired, username:m.user, state:ACC.state, err:ACC.err, pending:dirtyCount(m), last:m.last, reset:m.reset===undefined?null:m.reset}; } };
 
 /* ---- account UI ---- */
