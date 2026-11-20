@@ -1825,7 +1825,8 @@ function paintRangeCards(){ const el = $('#rangeCards'); if(el) el.innerHTML = r
 const USDA_SEARCH = 'https://api.nal.usda.gov/fdc/v1/foods/search';
 // encodeURIComponent leaves ( ) ! ' * as-is; USDA's server rejects a raw "(" (e.g. "Survey (FNDDS)") with HTTP 400
 const uenc = s => encodeURIComponent(s).replace(/[()!'*]/g, c=>'%'+c.charCodeAt(0).toString(16).toUpperCase());
-const OFF_SEARCH_HOSTS = ['https://us.openfoodfacts.org','https://us.openfoodfacts.org','https://world.openfoodfacts.org']; // retry US once, then world
+const OFF_SEARCH_HOSTS = ['https://us.openfoodfacts.org','https://world.openfoodfacts.org']; // one try per host; total budget ~6s
+const OFF_SEARCH_BUDGET = 6000;
 const OFF_PRODUCT = 'https://world.openfoodfacts.org/api/v2/product/';
 const OFF_FIELDS = 'code,product_name,product_name_en,generic_name,brands,nutriments,serving_size,serving_quantity,serving_quantity_unit,product_quantity,product_quantity_unit,quantity,countries_tags,ingredients_text,ingredients_text_en';
 const USDA_GENERIC = ['Foundation','SR Legacy','Survey (FNDDS)'];
@@ -1833,7 +1834,8 @@ const CAN_SCAN = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedi
 /* USDA key: the app's shared key from config.js (usdaKey); DEMO_KEY only if config.js has none */
 const APP_USDA_KEY = (()=>{ const k = String((window.FUEL_CONFIG||{}).usdaKey||'').trim(); return /^[A-Za-z0-9_\-]{6,100}$/.test(k) && k!=='DEMO_KEY' ? k : ''; })();
 const usdaKey = () => APP_USDA_KEY || 'DEMO_KEY';
-const dbCache = new Map();
+const dbCache = new Map();      // full USDA+OFF results (both sources succeeded)
+const usdaCache = new Map();    // USDA-only, so a repeat search can paint instantly even if OFF failed last time
 ICON.close = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 ICON.scan = '<svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M17 8v8"/></svg>';
 
@@ -1941,13 +1943,21 @@ async function searchUSDA(q, signal){
 }
 async function searchOFF(q, signal){
   let last;
+  const t0 = Date.now();
   for(let i=0;i<OFF_SEARCH_HOSTS.length;i++){
-    if(i) await sleep(700);
     if(signal && signal.aborted){ const x = new Error('cancelled'); x.cancelled = true; throw x; }
+    const left = OFF_SEARCH_BUDGET - (Date.now()-t0);
+    if(left < 400){ if(!last){ last = new Error('timeout'); last.timeout = true; } break; }
     try{
-      const d = await fetchJSON(`${OFF_SEARCH_HOSTS[i]}/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=24&fields=${OFF_FIELDS}`, {signal, timeout:10000});
+      const d = await fetchJSON(`${OFF_SEARCH_HOSTS[i]}/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=24&fields=${OFF_FIELDS}`, {signal, timeout:Math.min(3500, left)});
       return ((d && d.products)||[]).map(fromOFF).filter(Boolean);
-    } catch(e){ if(e.cancelled) throw e; last = e; if(e.status && e.status<500 && e.status!==429) break; }
+    } catch(e){
+      if(e.cancelled) throw e;
+      last = e;
+      // 5xx / timeout / network: try the next host if budget remains. Do not retry the same host (e.g. 503 twice).
+      // Other 4xx (except 429) is a hard stop.
+      if(e.status && e.status<500 && e.status!==429) break;
+    }
   }
   throw last;
 }
@@ -1970,6 +1980,13 @@ function rankMerge(q, lists){
   });
   return out.sort((a,b)=>b.s-a.s || a.idx-b.idx).map(x=>x.f);
 }
+const foodDedupKey = f => { const bc = String(f.barcode||'').replace(/\D/g,'').replace(/^0+/,''); return bc ? 'b:'+bc : 'n:'+normTxt(f.brand+' '+f.name)+'|'+Math.round((f.per100&&f.per100.cal||0)/5); };
+/* Keep already-shown rows if the list is scrolled; append anything new so results don't jump under a finger. */
+function appendMerge(existing, incoming){
+  const seen = new Set((existing||[]).map(foodDedupKey)), extra = (incoming||[]).filter(f=>!seen.has(foodDedupKey(f)));
+  return (existing||[]).concat(extra);
+}
+const dbListScrolled = () => { const sb = $('#sheet .sb'); return !!(sb && sb.scrollTop > 24); };
 let dbTimer = null, dbCtrl = null;
 function dbQueue(q, now){
   const st = UI.sheet; if(!st) return;
@@ -1985,17 +2002,29 @@ async function dbRun(q){
   const ctrl = dbCtrl = new AbortController();
   if(!navigator.onLine){ st.db.status='offline'; paintDb(); return; }
   const ck = usdaKey()+'|'+q.toLowerCase();
-  if(dbCache.has(ck)){ Object.assign(st.db, {status:'done', results:dbCache.get(ck), errs:{}}); paintDb(); return; }
-  st.db.status='loading'; st.db.msg='Searching USDA and Open Food Facts…'; st.db.errs={}; paintDb();
-  const [u,o] = await Promise.allSettled([searchUSDA(q, ctrl.signal), searchOFF(q, ctrl.signal)]);
-  if(ctrl.signal.aborted || UI.sheet!==st || st.db.q.trim()!==q) return;
-  const errs = {}; if(u.status==='rejected') errs.usda = u.reason; if(o.status==='rejected') errs.off = o.reason;
-  st.db.results = rankMerge(q, [u.value||[], o.value||[]]);
-  st.db.errs = errs;
-  const bothNet = errs.usda && errs.off && errs.usda.network && errs.off.network;
-  st.db.status = bothNet && !navigator.onLine ? 'offline' : 'done';
-  if(!errs.usda && !errs.off) dbCache.set(ck, st.db.results);
-  paintDb();
+  if(dbCache.has(ck)){ Object.assign(st.db, {status:'done', results:dbCache.get(ck), errs:{}, pendingOff:false, pendingUsda:false}); paintDb(); return; }
+  const live = () => !ctrl.signal.aborted && UI.sheet===st && st.db.q.trim()===q;
+  let usda=[], off=[], uErr=null, oErr=null, usdaSettled=false, offSettled=false;
+  const apply = () => {
+    if(!live()) return;
+    const merged = rankMerge(q, [usda, off]);
+    const pending = !usdaSettled || !offSettled;
+    // already-scrolled list: append new rows instead of re-ranking under the finger
+    st.db.results = (pending===false && st.db.results && st.db.results.length && dbListScrolled()) ? appendMerge(st.db.results, merged) : merged;
+    const errs = {}; if(uErr) errs.usda = uErr; if(oErr) errs.off = oErr;
+    st.db.errs = errs; st.db.pendingOff = !offSettled; st.db.pendingUsda = !usdaSettled;
+    if(pending){ st.db.status = st.db.results.length ? 'partial' : 'loading'; st.db.msg = st.db.results.length ? '' : 'Searching USDA and Open Food Facts…'; }
+    else { const bothNet = uErr && oErr && uErr.network && oErr.network; st.db.status = bothNet && !navigator.onLine ? 'offline' : 'done'; }
+    paintDb();
+  };
+  if(usdaCache.has(ck)){ usda = usdaCache.get(ck); usdaSettled = true; apply(); }
+  else { st.db.status='loading'; st.db.msg='Searching USDA and Open Food Facts…'; st.db.results=[]; st.db.errs={}; st.db.pendingOff=true; st.db.pendingUsda=true; paintDb(); }
+  const pU = usdaSettled ? Promise.resolve(usda) : searchUSDA(q, ctrl.signal).then(r=>{ usda=r; usdaSettled=true; usdaCache.set(ck, r); apply(); return r; }, e=>{ uErr=e; usdaSettled=true; apply(); });
+  const pO = searchOFF(q, ctrl.signal).then(r=>{ off=r; offSettled=true; apply(); return r; }, e=>{ oErr=e; offSettled=true; apply(); });
+  await Promise.allSettled([pU, pO]);
+  if(!live()) return;
+  if(!uErr && usda.length) usdaCache.set(ck, usda);
+  if(!uErr && !oErr) dbCache.set(ck, rankMerge(q, [usda, off]));
 }
 // UPC-A (12) and EAN-13 (13, leading 0) are the same number; UPC-E (8) is a compressed UPC-A. Try every spelling.
 function upcCheck(d11){ let s = 0; for(let i=0;i<11;i++) s += (+d11[i]) * (i%2===0 ? 3 : 1); return String((10 - s%10) % 10); }
@@ -2036,9 +2065,12 @@ async function barcodeLookup(raw, format){
   st.db.status='loading'; st.db.msg=`Looking up barcode ${code}…`; st.db.errs={}; paintDb();
   const cands = barcodeCandidates(code, format);
   let food = null, err = null, noNutrition = null;
+  const t0 = Date.now(), BARCODE_BUDGET = 8000;
   for(const c of cands){
+    const left = BARCODE_BUDGET - (Date.now()-t0);
+    if(left < 400){ if(!err){ err = new Error('timeout'); err.timeout = true; } break; }
     try{
-      const d = await fetchJSON(`${OFF_PRODUCT}${c}?fields=${OFF_FIELDS}`, {signal:ctrl.signal});
+      const d = await fetchJSON(`${OFF_PRODUCT}${c}?fields=${OFF_FIELDS}`, {signal:ctrl.signal, timeout:left});
       if(d && d.product){ food = fromOFF(d.product); if(food) break; noNutrition = noNutrition || d.product.product_name || c; }
     } catch(e){ if(e.cancelled) return; if(e.status===404) continue; err = e; break; }
     if(ctrl.signal.aborted) return;
@@ -2055,7 +2087,8 @@ async function barcodeLookup(raw, format){
   if(ctrl.signal.aborted || UI.sheet!==st) return;
   if(food){ st.db.status = st.db.results.length ? 'done' : 'idle'; openFoodDetail(food); return; }
   st.db.status = 'barcode-miss';
-  st.db.msg = err && err.network ? (navigator.onLine ? 'Couldn’t reach Open Food Facts. Check your connection and try again.' : 'offline')
+  st.db.msg = err && err.timeout ? 'Open Food Facts didn’t respond in time. Try again, or enter the food manually.'
+    : err && err.network ? (navigator.onLine ? 'Couldn’t reach Open Food Facts. Check your connection and try again.' : 'offline')
     : noNutrition ? `Found “${noNutrition}”, but it has no nutrition data yet.` : `No product found for barcode ${code}.`;
   if(st.db.msg==='offline') st.db.status='offline';
   paintDb();
@@ -2095,9 +2128,14 @@ function dbListHTML(){
   if(d.status==='loading') return `<div class="row" style="margin:14px 0 4px"><div class="spinner"></div><span class="muted small">${esc(d.msg||'Searching…')}</span></div><div class="skel"></div><div class="skel"></div><div class="skel"></div>`;
   if(d.status==='cam-error') return camErrHTML(d.camErr);
   if(d.status==='barcode-miss') return `<div class="notice">${esc(d.msg)} <button class="linkbtn" data-act="stab" data-tab="new">Enter it manually →</button></div>`;
+  if(d.status==='partial' && !d.results.length) return `<div class="row" style="margin:14px 0 4px"><div class="spinner"></div><span class="muted small">${esc(d.msg||'Searching…')}</span></div><div class="skel"></div><div class="skel"></div><div class="skel"></div>`;
   let h = '';
   if(d.errs.usda) h += `<div class="notice ${d.errs.usda.status===429||d.errs.usda.status===403?'':'bad'}" data-err="usda">${esc(usdaErrMsg(d.errs.usda))}</div>`;
-  if(d.errs.off) h += `<div class="notice" data-err="off">${esc(offErrMsg(d.errs.off))} <button class="linkbtn" data-act="db-retry">Retry</button></div>`;
+  const hasUsda = (d.results||[]).some(f=>f.src==='usda');
+  if(d.pendingOff) h += `<p class="muted small" id="offPending" style="margin:8px 0">Still checking Open Food Facts…</p>`;
+  else if(d.pendingUsda) h += `<p class="muted small" id="usdaPending" style="margin:8px 0">Still checking USDA…</p>`;
+  else if(d.errs.off && hasUsda) h += `<p class="muted small" id="offNote" style="margin:8px 0">Open Food Facts didn’t respond — showing USDA results.</p>`;
+  else if(d.errs.off) h += `<div class="notice" data-err="off">${esc(offErrMsg(d.errs.off))} <button class="linkbtn" data-act="db-retry">Retry</button></div>`;
   if(!d.results.length){
     h += (d.errs.usda && d.errs.off) ? `<div class="notice info">No results could be loaded. <button class="linkbtn" data-act="stab" data-tab="new">Enter a food manually →</button></div>`
        : `<div class="empty" style="padding:16px 0;text-align:center">No matches for “${esc(d.q.trim())}”.<br><button class="linkbtn" data-act="stab" data-tab="new">Enter it manually →</button></div>`;
@@ -3147,7 +3185,7 @@ document.addEventListener('click', async ev=>{
       if(el.dataset.tab==='search' && matchMedia('(pointer:fine)').matches){ const s=$('#dbSearch'); if(s) s.focus(); } } break;
     case 'db-pick': { const f = UI.sheet && UI.sheet.db.results[+el.dataset.i]; if(f) openFoodDetail(f); break; }
     case 'db-back': if(UI.sheet){ UI.sheet.food = null; UI.sheet.meta = null; UI.sheet.tab = 'search'; renderSheet(); } break;
-    case 'db-retry': if(UI.sheet){ dbCache.clear(); dbQueue(UI.sheet.db.q, true); } break;
+    case 'db-retry': if(UI.sheet){ dbCache.clear(); usdaCache.clear(); dbQueue(UI.sheet.db.q, true); } break;
     case 'scan': startScan(); break;
     case 'scan-cancel': if(scanStop) scanStop(); break;
     case 'fill': { const f = findFood(el.dataset.src, el.dataset.key); if(!f) break;
