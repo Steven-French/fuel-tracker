@@ -113,6 +113,9 @@ button.ringbox:active{background:var(--card2)}
 .ring .big{font-size:clamp(17px,5.4vw,26px);font-weight:800;letter-spacing:-.03em;line-height:1;white-space:nowrap}
 .ring .big .u{font-size:.6em;font-weight:700;letter-spacing:0}
 .ring .of{font-size:clamp(10px,2.9vw,11.5px);color:var(--muted);margin-top:3px;white-space:nowrap}
+.ring .left{font-size:clamp(7.5px,2.15vw,10px);font-weight:600;letter-spacing:-.03em;line-height:1.15;margin-top:2px;color:var(--wt);opacity:.78;white-space:nowrap;max-width:72%;overflow:hidden;text-overflow:ellipsis}
+.ring[data-gold="1"] .left{color:var(--wt-gold);opacity:.88}
+.ring .center:has(.left) .of{margin-top:2px}
 .ring .center.top{justify-content:flex-start;padding-top:27%}
 .remain{margin-top:6px;font-size:12.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .remain.sub{margin-top:1px;font-size:11px;font-weight:500;color:var(--muted)}
@@ -1071,6 +1074,14 @@ function goalProgress(cur){
   if(Math.abs(start-g) < 0.05) return Math.abs(cur.kg-g) < 0.25 ? 1 : 0;
   return Math.max(0, Math.min(1, (start-cur.kg)/(start-g)));
 }
+/* |latest − goal| in the display unit, 1 decimal. Hidden when there is no goal or no weigh-in.
+   “goal reached” once the latest weigh-in has met or passed the goal in the chosen direction. */
+function weightLeftToGoal(cur){
+  const g = S.settings.goalWeight; if(!g || !cur) return null;
+  const curD = r1(toDisp(cur.kg)), goalD = r1(toDisp(g)), left = r1(Math.abs(curD-goalD));
+  const reached = left===0 || (weightDirection()==='gaining' ? curD>=goalD : curD<=goalD);
+  return {left, reached, text: reached ? 'goal reached' : `${left.toFixed(1)} ${unit()==='lb'?'lbs':'kg'} left`};
+}
 function sparkSVG(k){
   const from = addDays(k,-29), pts = withMA(S.weights).filter(p=>p.date>=from && p.date<=k);
   if(!pts.length) return '';
@@ -1102,10 +1113,12 @@ function weightTileHTML(k){
     ? `<svg viewBox="0 0 124 124"><circle class="track" cx="62" cy="62" r="${R}"/></svg>${sparkSVG(k)}`
     : `<svg viewBox="0 0 124 124"><circle class="track" cx="62" cy="62" r="${R}"/><circle class="prog" cx="62" cy="62" r="${R}" stroke="${color}" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${(C*(1-pr)).toFixed(2)}"/></svg>`;
   const sub = pr==null ? u : `goal ${fmtW(gw)}`;
+  const left = pr==null ? null : weightLeftToGoal(cur);
+  const leftLine = left ? `<div class="left" id="wtLeft" style="color:${color}">${esc(left.text)}</div>` : '';
   const when = cur.date===k ? '' : `<div class="remain sub">${esc(cur.date===addDays(k,-1)?'from yesterday':'from '+fmtDate(cur.date,{month:'short',day:'numeric'}))}</div>`;
-  return `${open} aria-label="Weight ${fmtW(cur.kg)} ${u}${record?(weightDirection()==='gaining'?' · new high':' · new low'):''}${ro?'':'. Tap to log weight'}"${record?' data-record="1"':''}>${label}
+  return `${open} aria-label="Weight ${fmtW(cur.kg)} ${u}${left?`, ${left.text}`:''}${record?(weightDirection()==='gaining'?' · new high':' · new low'):''}${ro?'':'. Tap to log weight'}"${record?' data-record="1"':''}>${label}
     <div class="ring" data-mode="${pr==null?'spark':'goal'}"${record?' data-gold="1"':''}>${ring}
-      <div class="center${pr==null?' top':''}"><div class="big" data-val${record?` style="color:${color}"`:''}>${fmtW(cur.kg)}</div><div class="of"${record?` style="color:${color}"`:''}>${esc(sub)}</div></div></div>
+      <div class="center${pr==null?' top':''}"><div class="big" data-val${record?` style="color:${color}"`:''}>${fmtW(cur.kg)}</div><div class="of"${record?` style="color:${color}"`:''}>${esc(sub)}</div>${leftLine}</div></div>
     <div class="remain" data-change>${chTxt}</div>${when}${close}`;
 }
 const calPct = (g, perG, kcal) => kcal>0 ? Math.round(g*perG/kcal*100) : null;   // share of the day's eaten calories (not net of exercise)
@@ -3045,7 +3058,7 @@ async function signOut(){
   clearDevice();
   toast('Signed out · this device’s data was removed');
 }
-window.FuelData = { recipeSums, recipePerServing, recipeEntry, NUTS, NDLZ_DRI: window.NDLZ_DRI, fromUSDA, fromOFF, usdaNutrients, offNutrients, metaOf, scaleNut, nutTargets, dayNutrition, nutValues, nutStatus, foodMeta, canFood, canWeight, canExercise, setWeight, deleteWeight, logEntry, removeEntry, updateEntry, restoreEntry, logExercise, updateExercise, removeExercise, restoreExercise, currentStreak, weightDirection, isRecordWeight, earliestLogDate, fmtGoalStarted, ensureGoalStarted, cycleStartWeight, cycleWeightChange, cycleAvgKcal, scrollMain };   // data-layer API (used by tests)
+window.FuelData = { recipeSums, recipePerServing, recipeEntry, NUTS, NDLZ_DRI: window.NDLZ_DRI, fromUSDA, fromOFF, usdaNutrients, offNutrients, metaOf, scaleNut, nutTargets, dayNutrition, nutValues, nutStatus, foodMeta, canFood, canWeight, canExercise, setWeight, deleteWeight, logEntry, removeEntry, updateEntry, restoreEntry, logExercise, updateExercise, removeExercise, restoreExercise, currentStreak, weightDirection, isRecordWeight, earliestLogDate, fmtGoalStarted, ensureGoalStarted, cycleStartWeight, cycleWeightChange, cycleAvgKcal, weightLeftToGoal, scrollMain };   // data-layer API (used by tests)
 window.FuelSync = { now: ()=>syncNow(), status: ()=>{ const m = loadMeta(); return {configured:!!CFG, ready:ACC.ready, signedIn:!!m.uid && !ACC.expired, username:m.user, state:ACC.state, err:ACC.err, pending:dirtyCount(m), last:m.last, reset:m.reset===undefined?null:m.reset}; } };
 
 /* ---- account UI ---- */
